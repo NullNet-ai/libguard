@@ -1,0 +1,9 @@
+[workspace]
+resolver = "2"
+members = []
+
+#[workspace.package]
+#authors = ["Author Name <author@name.com>"]
+
+#[workspace.dependencies]
+# dependencies to be inherited by all members; can be used as `dependency_name.workspace = true`
