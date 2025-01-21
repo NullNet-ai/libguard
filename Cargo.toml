@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
-members = []
+members = [
+    "client_libraries/traffic_monitor"
+]
 
 #[workspace.package]
 #authors = ["Author Name <author@name.com>"]
