@@ -1,5 +1,5 @@
 # nullnet-platform
-A collection of shared libraries used across AppGuard and WallGuard
+A collection of shared libraries used across AppGuard and WallGuard.
 
 ## Steps to add a new member to the platform
 1. Modify the `Cargo.toml` file `[members]` section to include the new member (in the form `"client_libraries/member_name"` or `"server_libraries/member_name"`)
