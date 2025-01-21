@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = []
+members = ["client_libraries/libconfmon"]
 
 #[workspace.package]
 #authors = ["Author Name <author@name.com>"]
