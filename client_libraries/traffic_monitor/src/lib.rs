@@ -74,7 +74,7 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
                 link_type,
                 timestamp: Utc::now().to_rfc3339(),
             };
-            tx.send(packet).expect("send error");
+            tx.send(packet).unwrap_or_default();
         }
     }
 }
