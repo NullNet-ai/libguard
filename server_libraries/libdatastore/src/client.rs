@@ -7,6 +7,7 @@ use crate::{
 use tonic::transport::{Channel, ClientTlsConfig};
 
 /// A client for interacting with the datastore service.
+#[derive(Debug, Clone)]
 pub struct DatastoreClient {
     /// Configuration for connecting to the datastore.
     config: DatastoreConfig,
