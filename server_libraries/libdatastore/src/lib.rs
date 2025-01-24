@@ -1,5 +1,7 @@
 mod client;
 mod config;
+
+#[rustfmt::skip]
 mod datastore;
 
 pub use client::DatastoreClient;
@@ -25,8 +27,7 @@ pub enum ErrorKind {
 /// - `kind`: The specific type of error.
 /// - `message`: A detailed message explaining the error.
 #[derive(Debug)]
-#[allow(unused)]
 pub struct Error {
-    kind: ErrorKind,
-    message: String,
+    pub kind: ErrorKind,
+    pub message: String,
 }

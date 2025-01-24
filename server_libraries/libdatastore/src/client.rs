@@ -5,6 +5,7 @@ use crate::{
     UpdateRequest,
 };
 use tonic::transport::{Channel, ClientTlsConfig};
+use tonic::Request;
 
 /// A client for interacting with the datastore service.
 #[derive(Debug, Clone)]
@@ -62,7 +63,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `LoginResponse` if successful, or an `Error` if the login fails.
-    pub async fn login(&self, request: LoginRequest) -> Result<LoginResponse, Error> {
+    pub async fn login(&self, request: Request<LoginRequest>) -> Result<LoginResponse, Error> {
         let mut client_inner = self.connect().await?;
 
         let response = client_inner.login(request).await.map_err(|e| Error {
@@ -80,7 +81,10 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
-    pub async fn batch_create(&self, request: BatchCreateRequest) -> Result<Response, Error> {
+    pub async fn batch_create(
+        &self,
+        request: Request<BatchCreateRequest>,
+    ) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
         let response = client_inner
@@ -101,7 +105,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
-    pub async fn create(&self, request: CreateRequest) -> Result<Response, Error> {
+    pub async fn create(&self, request: Request<CreateRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
         let response = client_inner.create(request).await.map_err(|e| Error {
@@ -119,7 +123,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
-    pub async fn delete(&self, request: DeleteRequest) -> Result<Response, Error> {
+    pub async fn delete(&self, request: Request<DeleteRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
         let response = client_inner.delete(request).await.map_err(|e| Error {
@@ -137,7 +141,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
-    pub async fn update(&self, request: UpdateRequest) -> Result<Response, Error> {
+    pub async fn update(&self, request: Request<UpdateRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
         let response = client_inner.update(request).await.map_err(|e| Error {
@@ -155,7 +159,10 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
-    pub async fn get_by_filter(&self, request: GetByFilterRequest) -> Result<Response, Error> {
+    pub async fn get_by_filter(
+        &self,
+        request: Request<GetByFilterRequest>,
+    ) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
         let response = client_inner
@@ -176,7 +183,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
-    pub async fn aggregate(&self, request: AggregateRequest) -> Result<Response, Error> {
+    pub async fn aggregate(&self, request: Request<AggregateRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
         let response = client_inner.aggregate(request).await.map_err(|e| Error {
@@ -194,7 +201,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
-    pub async fn get_by_id(&self, request: GetByIdRequest) -> Result<Response, Error> {
+    pub async fn get_by_id(&self, request: Request<GetByIdRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
         let response = client_inner.get_by_id(request).await.map_err(|e| Error {
