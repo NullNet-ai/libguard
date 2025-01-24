@@ -1,0 +1,10 @@
+[package]
+name = "sandbox"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libdatastore = { path = "../server_libraries/libdatastore" }
+tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
+
+

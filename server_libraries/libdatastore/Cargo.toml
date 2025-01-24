@@ -1,0 +1,12 @@
+[package]
+name = "libdatastore"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+prost = "0.13.4"
+tonic = { version = "0.12.3", features = ["tls", "tls-roots"] }
+
+[build-dependencies]
+tonic-build = "0.12.3"
+

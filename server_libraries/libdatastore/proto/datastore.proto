@@ -1,0 +1,171 @@
+syntax = "proto3";
+
+package datastore;
+
+service StoreService {
+    rpc GetById (GetByIdRequest) returns (Response);
+    rpc Aggregate (AggregateRequest) returns (Response);
+    rpc GetByFilter(GetByFilterRequest) returns (Response);
+    rpc Update(UpdateRequest) returns (Response);
+    rpc Delete(DeleteRequest) returns (Response);
+    rpc Create(CreateRequest) returns (Response);
+    rpc BatchCreate(BatchCreateRequest) returns (Response);
+    rpc Login(LoginRequest) returns (LoginResponse);
+}
+
+message GetByIdRequest {
+    Params params = 1;
+    Query query = 2;
+}
+
+message GetByFilterRequest {
+    GetByFilterBody body = 1;
+    Params params = 2;
+}
+
+message GetByFilterBody {
+    repeated string pluck = 1;
+    repeated AdvanceFilter advance_filters = 2;
+    string order_by = 3;
+    int32 limit = 4;
+    int32 offset = 5;
+    string order_direction = 6;
+    repeated Join joins = 7;
+    repeated MultipleSort multiple_sort = 8;
+    map<string, string> pluck_object = 9;
+}
+
+message AdvanceFilter {
+    string type = 1;
+    string field = 2;
+    string operator = 3;
+    string entity = 4;
+    string values = 5;
+}
+
+message Value {
+    oneof value {
+        string string_value = 1;
+        int32 int_value = 2;
+    }
+}
+
+message MultipleSort {
+    string by_field = 1;
+    string by_direction = 2;
+}
+
+message Join {
+    string type = 1;
+    FieldRelation field_relation = 2;
+}
+
+message FieldRelation {
+    EntityFieldTo to = 1;
+    EntityFieldFrom from = 2;
+}
+
+message EntityFieldTo {
+    string entity = 1;
+    string field = 2;
+    string alias = 3;
+    int32 limit = 4;
+    string order_by = 5;
+    repeated AdvanceFilter filters = 6;
+}
+
+message EntityFieldFrom {
+    string entity = 1;
+    string field = 2;
+}
+
+message AggregateRequest {
+    AggregateBody body = 1;
+    Params params = 2;
+}
+
+message AggregateBody {
+    repeated Aggregation aggregations = 1;
+    repeated AdvanceFilter advance_filters = 2;
+    string entity = 3;
+    string bucket_size = 4;
+    Order order = 5;
+    repeated Join joins = 6;
+}
+
+message Aggregation {
+    string aggregation = 1;
+    string aggregate_on = 2;
+    string bucket_name = 3;
+}
+
+message Order {
+    string order_by = 1;
+    string order_direction = 2;
+}
+
+message UpdateRequest {
+    Params params = 1;
+    Query query = 2;
+    string body = 3;
+}
+
+message DeleteRequest {
+    Params params = 1;
+}
+
+message CreateRequest {
+    CreateParams params = 1;
+    Query query = 2;
+    string body = 3;
+}
+
+message BatchCreateRequest {
+    CreateParams params = 1;
+    Query query = 2;
+    BatchCreateBody body = 3;
+}
+
+message BatchCreateBody {
+    string records = 1;
+}
+
+message CreateParams {
+    string table = 1;
+}
+
+message LoginRequest {
+    LoginBody body = 1;
+}
+
+message LoginBody{
+    LoginData data = 1;
+}
+
+message LoginData {
+    string account_id = 1;
+    string account_secret = 2;
+}
+
+message Query {
+    string pluck = 1;
+}
+
+message Params {
+    string id = 1;
+    string table= 2;
+}
+
+message LoginResponse {
+    string token = 1;
+}
+
+message Response {
+    bool success = 1;
+    string message = 2;
+    string error = 3;
+    string statusCode = 4;
+    int32 count = 5;
+    string encoding = 6;
+    string data = 7;
+}

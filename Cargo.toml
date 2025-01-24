@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     "client_libraries/libconfmon",
     "client_libraries/traffic_monitor"
-]
+, "sandbox", "server_libraries/libdatastore"]
 
 #[workspace.package]
 #authors = ["Author Name <author@name.com>"]
