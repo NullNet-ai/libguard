@@ -4,6 +4,8 @@ mod config;
 #[rustfmt::skip]
 mod datastore;
 
+use core::fmt;
+
 pub use client::DatastoreClient;
 pub use config::DatastoreConfig;
 pub use datastore::{
@@ -30,4 +32,15 @@ pub enum ErrorKind {
 pub struct Error {
     pub kind: ErrorKind,
     pub message: String,
+}
+
+impl fmt::Display for Error {
+    /// Formats the error for user-friendly display.
+    ///
+    /// The format includes the error kind and the message, for example:
+    ///
+    /// `[ErrorCouldNotConnectToDatastore] Connection timed out`.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[{:?}] {}", self.kind, self.message)
+    }
 }
