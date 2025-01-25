@@ -94,7 +94,7 @@ impl Token {
             });
         }
 
-        let decoded_payload = base64::engine::general_purpose::STANDARD
+        let decoded_payload = base64::engine::general_purpose::URL_SAFE_NO_PAD
             .decode(parts[1])
             .map_err(|e| Error {
                 kind: ErrorKind::ErrorBadToken,
