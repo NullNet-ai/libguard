@@ -59,7 +59,7 @@ impl Display for Error {
 /// }).await?;
 /// ```
 pub async fn make_watcher<F, Fut>(
-    platform: String,
+    platform: &str,
     poll_interval: u64,
     callback: F,
 ) -> Result<Watcher<F, Fut>, Error>
@@ -67,7 +67,7 @@ where
     F: Fn(Snapshot) -> Fut,
     Fut: Future<Output = ()>,
 {
-    let pval = Platform::from_string(platform)?;
+    let pval = Platform::from_str(platform)?;
     let files = get_files_to_monitor(pval);
     let retval = Watcher::new(files, poll_interval, callback).await?;
 

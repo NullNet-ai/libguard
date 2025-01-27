@@ -64,6 +64,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `LoginResponse` if successful, or an `Error` if the login fails.
+    #[allow(clippy::missing_errors_doc)]
     pub async fn login(&self, request: Request<LoginRequest>) -> Result<LoginResponse, Error> {
         let mut client_inner = self.connect().await?;
 
@@ -82,6 +83,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
+    #[allow(clippy::missing_errors_doc)]
     pub async fn batch_create(
         &self,
         request: Request<BatchCreateRequest>,
@@ -106,6 +108,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
+    #[allow(clippy::missing_errors_doc)]
     pub async fn create(&self, request: Request<CreateRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
@@ -124,6 +127,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
+    #[allow(clippy::missing_errors_doc)]
     pub async fn delete(&self, request: Request<DeleteRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
@@ -142,6 +146,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
+    #[allow(clippy::missing_errors_doc)]
     pub async fn update(&self, request: Request<UpdateRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
@@ -160,6 +165,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
+    #[allow(clippy::missing_errors_doc)]
     pub async fn get_by_filter(
         &self,
         request: Request<GetByFilterRequest>,
@@ -184,6 +190,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
+    #[allow(clippy::missing_errors_doc)]
     pub async fn aggregate(&self, request: Request<AggregateRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 
@@ -202,6 +209,7 @@ impl DatastoreClient {
     ///
     /// # Returns
     /// A `Result` containing a `Response` if successful, or an `Error` if the operation fails.
+    #[allow(clippy::missing_errors_doc)]
     pub async fn get_by_id(&self, request: Request<GetByIdRequest>) -> Result<Response, Error> {
         let mut client_inner = self.connect().await?;
 

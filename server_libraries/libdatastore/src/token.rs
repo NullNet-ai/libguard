@@ -78,6 +78,7 @@ impl Token {
     /// # Returns
     /// * `Ok(Token)` if the token is successfully decoded and parsed.
     /// * `Err(Error)` if the token is malformed, Base64 decoding fails, or payload deserialization fails.
+    #[allow(clippy::missing_errors_doc)]
     pub fn from_jwt(jwt: &str) -> Result<Self, Error> {
         let parts: Vec<&str> = jwt.split('.').collect();
 

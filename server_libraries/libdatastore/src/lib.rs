@@ -3,6 +3,7 @@ mod config;
 mod token;
 
 #[rustfmt::skip]
+#[allow(clippy::pedantic)]
 mod datastore;
 
 use core::fmt;

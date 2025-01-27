@@ -6,7 +6,7 @@ async fn main() {
 
     let client = DatastoreClient::new(config);
 
-    let lreq = tonic::Request::new(LoginRequest {
+    let login_request = tonic::Request::new(LoginRequest {
         body: Some(LoginBody {
             data: Some(LoginData {
                 account_id: String::from("device_Hello@gmail.com"),
@@ -15,7 +15,7 @@ async fn main() {
         }),
     });
 
-    let lres = client.login(lreq).await.unwrap();
+    let login_response = client.login(login_request).await.unwrap();
 
-    println!("Token: {lres:?}");
+    println!("Token: {login_response:?}");
 }
