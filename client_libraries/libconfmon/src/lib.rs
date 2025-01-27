@@ -54,7 +54,7 @@ impl Display for Error {
 ///
 /// # Example
 /// ```rust
-/// let watcher = make_watcher("PfSense".to_string(), 1000, |snapshot| async move {
+/// let watcher = make_watcher("pfsense", 1000, |snapshot| async move {
 ///     println!("Changes detected in snapshot: {:?}", snapshot);
 /// }).await?;
 /// ```
