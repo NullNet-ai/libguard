@@ -40,7 +40,7 @@ impl Display for Error {
 /// Creates a new `Watcher` to monitor file changes.
 ///
 /// # Parameters
-/// - `platform`: The platform for which the watcher is being created (e.g., `"PfSense"` or `"OPNsense"`).
+/// - `platform`: The platform for which the watcher is being created (e.g., `"pfsense"` or `"opnsense"`).
 /// - `poll_interval`: The interval (in milliseconds) at which files are polled for changes.
 /// - `callback`: A closure or function to execute when changes are detected.
 ///
