@@ -17,5 +17,5 @@ async fn main() {
 
     let lres = client.login(lreq).await.unwrap();
 
-    println!("Token: {:?}", lres);
+    println!("Token: {lres:?}");
 }

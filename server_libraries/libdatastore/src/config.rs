@@ -22,6 +22,7 @@ impl DatastoreConfig {
     ///
     /// # Returns
     /// A `DatastoreConfig` instance with values derived from the environment or defaults.
+    #[must_use]
     pub fn from_env() -> Self {
         Self {
             host: read_host_value_from_env(String::from("127.0.0.1")),
@@ -39,6 +40,7 @@ impl DatastoreConfig {
     ///
     /// # Returns
     /// A `DatastoreConfig` instance initialized with the specified host, port, and TLS settings.
+    #[must_use]
     pub fn new(host: String, port: u16, tls: bool) -> Self {
         Self { host, port, tls }
     }

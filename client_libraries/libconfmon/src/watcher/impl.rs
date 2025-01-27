@@ -51,13 +51,13 @@ where
                 .await
                 .map_err(make_error_mapper(ErrorKind::ErrorInitializingWatcher))?;
 
-            files.push(FileInfo { mtime, path });
+            files.push(FileInfo { path, mtime });
         }
 
         Ok(Self {
             files,
-            poll_interval,
             callback,
+            poll_interval,
         })
     }
 
@@ -91,7 +91,7 @@ where
                 (self.callback)(snapshot).await;
             }
 
-            tokio::time::sleep(Duration::from_millis(self.poll_interval)).await
+            tokio::time::sleep(Duration::from_millis(self.poll_interval)).await;
         }
     }
 

@@ -25,7 +25,7 @@ impl Platform {
             "opnsense" => Ok(Platform::OPNsense),
             _ => Err(Error {
                 kind: ErrorKind::ErrorUnsupportedPlatform,
-                message: format!("Unsupported platform: {}", value),
+                message: format!("Unsupported platform: {value}"),
             }),
         }
     }

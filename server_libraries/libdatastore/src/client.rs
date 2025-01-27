@@ -19,6 +19,7 @@ impl DatastoreClient {
     ///
     /// # Arguments
     /// * `config` - Configuration for the datastore connection.
+    #[must_use]
     pub fn new(config: DatastoreConfig) -> Self {
         Self { config }
     }

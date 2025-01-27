@@ -22,7 +22,7 @@ pub struct Device {
     pub deleted_by: Option<String>,
     pub requested_by: Option<String>,
     pub timestamp: Option<String>,
-    pub tags: Vec<String>
+    pub tags: Vec<String>,
 }
 
 /// Represents an organization associated with an account.
