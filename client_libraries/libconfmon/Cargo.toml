@@ -1,7 +1,10 @@
 [package]
-name = "libconfmon"
+name = "nullnet-libconfmon"
 version = "0.1.0"
 edition = "2021"
+authors= ["Anton Liashkevich <anton.liashkevich.eng@gmail.com>"]
+repository = "https://github.com/NullNet-ai/libguard"
+license = "MIT"
 
 [dependencies]
 tokio = { version = "1.43.0", features = ["full"] }
