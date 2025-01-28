@@ -1,7 +1,12 @@
 [package]
-name = "traffic_monitor"
+name = "nullnet-traffic-monitor"
 version = "0.1.0"
 edition = "2021"
+authors= ["Giuliano Bellini <gyulyvgc89@gmail.com>"]
+repository = "https://github.com/NullNet-ai/libguard"
+license = "MIT"
+description = "Configuration monitoring library for NullNet targets"
+readme = "README.md"
 
 [dependencies]
 pcap = "2.2.0"
