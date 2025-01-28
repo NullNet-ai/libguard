@@ -1,4 +1,4 @@
-use libdatastore::{DatastoreClient, DatastoreConfig, LoginBody, LoginData, LoginRequest};
+use nullnet_libdatastore::{DatastoreClient, DatastoreConfig, LoginBody, LoginData, LoginRequest};
 
 #[tokio::main]
 async fn main() {
