@@ -6,7 +6,7 @@ authors= ["Anton Liashkevich <anton.liashkevich.eng@gmail.com>"]
 repository = "https://github.com/NullNet-ai/libguard"
 license = "MIT"
 description = "Configuration monitoring library for NullNet targets"
-
+readne = "README.md"
 
 [dependencies]
 tokio = { version = "1.43.0", features = ["full"] }
