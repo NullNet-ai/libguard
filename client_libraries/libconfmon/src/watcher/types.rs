@@ -5,6 +5,7 @@ use std::path::PathBuf;
 /// # Fields
 /// - `filename`: The name of the file.
 /// - `content`: The binary content of the file, stored as a vector of bytes.
+#[derive(Debug)]
 pub struct FileData {
     pub filename: String,
     pub content: Vec<u8>,
@@ -16,6 +17,7 @@ pub struct FileData {
 /// - `path`: The filesystem path to the file.
 /// - `mtime`: The modification time of the file, represented as the number of milliseconds
 ///            since the UNIX epoch.
+#[derive(Debug)]
 pub struct FileInfo {
     pub path: PathBuf,
     pub mtime: u128,
