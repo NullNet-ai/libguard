@@ -23,11 +23,7 @@ impl EndpoingParser {
 
         let node_value = node.unwrap();
 
-        if node_value
-            .children()
-            .find(|e| e.has_tag_name("any"))
-            .is_some()
-        {
+        if node_value.children().any(|e| e.has_tag_name("any")) {
             return (String::from("*"), String::from("*"));
         }
 

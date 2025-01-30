@@ -32,12 +32,10 @@ impl Parser {
     pub fn parse(platform: &str, document: &str) -> Result<Configuration, FireparseError> {
         match platform.to_lowercase().as_str() {
             "pfsense" => PfSenseParser::parse(document),
-            _ => {
-                return Err(FireparseError::UnsupportedPlatform(format!(
-                    "Platform {} is not supported",
-                    platform
-                )))
-            }
+            _ => Err(FireparseError::UnsupportedPlatform(format!(
+                "Platform {} is not supported",
+                platform
+            ))),
         }
     }
 }
