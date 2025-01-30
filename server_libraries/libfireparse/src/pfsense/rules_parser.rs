@@ -1,0 +1,275 @@
+use roxmltree::{Document, Node};
+
+use super::endpoint_parser::EndpoingParser;
+use crate::Rule;
+
+/// A parser for extracting firewall and NAT rules from a pfSense XML configuration.
+pub struct PfSenseRulesParser {}
+
+impl PfSenseRulesParser {
+    /// Parses a pfSense XML document to extract `filter` and `nat` rules.
+    ///
+    /// # Arguments
+    /// * `document` - A reference to a `Document` containing the pfSense configuration.
+    ///
+    /// # Returns
+    /// A `Vec<Rule>` containing all parsed rules from the `<filter>` and `<nat>` sections.
+    ///
+    /// The function first looks for a `<pfsense>` node and then extracts `<filter>` and `<nat>` rules.
+    pub fn parse(document: &Document) -> Vec<Rule> {
+        let mut rules = vec![];
+
+        if let Some(filter) = document
+            .descendants()
+            .find(|e| e.has_tag_name("pfsense"))
+            .and_then(|e| e.children().find(|ce| ce.has_tag_name("filter")))
+        {
+            rules.append(&mut PfSenseRulesParser::parse_rules(filter, "filter"));
+        }
+
+        if let Some(nat) = document
+            .descendants()
+            .find(|e| e.has_tag_name("pfsense"))
+            .and_then(|e| e.children().find(|ce| ce.has_tag_name("nat")))
+        {
+            rules.append(&mut PfSenseRulesParser::parse_rules(nat, "nat"));
+        }
+
+        rules
+    }
+
+    /// Generic function to parse rules from a given XML node.
+    ///
+    /// # Arguments
+    /// * `node` - A `Node` representing either the `<filter>` or `<nat>` section.
+    /// * `rule_type` - A `&str` indicating the type of rule (`"filter"` or `"nat"`).
+    ///
+    /// # Returns
+    /// A `Vec<Rule>` containing extracted rules.
+    fn parse_rules(node: Node<'_, '_>, rule_type: &str) -> Vec<Rule> {
+        let mut rules = Vec::new();
+
+        for rule in node.children().filter(|e| e.has_tag_name("rule")) {
+            let action = rule
+                .children()
+                .find(|e| e.has_tag_name("type"))
+                .and_then(|e| e.text())
+                .unwrap_or("pass")
+                .to_string();
+
+            let ipprotocol = rule
+                .children()
+                .find(|e| e.has_tag_name("ipprotocol"))
+                .and_then(|e| e.text())
+                .unwrap_or("*");
+
+            let protocol = rule
+                .children()
+                .find(|e| e.has_tag_name("protocol"))
+                .and_then(|e| e.text())
+                .unwrap_or("any");
+
+            let description = rule
+                .children()
+                .find(|e| e.has_tag_name("descr"))
+                .and_then(|e| e.text())
+                .unwrap_or("")
+                .to_string();
+
+            let (source_addr, source_port) =
+                EndpoingParser::parse(rule.children().find(|e| e.has_tag_name("source")));
+
+            let (destination_addr, destination_port) =
+                EndpoingParser::parse(rule.children().find(|e| e.has_tag_name("destination")));
+
+            rules.push(Rule {
+                r#type: rule_type.to_string(),
+                protocol: format!("{}/{}", ipprotocol, protocol),
+                action,
+                description,
+                source_port,
+                source_addr,
+                destination_addr,
+                destination_port,
+            });
+        }
+
+        rules
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::PfSenseRulesParser;
+    use roxmltree::Document;
+
+    #[test]
+    fn test_parse_filter_rules() {
+        let xml = r#"
+        <pfsense>
+            <filter>
+                <rule>
+                    <type>pass</type>
+                    <ipprotocol>inet</ipprotocol>
+                    <descr>Default allow LAN to any rule</descr>
+                    <interface>lan</interface>
+                    <source>
+                        <network>lan</network>
+                    </source>
+                    <destination>
+                        <any/>
+                    </destination>
+                </rule>
+            </filter>
+        </pfsense>
+        "#;
+
+        let doc = Document::parse(xml).expect("Failed to parse XML");
+        let rules = PfSenseRulesParser::parse(&doc);
+
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].r#type, "filter");
+        assert_eq!(rules[0].action, "pass");
+        assert_eq!(rules[0].protocol, "inet/any");
+        assert_eq!(rules[0].description, "Default allow LAN to any rule");
+        assert_eq!(rules[0].source_addr, "lan");
+        assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].destination_addr, "*");
+        assert_eq!(rules[0].destination_port, "*");
+    }
+
+    #[test]
+    fn test_parse_nat_rules() {
+        let xml = r#"
+        <pfsense>
+            <nat>
+                <rule>
+                    <source>
+                        <any></any>
+                    </source>
+                    <destination>
+                        <network>wanip</network>
+                        <port>8091</port>
+                    </destination>
+                    <ipprotocol>inet</ipprotocol>
+                    <protocol>tcp</protocol>
+                    <target>172.16.70.20</target>
+                    <local-port>8080</local-port>
+                    <interface>wan</interface>
+                    <descr>NAT Rule</descr>
+                </rule>
+            </nat>
+        </pfsense>
+        "#;
+
+        let doc = Document::parse(xml).expect("Failed to parse XML");
+        let rules = PfSenseRulesParser::parse(&doc);
+
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].r#type, "nat");
+        assert_eq!(rules[0].action, "pass");
+        assert_eq!(rules[0].protocol, "inet/tcp");
+        assert_eq!(rules[0].description, "NAT Rule");
+        assert_eq!(rules[0].source_addr, "*");
+        assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].destination_addr, "wanip");
+        assert_eq!(rules[0].destination_port, "8091");
+    }
+
+    #[test]
+    fn test_parse_multiple_rules() {
+        let xml = r#"
+        <pfsense>
+            <filter>
+                <rule>
+                    <type>pass</type>
+                    <ipprotocol>inet</ipprotocol>
+                    <descr>Allow LAN</descr>
+                    <interface>lan</interface>
+                    <source>
+                        <network>lan</network>
+                    </source>
+                    <destination>
+                        <any/>
+                    </destination>
+                </rule>
+            </filter>
+            <nat>
+                <rule>
+                    <source>
+                        <any></any>
+                    </source>
+                    <destination>
+                        <network>wanip</network>
+                        <port>8091</port>
+                    </destination>
+                    <ipprotocol>inet</ipprotocol>
+                    <protocol>tcp</protocol>
+                    <target>172.16.70.20</target>
+                    <local-port>8080</local-port>
+                    <interface>wan</interface>
+                    <descr>NAT Rule</descr>
+                </rule>
+            </nat>
+        </pfsense>
+        "#;
+
+        let doc = Document::parse(xml).expect("Failed to parse XML");
+        let rules = PfSenseRulesParser::parse(&doc);
+
+        assert_eq!(rules.len(), 2);
+
+        // Verify the first rule (Filter)
+        assert_eq!(rules[0].r#type, "filter");
+        assert_eq!(rules[0].action, "pass");
+        assert_eq!(rules[0].protocol, "inet/any");
+        assert_eq!(rules[0].description, "Allow LAN");
+        assert_eq!(rules[0].source_addr, "lan");
+        assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].destination_addr, "*");
+        assert_eq!(rules[0].destination_port, "*");
+
+        // Verify the second rule (NAT)
+        assert_eq!(rules[1].r#type, "nat");
+        assert_eq!(rules[1].action, "pass");
+        assert_eq!(rules[1].protocol, "inet/tcp");
+        assert_eq!(rules[1].description, "NAT Rule");
+        assert_eq!(rules[1].source_addr, "*");
+        assert_eq!(rules[1].source_port, "*");
+        assert_eq!(rules[1].destination_addr, "wanip");
+        assert_eq!(rules[1].destination_port, "8091");
+    }
+
+    #[test]
+    fn test_parse_missing_optional_fields() {
+        let xml = r#"
+        <pfsense>
+            <filter>
+                <rule>
+                    <type>reject</type>
+                    <ipprotocol>inet</ipprotocol>
+                    <descr>Block traffic</descr>
+                    <source>
+                        <any></any>
+                    </source>
+                    <destination>
+                        <address>restricted_zone</address>
+                    </destination>
+                </rule>
+            </filter>
+        </pfsense>
+        "#;
+
+        let doc = Document::parse(xml).expect("Failed to parse XML");
+        let rules = PfSenseRulesParser::parse(&doc);
+
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].r#type, "filter");
+        assert_eq!(rules[0].action, "reject");
+        assert_eq!(rules[0].protocol, "inet/any");
+        assert_eq!(rules[0].description, "Block traffic");
+        assert_eq!(rules[0].source_addr, "*");
+        assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].destination_addr, "restricted_zone");
+        assert_eq!(rules[0].destination_port, "*");
+    }
+}
