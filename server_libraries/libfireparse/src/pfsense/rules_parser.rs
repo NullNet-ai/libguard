@@ -50,7 +50,7 @@ impl PfSenseRulesParser {
         let mut rules = Vec::new();
 
         for rule in node.children().filter(|e| e.has_tag_name("rule")) {
-            let action = rule
+            let policy = rule
                 .children()
                 .find(|e| e.has_tag_name("type"))
                 .and_then(|e| e.text())
@@ -85,7 +85,7 @@ impl PfSenseRulesParser {
             rules.push(Rule {
                 r#type: rule_type.to_string(),
                 protocol: format!("{}/{}", ipprotocol, protocol),
-                action,
+                policy,
                 description,
                 source_port,
                 source_addr,
@@ -128,7 +128,7 @@ mod tests {
 
         assert_eq!(rules.len(), 1);
         assert_eq!(rules[0].r#type, "filter");
-        assert_eq!(rules[0].action, "pass");
+        assert_eq!(rules[0].policy, "pass");
         assert_eq!(rules[0].protocol, "inet/any");
         assert_eq!(rules[0].description, "Default allow LAN to any rule");
         assert_eq!(rules[0].source_addr, "lan");
@@ -166,7 +166,7 @@ mod tests {
 
         assert_eq!(rules.len(), 1);
         assert_eq!(rules[0].r#type, "nat");
-        assert_eq!(rules[0].action, "pass");
+        assert_eq!(rules[0].policy, "pass");
         assert_eq!(rules[0].protocol, "inet/tcp");
         assert_eq!(rules[0].description, "NAT Rule");
         assert_eq!(rules[0].source_addr, "*");
@@ -220,7 +220,7 @@ mod tests {
 
         // Verify the first rule (Filter)
         assert_eq!(rules[0].r#type, "filter");
-        assert_eq!(rules[0].action, "pass");
+        assert_eq!(rules[0].policy, "pass");
         assert_eq!(rules[0].protocol, "inet/any");
         assert_eq!(rules[0].description, "Allow LAN");
         assert_eq!(rules[0].source_addr, "lan");
@@ -230,7 +230,7 @@ mod tests {
 
         // Verify the second rule (NAT)
         assert_eq!(rules[1].r#type, "nat");
-        assert_eq!(rules[1].action, "pass");
+        assert_eq!(rules[1].policy, "pass");
         assert_eq!(rules[1].protocol, "inet/tcp");
         assert_eq!(rules[1].description, "NAT Rule");
         assert_eq!(rules[1].source_addr, "*");
@@ -264,7 +264,7 @@ mod tests {
 
         assert_eq!(rules.len(), 1);
         assert_eq!(rules[0].r#type, "filter");
-        assert_eq!(rules[0].action, "reject");
+        assert_eq!(rules[0].policy, "reject");
         assert_eq!(rules[0].protocol, "inet/any");
         assert_eq!(rules[0].description, "Block traffic");
         assert_eq!(rules[0].source_addr, "*");

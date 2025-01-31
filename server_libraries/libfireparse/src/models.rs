@@ -11,7 +11,7 @@ pub struct Alias {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Rule {
     pub r#type: String,
-    pub action: String,
+    pub policy: String,
     pub protocol: String,
     pub source_port: String,
     pub source_addr: String,
