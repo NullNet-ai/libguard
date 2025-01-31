@@ -128,6 +128,7 @@ message BatchCreateRequest {
 
 message BatchCreateBody {
     string records = 1;
+    string entity_prefix = 2;
 }
 
 message CreateParams {

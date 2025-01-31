@@ -182,6 +182,8 @@ pub struct BatchCreateRequest {
 pub struct BatchCreateBody {
     #[prost(string, tag = "1")]
     pub records: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub entity_prefix: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateParams {

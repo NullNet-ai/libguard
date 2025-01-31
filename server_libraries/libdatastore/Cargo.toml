@@ -1,6 +1,6 @@
 [package]
 name = "nullnet-libdatastore"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors= ["Anton Liashkevich <anton.liashkevich.eng@gmail.com>"]
 repository = "https://github.com/NullNet-ai/libguard"
