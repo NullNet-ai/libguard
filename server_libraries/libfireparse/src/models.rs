@@ -23,5 +23,5 @@ pub struct Rule {
 pub struct Configuration {
     pub rules: Vec<Rule>,
     pub aliases: Vec<Alias>,
-    pub raw_data: String,
+    pub raw_content: String,
 }

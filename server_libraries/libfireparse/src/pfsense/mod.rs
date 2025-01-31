@@ -27,7 +27,7 @@ impl PfSenseParser {
             Document::parse(document).map_err(|e| FireparseError::ParserError(e.to_string()))?;
 
         Ok(Configuration {
-            raw_data: utils::encode_base64(document.as_bytes()),
+            raw_content: utils::encode_base64(document.as_bytes()),
             aliases: AliasesParser::parse(&xmltree),
             rules: PfSenseRulesParser::parse(&xmltree),
         })
