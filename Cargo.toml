@@ -1,12 +1,13 @@
 [workspace]
 resolver = "2"
 members = [
+    "sandbox",
     "client_libraries/libconfmon",
-    "client_libraries/traffic_monitor"
-, "sandbox", "server_libraries/libdatastore", "server_libraries/libfireparse", "server_libraries/libtoken"]
+    "client_libraries/traffic_monitor",
+    "server_libraries/libdatastore",
+    "server_libraries/libfireparse",
+    "server_libraries/libipinfo",
+    "server_libraries/libtoken"]
 
 #[workspace.package]
 #authors = ["Author Name <author@name.com>"]
-
-#[workspace.dependencies]
-# dependencies to be inherited by all members; can be used as `dependency_name.workspace = true`
