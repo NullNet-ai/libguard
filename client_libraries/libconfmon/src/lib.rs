@@ -22,8 +22,8 @@ pub enum ErrorKind {
 /// - `message`: A detailed message explaining the error.
 #[derive(Debug)]
 pub struct Error {
-    kind: ErrorKind,
-    message: String,
+    pub kind: ErrorKind,
+    pub message: String,
 }
 
 impl Display for Error {
