@@ -1,7 +1,8 @@
-use platform::Platform;
 use std::fmt::Display;
 use std::{future::Future, path::PathBuf};
+
 pub use watcher::{r#impl::Watcher, types::Snapshot};
+pub use platform::Platform;
 
 mod platform;
 mod watcher;
