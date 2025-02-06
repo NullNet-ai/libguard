@@ -33,6 +33,8 @@ message GetByFilterBody {
     repeated Join joins = 7;
     repeated MultipleSort multiple_sort = 8;
     map<string, string> pluck_object = 9;
+    string date_format = 10;
+
 }
 
 message AdvanceFilter {

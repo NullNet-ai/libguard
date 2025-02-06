@@ -36,6 +36,8 @@ pub struct GetByFilterBody {
         ::prost::alloc::string::String,
         ::prost::alloc::string::String,
     >,
+    #[prost(string, tag = "10")]
+    pub date_format: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AdvanceFilter {
