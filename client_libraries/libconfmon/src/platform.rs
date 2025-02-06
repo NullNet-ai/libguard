@@ -19,8 +19,8 @@ impl Platform {
     ///
     /// # Errors
     /// Returns an `Error` with the kind `ErrorUnsupportedPlatform` if the input string is not recognized as a valid platform.
-    pub fn from_str(value: &str) -> Result<Platform, Error> {
-        match value {
+    pub fn from_string(value: &str) -> Result<Platform, Error> {
+        match value.to_lowercase().as_str() {
             "pfsense" => Ok(Platform::PfSense),
             "opnsense" => Ok(Platform::OPNsense),
             _ => Err(Error {

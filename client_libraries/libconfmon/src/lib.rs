@@ -1,42 +1,15 @@
-use std::fmt::Display;
-use std::{future::Future, path::PathBuf};
-
-pub use watcher::{r#impl::Watcher, types::Snapshot};
+pub use detector::{Detector, State};
+pub use error::{Error, ErrorKind};
 pub use platform::Platform;
+pub use watcher::{
+    r#impl::{Watcher, WatcherHandler},
+    types::Snapshot,
+};
 
+mod detector;
+mod error;
 mod platform;
 mod watcher;
-
-/// Represents the different kinds of errors that can occur during configuration monitoring.
-#[derive(Debug)]
-pub enum ErrorKind {
-    ErrorInitializingWatcher,
-    ErrorWatchingFile,
-    ErrorReadingFile,
-    ErrorUnsupportedPlatform,
-}
-
-/// A structured error type for `libconfmon`.
-///
-/// # Fields
-/// - `kind`: The specific type of error.
-/// - `message`: A detailed message explaining the error.
-#[derive(Debug)]
-pub struct Error {
-    pub kind: ErrorKind,
-    pub message: String,
-}
-
-impl Display for Error {
-    /// Formats the `Error` for display.
-    ///
-    /// # Format
-    /// The output includes the `ErrorKind` and the detailed message:
-    /// `[ErrorKind] message`
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{:?}] {}", self.kind, self.message)
-    }
-}
 
 /// Creates a new `Watcher` to monitor file changes.
 ///
@@ -65,24 +38,16 @@ impl Display for Error {
 ///     Ok(())
 /// }
 /// ```
-pub async fn make_watcher<F, Fut>(
+pub async fn make_watcher<T>(
     platform: &str,
     poll_interval: u64,
-    callback: F,
-) -> Result<Watcher<F, Fut>, Error>
+    handler: T,
+) -> Result<Watcher<T>, Error>
 where
-    F: Fn(Snapshot) -> Fut,
-    Fut: Future<Output = ()>,
+    T: WatcherHandler,
 {
-    let pval = Platform::from_str(platform)?;
-    let files = get_files_to_monitor(pval);
-    let retval = Watcher::new(files, poll_interval, callback).await?;
+    let pval = Platform::from_string(platform)?;
+    let retval = Watcher::new(pval, poll_interval, handler).await?;
 
     Ok(retval)
-}
-
-fn get_files_to_monitor(platform: Platform) -> Vec<PathBuf> {
-    match platform {
-        Platform::PfSense | Platform::OPNsense => vec![PathBuf::from("/conf/config.xml")],
-    }
 }
