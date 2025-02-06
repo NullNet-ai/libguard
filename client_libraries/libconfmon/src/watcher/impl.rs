@@ -135,6 +135,26 @@ impl<H: WatcherHandler> Watcher<H> {
 
         Ok(snapshot)
     }
+
+    /// Forces the capture of a snapshot and dispatches it to the handler.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the snapshot was successfully processed by the handler.
+    /// - `Err(Error)`: If an error occurs during snapshot creation or handling.
+    pub async fn force_capture_and_dispatch(&self) -> Result<(), Error> {
+        let snapshot = self.snapshot().await?;
+        let state = Detector::check(self.platform).await;
+
+        let result = self.handler.on_snapshot(snapshot, state).await;
+
+        if result.is_err() {
+            self.handler
+                .on_error(result.as_ref().unwrap_err().clone())
+                .await
+        }
+
+        result
+    }
 }
 
 /// Returns a list of files that should be monitored based on the given platform.

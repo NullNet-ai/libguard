@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter, Result};
 
 /// Represents the different kinds of errors that can occur during configuration monitoring.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ErrorKind {
     ErrorInitializingWatcher,
     ErrorWatchingFile,
@@ -28,7 +28,7 @@ impl Display for ErrorKind {
 /// # Fields
 /// - `kind`: The specific type of error.
 /// - `message`: A detailed message explaining the error.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Error {
     pub kind: ErrorKind,
     pub message: String,
