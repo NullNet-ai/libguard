@@ -10,6 +10,7 @@ pub struct Alias {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Rule {
+    pub disabled: bool,
     pub r#type: String,
     pub policy: String,
     pub protocol: String,

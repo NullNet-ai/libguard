@@ -50,6 +50,8 @@ impl PfSenseRulesParser {
         let mut rules = Vec::new();
 
         for rule in node.children().filter(|e| e.has_tag_name("rule")) {
+            let disabled = rule.children().any(|e| e.has_tag_name("disabled"));
+
             let policy = rule
                 .children()
                 .find(|e| e.has_tag_name("type"))
@@ -83,6 +85,7 @@ impl PfSenseRulesParser {
                 EndpoingParser::parse(rule.children().find(|e| e.has_tag_name("destination")));
 
             rules.push(Rule {
+                disabled,
                 r#type: rule_type.to_string(),
                 protocol: format!("{}/{}", ipprotocol, protocol),
                 policy,
@@ -127,6 +130,7 @@ mod tests {
         let rules = PfSenseRulesParser::parse(&doc);
 
         assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].disabled, false);
         assert_eq!(rules[0].r#type, "filter");
         assert_eq!(rules[0].policy, "pass");
         assert_eq!(rules[0].protocol, "inet/any");
@@ -165,6 +169,7 @@ mod tests {
         let rules = PfSenseRulesParser::parse(&doc);
 
         assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].disabled, false);
         assert_eq!(rules[0].r#type, "nat");
         assert_eq!(rules[0].policy, "pass");
         assert_eq!(rules[0].protocol, "inet/tcp");
@@ -181,6 +186,7 @@ mod tests {
         <pfsense>
             <filter>
                 <rule>
+                    <disabled></disabled>
                     <type>pass</type>
                     <ipprotocol>inet</ipprotocol>
                     <descr>Allow LAN</descr>
@@ -195,6 +201,7 @@ mod tests {
             </filter>
             <nat>
                 <rule>
+                    <disabled/>
                     <source>
                         <any></any>
                     </source>
@@ -219,6 +226,7 @@ mod tests {
         assert_eq!(rules.len(), 2);
 
         // Verify the first rule (Filter)
+        assert_eq!(rules[0].disabled, true);
         assert_eq!(rules[0].r#type, "filter");
         assert_eq!(rules[0].policy, "pass");
         assert_eq!(rules[0].protocol, "inet/any");
@@ -229,6 +237,7 @@ mod tests {
         assert_eq!(rules[0].destination_port, "*");
 
         // Verify the second rule (NAT)
+        assert_eq!(rules[0].disabled, true);
         assert_eq!(rules[1].r#type, "nat");
         assert_eq!(rules[1].policy, "pass");
         assert_eq!(rules[1].protocol, "inet/tcp");
@@ -263,6 +272,7 @@ mod tests {
         let rules = PfSenseRulesParser::parse(&doc);
 
         assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].disabled, false);
         assert_eq!(rules[0].r#type, "filter");
         assert_eq!(rules[0].policy, "reject");
         assert_eq!(rules[0].protocol, "inet/any");
