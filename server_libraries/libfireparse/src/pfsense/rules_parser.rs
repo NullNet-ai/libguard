@@ -87,7 +87,7 @@ impl PfSenseRulesParser {
             rules.push(Rule {
                 disabled,
                 r#type: rule_type.to_string(),
-                protocol: format!("{}/{}", ipprotocol, protocol),
+                protocol: format!("{}/{}", Self::map_ipprotocol(ipprotocol), protocol),
                 policy,
                 description,
                 source_port,
@@ -98,6 +98,22 @@ impl PfSenseRulesParser {
         }
 
         rules
+    }
+
+    /// Maps an IP protocol string to a common format.
+    ///
+    /// # Arguments
+    /// * `ipprotocol` - A string representing the IP protocol.
+    ///
+    /// # Returns
+    /// A `String` representing the mapped protocol (IPv4, IPv6, or Unknown).
+    #[inline]
+    fn map_ipprotocol(ipprotocol: &str) -> &str {
+        match ipprotocol {
+            "inet" => "IPv4",
+            "inet6" => "IPv6",
+            _ => "Unknown",
+        }
     }
 }
 #[cfg(test)]
@@ -133,7 +149,7 @@ mod tests {
         assert_eq!(rules[0].disabled, false);
         assert_eq!(rules[0].r#type, "filter");
         assert_eq!(rules[0].policy, "pass");
-        assert_eq!(rules[0].protocol, "inet/any");
+        assert_eq!(rules[0].protocol, "IPv4/any");
         assert_eq!(rules[0].description, "Default allow LAN to any rule");
         assert_eq!(rules[0].source_addr, "lan");
         assert_eq!(rules[0].source_port, "*");
@@ -154,7 +170,7 @@ mod tests {
                         <network>wanip</network>
                         <port>8091</port>
                     </destination>
-                    <ipprotocol>inet</ipprotocol>
+                    <ipprotocol>inet6</ipprotocol>
                     <protocol>tcp</protocol>
                     <target>172.16.70.20</target>
                     <local-port>8080</local-port>
@@ -172,7 +188,7 @@ mod tests {
         assert_eq!(rules[0].disabled, false);
         assert_eq!(rules[0].r#type, "nat");
         assert_eq!(rules[0].policy, "pass");
-        assert_eq!(rules[0].protocol, "inet/tcp");
+        assert_eq!(rules[0].protocol, "IPv6/tcp");
         assert_eq!(rules[0].description, "NAT Rule");
         assert_eq!(rules[0].source_addr, "*");
         assert_eq!(rules[0].source_port, "*");
@@ -229,7 +245,7 @@ mod tests {
         assert_eq!(rules[0].disabled, true);
         assert_eq!(rules[0].r#type, "filter");
         assert_eq!(rules[0].policy, "pass");
-        assert_eq!(rules[0].protocol, "inet/any");
+        assert_eq!(rules[0].protocol, "IPv4/any");
         assert_eq!(rules[0].description, "Allow LAN");
         assert_eq!(rules[0].source_addr, "lan");
         assert_eq!(rules[0].source_port, "*");
@@ -240,7 +256,7 @@ mod tests {
         assert_eq!(rules[0].disabled, true);
         assert_eq!(rules[1].r#type, "nat");
         assert_eq!(rules[1].policy, "pass");
-        assert_eq!(rules[1].protocol, "inet/tcp");
+        assert_eq!(rules[1].protocol, "IPv4/tcp");
         assert_eq!(rules[1].description, "NAT Rule");
         assert_eq!(rules[1].source_addr, "*");
         assert_eq!(rules[1].source_port, "*");
@@ -275,7 +291,7 @@ mod tests {
         assert_eq!(rules[0].disabled, false);
         assert_eq!(rules[0].r#type, "filter");
         assert_eq!(rules[0].policy, "reject");
-        assert_eq!(rules[0].protocol, "inet/any");
+        assert_eq!(rules[0].protocol, "IPv4/any");
         assert_eq!(rules[0].description, "Block traffic");
         assert_eq!(rules[0].source_addr, "*");
         assert_eq!(rules[0].source_port, "*");
