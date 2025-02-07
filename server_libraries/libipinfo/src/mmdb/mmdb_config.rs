@@ -6,13 +6,13 @@ use crate::IpInfo;
 use maxminddb::geoip2::{Asn, City};
 use std::sync::{Arc, RwLock};
 
-pub struct MmdbConfig {
+pub(crate) struct MmdbConfig {
     location_reader: Arc<RwLock<MmdbReader>>,
     asn_reader: Arc<RwLock<MmdbReader>>,
 }
 
 impl MmdbConfig {
-    pub fn new(location_url: &str, asn_url: &str, api_key: &str, refresh_days: u64) -> Self {
+    pub(crate) fn new(location_url: &str, asn_url: &str, api_key: &str, refresh_days: u64) -> Self {
         let location_url = location_url.replace("{api_key}", api_key);
         let mmdb_url = asn_url.replace("{api_key}", api_key);
 

@@ -3,13 +3,13 @@ use crate::IpInfo;
 use reqwest::Client;
 use serde_json::Value;
 
-pub struct ApiConfig {
+pub(crate) struct ApiConfig {
     url: String,
     fields: ApiFields,
 }
 
 impl ApiConfig {
-    pub fn new(url: &str, api_key: &str, fields: ApiFields) -> Self {
+    pub(crate) fn new(url: &str, api_key: &str, fields: ApiFields) -> Self {
         let url = url.replace("{api_key}", api_key);
         Self { url, fields }
     }

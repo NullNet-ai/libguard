@@ -4,14 +4,15 @@ use crate::mmdb::mmdb_config::MmdbConfig;
 use crate::IpInfo;
 use reqwest::Client;
 
-pub enum IpInfoProvider {
-    Api(ApiConfig),
-    Mmdb(MmdbConfig),
+pub struct IpInfoProvider {
+    inner: IpInfoProviderInner,
 }
 
 impl IpInfoProvider {
     pub fn new_api_provider(url: &str, api_key: &str, fields: ApiFields) -> Self {
-        Self::Api(ApiConfig::new(url, api_key, fields))
+        Self {
+            inner: IpInfoProviderInner::Api(ApiConfig::new(url, api_key, fields)),
+        }
     }
 
     pub fn new_mmdb_provider(
@@ -20,18 +21,25 @@ impl IpInfoProvider {
         api_key: &str,
         refresh_days: u64,
     ) -> Self {
-        Self::Mmdb(MmdbConfig::new(
-            location_url,
-            mmdb_url,
-            api_key,
-            refresh_days,
-        ))
+        Self {
+            inner: IpInfoProviderInner::Mmdb(MmdbConfig::new(
+                location_url,
+                mmdb_url,
+                api_key,
+                refresh_days,
+            )),
+        }
     }
 
     pub(crate) async fn lookup_ip(&self, client: &Client, ip: &str) -> Result<IpInfo, ()> {
-        match self {
-            IpInfoProvider::Api(config) => config.lookup_ip(client, ip).await,
-            IpInfoProvider::Mmdb(config) => config.lookup_ip(ip),
+        match &self.inner {
+            IpInfoProviderInner::Api(config) => config.lookup_ip(client, ip).await,
+            IpInfoProviderInner::Mmdb(config) => config.lookup_ip(ip),
         }
     }
+}
+
+enum IpInfoProviderInner {
+    Api(ApiConfig),
+    Mmdb(MmdbConfig),
 }

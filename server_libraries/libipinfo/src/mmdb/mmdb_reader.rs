@@ -3,14 +3,14 @@ use serde::Deserialize;
 use std::net::IpAddr;
 
 #[derive(Default)]
-pub enum MmdbReader {
+pub(crate) enum MmdbReader {
     #[default]
     Empty,
     Reader(Reader<Vec<u8>>),
 }
 
 impl MmdbReader {
-    pub fn lookup<'de, T: Deserialize<'de>>(&'de self, ip: IpAddr) -> Option<T> {
+    pub(crate) fn lookup<'de, T: Deserialize<'de>>(&'de self, ip: IpAddr) -> Option<T> {
         match self {
             MmdbReader::Reader(reader) => reader.lookup(ip).unwrap(),
             MmdbReader::Empty => None,
