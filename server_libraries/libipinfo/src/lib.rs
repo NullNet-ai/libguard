@@ -1,56 +1,50 @@
-use crate::api::api_config::ApiConfig;
-use crate::handle_data::{periodically_refresh_data};
 pub use crate::ip_info::IpInfo;
-use crate::mmdb_reader::MmdbReader;
-use reqwest::{Client, ClientBuilder};
-use std::sync::{Arc, RwLock};
-use std::time::Duration;
+use crate::ip_info_provider::IpInfoProvider;
+use crate::mmdb::mmdb_config::MmdbConfig;
+use crate::web_client::new_web_client;
+use reqwest::Client;
 
-mod constants;
-mod handle_data;
-mod ip_info;
-mod mmdb_reader;
 mod api;
+mod ip_info;
+mod ip_info_provider;
+mod mmdb;
+mod web_client;
 
 pub struct IpInfoHandler {
     web_client: Client,
-    api_config: ApiConfig,
-    mmdb_reader: Arc<RwLock<MmdbReader>>,
+    providers: Vec<IpInfoProvider>,
+    fallback: MmdbConfig,
 }
 
 impl IpInfoHandler {
-    pub fn new(api_config: ApiConfig, mmdb_key: String) -> Self {
-        let web_client = ClientBuilder::new()
-            .user_agent("nullnet")
-            .timeout(Duration::from_secs(300))
-            .build()
-            // .handle_err(location!())
-            .unwrap_or_default();
-        let mmdb_reader = Arc::new(RwLock::new(MmdbReader::default()));
-        let mmdb_reader_2 = mmdb_reader.clone();
+    pub fn new(providers: Vec<IpInfoProvider>) -> Self {
+        let web_client = new_web_client();
 
-        // log::info!("Opened blacklist SQLite database at {BLACKLIST_PATH}");
-
-        tokio::spawn(async move {
-            periodically_refresh_data(mmdb_reader_2, &mmdb_key).await;
-        });
+        let year_month = chrono::Utc::now().format("%Y-%m").to_string();
+        let fallback = MmdbConfig::new(
+            &format!("https://download.db-ip.com/free/dbip-city-lite-{year_month}.mmdb.gz"),
+            &format!("https://download.db-ip.com/free/dbip-asn-lite-{year_month}.mmdb.gz"),
+            "",
+            31,
+        );
 
         Self {
-            api_config,
             web_client,
-            mmdb_reader,
+            providers,
+            fallback,
         }
     }
 
     pub async fn lookup(&self, ip: &str) -> Result<IpInfo, ()> {
-        let ip_info =
-            IpInfo::lookup_from_api(&self.api_config, &self.web_client, ip)
-                .await
-                .or_else(|_| {
-                    // log::warn!("Failed to look up IP info from API, trying with MMDB...");
-                    IpInfo::lookup_from_mmdb(&self.mmdb_reader, ip)
-                });
+        for provider in &self.providers {
+            let ip_info = provider.lookup_ip(&self.web_client, ip).await;
+            if ip_info.is_ok() {
+                return ip_info;
+            }
+        }
 
-        ip_info
+        self.fallback.lookup_ip(ip)?;
+
+        Err(())
     }
 }
