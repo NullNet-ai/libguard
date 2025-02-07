@@ -152,6 +152,7 @@ message LoginData {
 
 message Query {
     string pluck = 1;
+    string durability = 2;
 }
 
 message Params {

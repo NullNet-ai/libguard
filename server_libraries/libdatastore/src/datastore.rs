@@ -213,6 +213,8 @@ pub struct LoginData {
 pub struct Query {
     #[prost(string, tag = "1")]
     pub pluck: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub durability: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Params {
