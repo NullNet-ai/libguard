@@ -17,13 +17,13 @@ pub struct IpInfoHandler {
 }
 
 impl IpInfoHandler {
+    #[must_use]
     pub fn new(providers: Vec<IpInfoProvider>) -> Self {
         let web_client = new_web_client();
 
-        let year_month = chrono::Utc::now().format("%Y-%m").to_string();
         let fallback = MmdbConfig::new(
-            &format!("https://download.db-ip.com/free/dbip-city-lite-{year_month}.mmdb.gz"),
-            &format!("https://download.db-ip.com/free/dbip-asn-lite-{year_month}.mmdb.gz"),
+            "https://download.db-ip.com/free/dbip-city-lite-{%Y-%m}.mmdb.gz",
+            "https://download.db-ip.com/free/dbip-asn-lite-{%Y-%m}.mmdb.gz",
             "",
             31,
         );

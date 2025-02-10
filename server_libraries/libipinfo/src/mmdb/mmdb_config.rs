@@ -1,5 +1,16 @@
-/// Support MMDBs compatible with `MaxMind` specification version 2.0
-/// `<https://maxmind.github.io/MaxMind-DB>`
+/// Challenges:
+/// 1) different providers have different database formats
+/// 2) certain providers split IPv4 and IPv6 data into separate databases, others combine them
+/// 3) certain providers split ASN and geolocation data into separate databases, others combine them
+/// 4) certain providers have static download links, others vary by date
+/// 5) certain providers compress their databases, others do not
+///
+/// What we currently support:
+/// 1) MMDBs compatible with `MaxMind`'s specification version 2.0
+/// 2) databases that combine IPv4 and IPv6 data
+/// 3) databases that split ASN and geolocation data
+/// 4) databases that have static download links
+/// 5) databases that are gzip compressed
 use crate::mmdb::mmdb_reader::MmdbReader;
 use crate::mmdb::refresh_mmdb_data::refresh_mmdb_data;
 use crate::IpInfo;
@@ -59,10 +70,9 @@ impl MmdbConfig {
 //
 //     #[tokio::test]
 //     async fn test_lookup_from_mmdb() {
-//         let year_month = chrono::Utc::now().format("%Y-%m").to_string();
 //         let mmdb_provider = MmdbConfig::new(
-//             &format!("https://download.db-ip.com/free/dbip-city-lite-{year_month}.mmdb.gz"),
-//             &format!("https://download.db-ip.com/free/dbip-asn-lite-{year_month}.mmdb.gz"),
+//             "https://download.db-ip.com/free/dbip-city-lite-{%Y-%m}.mmdb.gz",
+//             "https://download.db-ip.com/free/dbip-asn-lite-{%Y-%m}.mmdb.gz",
 //             "",
 //             31,
 //         );
