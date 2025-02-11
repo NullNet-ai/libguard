@@ -11,6 +11,7 @@ readme = "README.md"
 [dependencies]
 prost = "0.13.4"
 tonic = { version = "0.12.3", features = ["tls", "tls-roots"] }
+nullnet-liblogging.workspace = true
 
 [build-dependencies]
 tonic-build = "0.12.3"

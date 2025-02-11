@@ -1,0 +1,10 @@
+[package]
+name = "nullnet-liblogging"
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/NullNet-ai/libguard"
+license = "MIT"
+description = "Logging library for NullNet"
+readme = "README.md"
+
+[dependencies]
