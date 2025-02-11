@@ -67,46 +67,70 @@ impl<H: WatcherHandler> Watcher<H> {
         })
     }
 
-    /// Starts monitoring the files for changes.
+    /// Starts monitoring the files and system state for changes.
     ///
-    /// This function continuously checks the monitored files for modifications.
-    /// When a change is detected, it triggers the `on_snapshot` method of the handler.
+    /// This function continuously checks the monitored files for modifications
+    /// and observes system state transitions. When a file modification or a
+    /// relevant state transition (from `Draft` to `Applied`) is detected, it
+    /// triggers the `on_snapshot` method of the handler.
     ///
     /// # Returns
     /// - `Ok(())` if the monitoring process runs smoothly.
     /// - `Err(Error)` if an unrecoverable error occurs.
     pub async fn watch(&mut self) {
+        let mut last_state = Detector::check(self.platform).await;
+
         loop {
-            let mut should_upload = false;
-            for file in &mut self.files {
-                match get_mtime(&file.path).await {
-                    Ok(current) => {
-                        if current > file.mtime {
-                            file.mtime = current;
-                            should_upload = true;
-                        }
-                    }
-                    Err(err) => {
-                        self.handler.on_error(err).await;
-                    }
-                }
+            let mut should_upload = self.check_files_for_changes().await;
+
+            let current_state = Detector::check(self.platform).await;
+
+            if last_state == State::Draft && current_state == State::Applied {
+                should_upload = true;
             }
 
+            last_state = current_state;
+
             if should_upload {
-                match self.snapshot().await {
-                    Ok(snapshot) => {
-                        let state = Detector::check(self.platform).await;
-                        if let Err(err) = self.handler.on_snapshot(snapshot, state).await {
-                            self.handler.on_error(err).await;
-                        }
-                    }
-                    Err(err) => {
-                        self.handler.on_error(err).await;
-                    }
-                }
+                self.handle_snapshot().await;
             }
 
             tokio::time::sleep(Duration::from_millis(self.poll_interval)).await;
+        }
+    }
+
+    /// Checks the monitored files for modifications.
+    pub async fn check_files_for_changes(&mut self) -> bool {
+        let mut should_upload = false;
+
+        for file in &mut self.files {
+            match get_mtime(&file.path).await {
+                Ok(current) if current > file.mtime => {
+                    file.mtime = current;
+                    should_upload = true;
+                }
+                Err(err) => {
+                    self.handler.on_error(err).await;
+                }
+                _ => {}
+            }
+        }
+
+        should_upload
+    }
+
+    /// Captures and processes a snapshot of the monitored files and system state.
+    pub async fn handle_snapshot(&mut self) {
+        match self.snapshot().await {
+            Ok(snapshot) => {
+                let state = Detector::check(self.platform).await;
+                if let Err(err) = self.handler.on_snapshot(snapshot, state).await {
+                    self.handler.on_error(err).await;
+                }
+            }
+            Err(err) => {
+                self.handler.on_error(err).await;
+            }
         }
     }
 
