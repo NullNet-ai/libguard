@@ -1,10 +1,14 @@
 use crate::{utils, Configuration, FireparseError};
 use aliases_parser::AliasesParser;
+use hostname_parser::PfSenseHostnameParser;
+use interfaces_parser::PfSenseInterfacesParser;
 use roxmltree::Document;
 use rules_parser::PfSenseRulesParser;
 
 mod aliases_parser;
 mod endpoint_parser;
+mod hostname_parser;
+mod interfaces_parser;
 mod rules_parser;
 
 /// A parser for extracting configuration details from a pfSense XML configuration.
@@ -30,6 +34,8 @@ impl PfSenseParser {
             raw_content: utils::encode_base64(document.as_bytes()),
             aliases: AliasesParser::parse(&xmltree),
             rules: PfSenseRulesParser::parse(&xmltree),
+            interfaces: PfSenseInterfacesParser::parse(&xmltree),
+            hostname: PfSenseHostnameParser::parse(&xmltree),
         })
     }
 }

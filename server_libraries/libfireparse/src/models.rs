@@ -21,8 +21,17 @@ pub struct Rule {
     pub description: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct NetworkInterface {
+    pub name: String,
+    pub device: String,
+    pub address: String,
+}
+
 pub struct Configuration {
     pub rules: Vec<Rule>,
     pub aliases: Vec<Alias>,
+    pub interfaces: Vec<NetworkInterface>,
     pub raw_content: String,
+    pub hostname: String,
 }
