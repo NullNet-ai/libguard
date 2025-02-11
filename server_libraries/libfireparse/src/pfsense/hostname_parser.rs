@@ -37,7 +37,7 @@ impl PfSenseHostnameParser {
                 return domain.unwrap().to_string();
             }
         }
-        
+
         String::from("Unknown")
     }
 }
