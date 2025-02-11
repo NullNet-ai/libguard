@@ -52,17 +52,26 @@ pub fn monitor_devices(monitor_config: &MonitorConfig) -> Receiver<PacketInfo> {
 fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_program: &str) {
     let device_name = device.name.clone();
 
-    let Ok(mut cap) = pcap::Capture::from_device(device)
-        .expect("capture initialization error")
-        .promisc(true)
-        .snaplen(snaplen) // limit stored packets slice dimension (to keep more in the buffer)
-        .immediate_mode(true) // parse packets ASAP!
-        .open()
-    else {
-        return;
+    let mut cap = match pcap::Capture::from_device(device)
+        .map(|c| c.promisc(true).snaplen(snaplen).immediate_mode(true).open())
+    {
+        Ok(Ok(cap)) => cap,
+        Ok(Err(err)) | Err(err) => {
+            eprintln!(
+                "Failed to initialize capture on {}: {}. Aborting monitoring...",
+                device_name, err
+            );
+            return;
+        }
     };
 
-    cap.filter(bpf_program, true).expect("PCAP filter error");
+    if let Err(err) = cap.filter(bpf_program, true) {
+        eprintln!(
+            "PCAP filter error on {}: {}. Aborting monitoring...",
+            device_name, err
+        );
+        return;
+    }
 
     let link_type = cap.get_datalink().0;
 

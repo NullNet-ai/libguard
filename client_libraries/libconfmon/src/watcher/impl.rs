@@ -2,51 +2,56 @@ use super::{
     types::{FileData, FileInfo, Snapshot},
     utils::{get_mtime, make_error_mapper},
 };
-use crate::{Error, ErrorKind};
-use std::{future::Future, path::PathBuf, time::Duration};
+use crate::{Detector, Error, ErrorKind, Platform, State};
+use std::{path::PathBuf, time::Duration};
 
-/// A file watcher that monitors changes in a list of files and triggers a callback when changes are detected.
-///
-/// # Generics
-/// - `F`: A closure or function that takes a `Snapshot` and produces a future.
-/// - `Fut`: The type of the future returned by the callback.
-///
-/// # Fields
-/// - `files`: A list of `FileInfo` containing metadata about the monitored files.
-/// - `callback`: A closure or function to execute when changes are detected.
-/// - `poll_interval`: The interval (in milliseconds) at which files are polled for changes.
-pub struct Watcher<F, Fut>
-where
-    F: Fn(Snapshot) -> Fut,
-    Fut: Future<Output = ()>,
-{
-    files: Vec<FileInfo>,
-    callback: F,
-    poll_interval: u64,
-}
-
-impl<F, Fut> Watcher<F, Fut>
-where
-    F: Fn(Snapshot) -> Fut,
-    Fut: Future<Output = ()>,
-{
-    /// Creates a new `Watcher` instance.
+/// A simple file watcher that monitors changes in a list of files and triggers appropriate handlers.
+#[allow(async_fn_in_trait)]
+pub trait WatcherHandler {
+    /// Defines how the snapshot should be uploaded or processed.
     ///
     /// # Parameters
-    /// - `paths`: A list of paths to the files to monitor.
-    /// - `poll_interval`: The interval (in milliseconds) at which files are polled for changes.
-    /// - `callback`: A closure or function to execute when changes are detected.
+    /// - `snapshot`: A snapshot of the monitored files, containing file metadata and content.
     ///
     /// # Returns
-    /// - `Ok(Self)`: A new instance of `Watcher` if all files are successfully initialized.
-    /// - `Err(Error)`: An error if any file cannot be initialized (e.g., failed to read metadata).
+    /// - `Ok(())` if processing is successful.
+    /// - `Err(Error)` if an error occurs while processing the snapshot.
+    async fn on_snapshot(&self, snapshot: Snapshot, state: State) -> Result<(), Error>;
+
+    /// Handles errors that occur during file monitoring.
     ///
-    /// # Errors
-    /// - Returns an error with `ErrorKind::ErrorInitializingWatcher` if a file's metadata cannot be read.
-    pub async fn new(paths: Vec<PathBuf>, poll_interval: u64, callback: F) -> Result<Self, Error> {
+    /// # Parameters
+    /// - `error`: The error encountered during monitoring.
+    async fn on_error(&self, error: Error);
+}
+
+/// A file watcher that monitors specified files for changes and notifies a handler when updates occur.
+pub struct Watcher<H: WatcherHandler> {
+    /// List of monitored files and their metadata.
+    files: Vec<FileInfo>,
+    /// Polling interval (in milliseconds) for checking file modifications.
+    poll_interval: u64,
+    /// Handler for processing snapshots and handling errors.
+    handler: H,
+    /// Target platform
+    platform: Platform,
+}
+
+impl<H: WatcherHandler> Watcher<H> {
+    /// Creates a new `Watcher` instance that monitors configuration files for changes.
+    ///
+    /// # Parameters
+    /// - `platform`: The target platform for which the configuration state should be monitored.
+    /// - `poll_interval`: Time interval (in milliseconds) to check for file changes.
+    /// - `handler`: An instance implementing `WatcherHandler` for handling snapshots and errors.
+    ///
+    /// # Returns
+    /// - `Ok(Self)`: A properly initialized `Watcher` instance.
+    /// - `Err(Error)`: If any file metadata cannot be retrieved.
+    pub async fn new(platform: Platform, poll_interval: u64, handler: H) -> Result<Self, Error> {
         let mut files = Vec::new();
 
-        for path in paths {
+        for path in get_files_to_monitor(platform) {
             let mtime = get_mtime(&path)
                 .await
                 .map_err(make_error_mapper(ErrorKind::ErrorInitializingWatcher))?;
@@ -56,53 +61,84 @@ where
 
         Ok(Self {
             files,
-            callback,
             poll_interval,
+            handler,
+            platform,
         })
     }
 
-    /// Starts monitoring the files for changes.
+    /// Starts monitoring the files and system state for changes.
     ///
-    /// # Behavior
-    /// - Periodically checks the modification time of each file.
-    /// - If any file has been modified since the last check, triggers the `callback` with a `Snapshot`.
-    /// - Continues indefinitely until the task is canceled.
+    /// This function continuously checks the monitored files for modifications
+    /// and observes system state transitions. When a file modification or a
+    /// relevant state transition (from `Draft` to `Applied`) is detected, it
+    /// triggers the `on_snapshot` method of the handler.
     ///
     /// # Returns
-    /// - `Ok(())`: This function only exits if the task is canceled or an error occurs.
-    /// - `Err(Error)`: An error if reading a file's metadata or content fails.
-    ///
-    /// # Errors
-    /// - Returns an error with `ErrorKind::ErrorReadingFile` if file metadata or content cannot be read.
-    pub async fn watch(&mut self) -> Result<(), Error> {
-        loop {
-            let mut should_upload = false;
-            for file in &mut self.files {
-                let current = get_mtime(&file.path).await?;
+    /// - `Ok(())` if the monitoring process runs smoothly.
+    /// - `Err(Error)` if an unrecoverable error occurs.
+    pub async fn watch(&mut self) {
+        let mut last_state = Detector::check(self.platform).await;
 
-                if current > file.mtime {
-                    file.mtime = current;
-                    should_upload = true;
-                }
+        loop {
+            let mut should_upload = self.check_files_for_changes().await;
+
+            let current_state = Detector::check(self.platform).await;
+
+            if last_state == State::Draft && current_state == State::Applied {
+                should_upload = true;
             }
 
+            last_state = current_state;
+
             if should_upload {
-                let snapshot = self.snapshot().await?;
-                (self.callback)(snapshot).await;
+                self.handle_snapshot().await;
             }
 
             tokio::time::sleep(Duration::from_millis(self.poll_interval)).await;
         }
     }
 
+    /// Checks the monitored files for modifications.
+    pub async fn check_files_for_changes(&mut self) -> bool {
+        let mut should_upload = false;
+
+        for file in &mut self.files {
+            match get_mtime(&file.path).await {
+                Ok(current) if current > file.mtime => {
+                    file.mtime = current;
+                    should_upload = true;
+                }
+                Err(err) => {
+                    self.handler.on_error(err).await;
+                }
+                _ => {}
+            }
+        }
+
+        should_upload
+    }
+
+    /// Captures and processes a snapshot of the monitored files and system state.
+    pub async fn handle_snapshot(&mut self) {
+        match self.snapshot().await {
+            Ok(snapshot) => {
+                let state = Detector::check(self.platform).await;
+                if let Err(err) = self.handler.on_snapshot(snapshot, state).await {
+                    self.handler.on_error(err).await;
+                }
+            }
+            Err(err) => {
+                self.handler.on_error(err).await;
+            }
+        }
+    }
+
     /// Generates a snapshot of the current state of the monitored files.
     ///
     /// # Returns
-    /// - `Ok(Snapshot)`: A snapshot containing the data of all monitored files.
-    /// - `Err(Error)`: An error if any file cannot be read.
-    ///
-    /// # Errors
-    /// - Returns an error with `ErrorKind::ErrorReadingFile` if a file cannot be read.
+    /// - `Ok(Snapshot)`: A snapshot containing the contents and metadata of monitored files.
+    /// - `Err(Error)`: If a file cannot be read.
     pub async fn snapshot(&self) -> Result<Snapshot, Error> {
         let mut snapshot = Snapshot::new();
 
@@ -122,5 +158,38 @@ where
         }
 
         Ok(snapshot)
+    }
+
+    /// Forces the capture of a snapshot and dispatches it to the handler.
+    ///
+    /// # Returns
+    /// - `Ok(())` if the snapshot was successfully processed by the handler.
+    /// - `Err(Error)`: If an error occurs during snapshot creation or handling.
+    pub async fn force_capture_and_dispatch(&self) -> Result<(), Error> {
+        let snapshot = self.snapshot().await?;
+        let state = Detector::check(self.platform).await;
+
+        let result = self.handler.on_snapshot(snapshot, state).await;
+
+        if result.is_err() {
+            self.handler
+                .on_error(result.as_ref().unwrap_err().clone())
+                .await
+        }
+
+        result
+    }
+}
+
+/// Returns a list of files that should be monitored based on the given platform.
+///
+/// # Parameters
+/// - `platform`: The target platform for which files need to be monitored.
+///
+/// # Returns
+/// - `Vec<PathBuf>`: A vector containing paths to the configuration files that need monitoring.
+fn get_files_to_monitor(platform: Platform) -> Vec<PathBuf> {
+    match platform {
+        Platform::PfSense | Platform::OPNsense => vec![PathBuf::from("/conf/config.xml")],
     }
 }
