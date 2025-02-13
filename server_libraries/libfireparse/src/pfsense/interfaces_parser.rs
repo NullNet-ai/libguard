@@ -48,6 +48,7 @@ impl PfSenseInterfacesParser {
                     // !!!!!!!!!!!!!!!!! @TODO !!!!!!!!!!!!!!!!!!!!!!!!
                     // !!!Save all addresses, not only the first one!!!
                     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    #[allow(clippy::single_match)]
                     match data.ip_addresses.first() {
                         Some(addr) => address = addr.to_string(),
                         None => {}

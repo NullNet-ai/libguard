@@ -45,14 +45,14 @@ impl PfSenseParser {
         snapshot: &Snapshot,
     ) -> Result<(Document, String), FireparseError> {
         let pfsense_config =
-            find_in_snapshot(&snapshot, "config.xml").ok_or(FireparseError::ParserError(
+            find_in_snapshot(snapshot, "config.xml").ok_or(FireparseError::ParserError(
                 String::from("PfSenseParser: 'config.xml' file is missing in the snapshot"),
             ))?;
 
         let config_content = std::str::from_utf8(&pfsense_config.content).map_err(|e| {
             FireparseError::ParserError(format!(
                 "PfSenseParser: Failed to parse 'config.xml' blob as UTF-8: {}",
-                e.to_string()
+                e
             ))
         })?;
 
@@ -68,13 +68,12 @@ impl PfSenseParser {
     fn parse_interfaces_info_from_snapshot(
         snapshot: &Snapshot,
     ) -> Result<Vec<InterfaceSnapshot>, FireparseError> {
-        let ifaces_data = find_in_snapshot(&snapshot, "#NetworkInterfaces").ok_or(
-            FireparseError::ParserError(String::from(
-                "PfSenseParser: '#NetworkInterfaces' file is missing in the snapshot",
-            )),
-        )?;
+        let ifaces_data =
+            find_in_snapshot(snapshot, "#NetworkInterfaces").ok_or(FireparseError::ParserError(
+                String::from("PfSenseParser: '#NetworkInterfaces' file is missing in the snapshot"),
+            ))?;
 
         InterfaceSnapshot::deserialize_snapshot(&ifaces_data.content)
-            .map_err(|e| FireparseError::ParserError(format!("PfSenseParser: Failed to deserialize network interfaces data from the snapshot. {}", e.to_string())))
+            .map_err(|e| FireparseError::ParserError(format!("PfSenseParser: Failed to deserialize network interfaces data from the snapshot. {}", e)))
     }
 }
