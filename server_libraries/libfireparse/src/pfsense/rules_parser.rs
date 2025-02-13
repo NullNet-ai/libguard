@@ -1,6 +1,6 @@
 use roxmltree::{Document, Node};
 
-use super::endpoint_parser::EndpoingParser;
+use super::endpoint_parser::EndpointParser;
 use crate::Rule;
 
 /// A parser for extracting firewall and NAT rules from a pfSense XML configuration.
@@ -85,11 +85,11 @@ impl PfSenseRulesParser {
                 .unwrap_or("none")
                 .to_string();
 
-            let (source_addr, source_port) =
-                EndpoingParser::parse(rule.children().find(|e| e.has_tag_name("source")));
+            let (source_addr, source_port, source_type, source_inversed) =
+                EndpointParser::parse(rule.children().find(|e| e.has_tag_name("source")));
 
-            let (destination_addr, destination_port) =
-                EndpoingParser::parse(rule.children().find(|e| e.has_tag_name("destination")));
+            let (destination_addr, destination_port, destination_type, destination_inversed) =
+                EndpointParser::parse(rule.children().find(|e| e.has_tag_name("destination")));
 
             rules.push(Rule {
                 disabled,
@@ -99,8 +99,12 @@ impl PfSenseRulesParser {
                 description,
                 source_port,
                 source_addr,
+                source_type,
+                source_inversed,
                 destination_addr,
                 destination_port,
+                destination_type,
+                destination_inversed,
                 interface,
                 order: index,
             });
@@ -125,6 +129,7 @@ impl PfSenseRulesParser {
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::PfSenseRulesParser;
@@ -162,8 +167,12 @@ mod tests {
         assert_eq!(rules[0].description, "Default allow LAN to any rule");
         assert_eq!(rules[0].source_addr, "lan");
         assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].source_type, "network");
+        assert_eq!(rules[0].source_inversed, false);
         assert_eq!(rules[0].destination_addr, "*");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].destination_type, "address");
+        assert_eq!(rules[0].destination_inversed, false);
         assert_eq!(rules[0].interface, "lan");
         assert_eq!(rules[0].order, 0);
     }
@@ -203,8 +212,12 @@ mod tests {
         assert_eq!(rules[0].description, "NAT Rule");
         assert_eq!(rules[0].source_addr, "*");
         assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].source_type, "address");
+        assert_eq!(rules[0].source_inversed, false);
         assert_eq!(rules[0].destination_addr, "wanip");
         assert_eq!(rules[0].destination_port, "8091");
+        assert_eq!(rules[0].destination_type, "network");
+        assert_eq!(rules[0].destination_inversed, false);
         assert_eq!(rules[0].interface, "wan");
         assert_eq!(rules[0].order, 0);
     }
@@ -262,13 +275,17 @@ mod tests {
         assert_eq!(rules[0].description, "Allow LAN");
         assert_eq!(rules[0].source_addr, "lan");
         assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].source_type, "network");
+        assert_eq!(rules[0].source_inversed, false);
         assert_eq!(rules[0].destination_addr, "*");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].destination_type, "address");
+        assert_eq!(rules[0].destination_inversed, false);
         assert_eq!(rules[0].interface, "lan");
         assert_eq!(rules[0].order, 0);
 
         // Verify the second rule (NAT)
-        assert_eq!(rules[0].disabled, true);
+        assert_eq!(rules[1].disabled, true);
         assert_eq!(rules[1].r#type, "nat");
         assert_eq!(rules[1].policy, "pass");
         assert_eq!(rules[1].protocol, "IPv4/tcp");
@@ -277,6 +294,8 @@ mod tests {
         assert_eq!(rules[1].source_port, "*");
         assert_eq!(rules[1].destination_addr, "wanip");
         assert_eq!(rules[1].destination_port, "8091");
+        assert_eq!(rules[1].destination_type, "network");
+        assert_eq!(rules[1].destination_inversed, false);
         assert_eq!(rules[1].interface, "wan");
         assert_eq!(rules[1].order, 0);
     }
@@ -313,8 +332,12 @@ mod tests {
         assert_eq!(rules[0].description, "Block traffic");
         assert_eq!(rules[0].source_addr, "*");
         assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].source_type, "address");
+        assert_eq!(rules[0].source_inversed, false);
         assert_eq!(rules[0].destination_addr, "restricted_zone");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].destination_type, "address");
+        assert_eq!(rules[0].destination_inversed, false);
         assert_eq!(rules[0].interface, "opt1");
         assert_eq!(rules[0].order, 0);
     }
