@@ -49,7 +49,7 @@ impl PfSenseRulesParser {
     fn parse_rules(node: Node<'_, '_>, rule_type: &str) -> Vec<Rule> {
         let mut rules = Vec::new();
 
-        for rule in node.children().filter(|e| e.has_tag_name("rule")) {
+        for (index, rule) in (0_u64..).zip(node.children().filter(|e| e.has_tag_name("rule"))) {
             let disabled = rule.children().any(|e| e.has_tag_name("disabled"));
 
             let policy = rule
@@ -78,6 +78,13 @@ impl PfSenseRulesParser {
                 .unwrap_or("")
                 .to_string();
 
+            let interface = rule
+                .children()
+                .find(|e| e.has_tag_name("interface"))
+                .and_then(|e| e.text())
+                .unwrap_or("none")
+                .to_string();
+
             let (source_addr, source_port) =
                 EndpoingParser::parse(rule.children().find(|e| e.has_tag_name("source")));
 
@@ -94,6 +101,8 @@ impl PfSenseRulesParser {
                 source_addr,
                 destination_addr,
                 destination_port,
+                interface,
+                order: index,
             });
         }
 
@@ -112,7 +121,7 @@ impl PfSenseRulesParser {
         match ipprotocol {
             "inet" => "IPv4",
             "inet6" => "IPv6",
-            _ => "Unknown",
+            _ => "none",
         }
     }
 }
@@ -155,6 +164,8 @@ mod tests {
         assert_eq!(rules[0].source_port, "*");
         assert_eq!(rules[0].destination_addr, "*");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].interface, "lan");
+        assert_eq!(rules[0].order, 0);
     }
 
     #[test]
@@ -194,6 +205,8 @@ mod tests {
         assert_eq!(rules[0].source_port, "*");
         assert_eq!(rules[0].destination_addr, "wanip");
         assert_eq!(rules[0].destination_port, "8091");
+        assert_eq!(rules[0].interface, "wan");
+        assert_eq!(rules[0].order, 0);
     }
 
     #[test]
@@ -251,6 +264,8 @@ mod tests {
         assert_eq!(rules[0].source_port, "*");
         assert_eq!(rules[0].destination_addr, "*");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].interface, "lan");
+        assert_eq!(rules[0].order, 0);
 
         // Verify the second rule (NAT)
         assert_eq!(rules[0].disabled, true);
@@ -262,6 +277,8 @@ mod tests {
         assert_eq!(rules[1].source_port, "*");
         assert_eq!(rules[1].destination_addr, "wanip");
         assert_eq!(rules[1].destination_port, "8091");
+        assert_eq!(rules[1].interface, "wan");
+        assert_eq!(rules[1].order, 0);
     }
 
     #[test]
@@ -279,6 +296,7 @@ mod tests {
                     <destination>
                         <address>restricted_zone</address>
                     </destination>
+                    <interface>opt1</interface>
                 </rule>
             </filter>
         </pfsense>
@@ -297,5 +315,37 @@ mod tests {
         assert_eq!(rules[0].source_port, "*");
         assert_eq!(rules[0].destination_addr, "restricted_zone");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].interface, "opt1");
+        assert_eq!(rules[0].order, 0);
+    }
+
+    #[test]
+    fn test_parse_ordering() {
+        let xml = r#"
+        <pfsense>
+            <filter>
+                <rule>
+                    <type>reject</type>
+                    <interface>opt1</interface>
+                </rule>
+                <rule>
+                    <type>reject</type>
+                    <interface>opt1</interface>
+                </rule>
+                <rule>
+                    <type>reject</type>
+                    <interface>opt1</interface>
+                </rule>
+            </filter>
+        </pfsense>
+        "#;
+
+        let doc = Document::parse(xml).expect("Failed to parse XML");
+        let rules = PfSenseRulesParser::parse(&doc);
+
+        assert_eq!(rules.len(), 3);
+        assert_eq!(rules[0].order, 0);
+        assert_eq!(rules[1].order, 1);
+        assert_eq!(rules[2].order, 2);
     }
 }

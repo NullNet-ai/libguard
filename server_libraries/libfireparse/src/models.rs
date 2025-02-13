@@ -19,6 +19,8 @@ pub struct Rule {
     pub destination_port: String,
     pub destination_addr: String,
     pub description: String,
+    pub interface: String,
+    pub order: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -30,14 +30,14 @@ impl PfSenseInterfacesParser {
                     .children()
                     .find(|c| c.has_tag_name("if"))
                     .and_then(|v| v.text())
-                    .unwrap_or("Unknown")
+                    .unwrap_or("none")
                     .to_string();
 
                 let address = interface
                     .children()
                     .find(|c| c.has_tag_name("ipaddr"))
                     .and_then(|c| c.text())
-                    .unwrap_or("Unknown")
+                    .unwrap_or("none")
                     .to_string();
 
                 interfaces.push(NetworkInterface {
@@ -95,8 +95,8 @@ mod tests {
 
         assert_eq!(interfaces.len(), 1);
         assert_eq!(interfaces[0].name, "wan");
-        assert_eq!(interfaces[0].device, "Unknown");
-        assert_eq!(interfaces[0].address, "Unknown");
+        assert_eq!(interfaces[0].device, "none");
+        assert_eq!(interfaces[0].address, "none");
     }
 
     #[test]

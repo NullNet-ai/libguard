@@ -38,7 +38,7 @@ impl PfSenseHostnameParser {
             }
         }
 
-        String::from("Unknown")
+        String::from("none")
     }
 }
 
@@ -77,6 +77,6 @@ mod tests {
         let xml = "<pfsense></pfsense>";
         let doc = Document::parse(xml).expect("Failed to parse XML");
         let hostname = PfSenseHostnameParser::parse(&doc);
-        assert_eq!(hostname, "Unknown");
+        assert_eq!(hostname, "none");
     }
 }
