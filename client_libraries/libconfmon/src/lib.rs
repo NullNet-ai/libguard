@@ -1,5 +1,6 @@
 pub use detector::{Detector, State};
 pub use error::{Error, ErrorKind};
+pub use interface_snapshot::InterfaceSnapshot;
 pub use platform::Platform;
 pub use watcher::{
     r#impl::{Watcher, WatcherHandler},
@@ -8,6 +9,7 @@ pub use watcher::{
 
 mod detector;
 mod error;
+mod interface_snapshot;
 mod platform;
 mod watcher;
 
