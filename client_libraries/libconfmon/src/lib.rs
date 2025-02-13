@@ -4,7 +4,7 @@ pub use interface_snapshot::InterfaceSnapshot;
 pub use platform::Platform;
 pub use watcher::{
     r#impl::{Watcher, WatcherHandler},
-    types::Snapshot,
+    types::{FileData, Snapshot},
 };
 
 mod detector;

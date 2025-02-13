@@ -103,7 +103,6 @@ mod tests {
     use super::InterfaceSnapshot;
     use bincode;
 
-    /// Test that serializing and deserializing an `InterfaceSnapshot` preserves its data.
     #[test]
     fn test_interface_snapshot_serialize_deserialize() {
         let snapshot = vec![InterfaceSnapshot {
@@ -122,11 +121,9 @@ mod tests {
             gateway: Some("192.168.1.1".parse().unwrap()),
         }];
 
-        // Serialize
         let serialized = InterfaceSnapshot::serialize_snapshot(&snapshot).unwrap();
         assert!(!serialized.is_empty(), "Serialization should produce data");
 
-        // Deserialize
         let deserialized = InterfaceSnapshot::deserialize_snapshot(&serialized).unwrap();
         assert_eq!(
             deserialized, snapshot,
@@ -134,16 +131,13 @@ mod tests {
         );
     }
 
-    /// Test that serializing and deserializing an empty list of `InterfaceSnapshot` works correctly.
     #[test]
     fn test_empty_interface_snapshot_serialize_deserialize() {
         let snapshot: Vec<InterfaceSnapshot> = vec![];
 
-        // Serialize
         let serialized = InterfaceSnapshot::serialize_snapshot(&snapshot).unwrap();
         assert!(!serialized.is_empty(), "Serialization should produce data");
 
-        // Deserialize
         let deserialized = InterfaceSnapshot::deserialize_snapshot(&serialized).unwrap();
         assert!(
             deserialized.is_empty(),
@@ -151,8 +145,6 @@ mod tests {
         );
     }
 
-    /// Test that `take_all()` collects interface data without errors.
-    /// This test **only checks that the function runs without panicking**.
     #[test]
     fn test_take_all_interfaces() {
         let snapshot = InterfaceSnapshot::take_all();
@@ -162,7 +154,6 @@ mod tests {
         );
     }
 
-    /// Test serialization and deserialization of `Option<IpAddr>` fields in `InterfaceSnapshot`.
     #[test]
     fn test_serde_ipaddr_option_fields() {
         let snapshot = InterfaceSnapshot {
@@ -174,7 +165,7 @@ mod tests {
             mac_address: Some("00:1A:2B:3C:4D:5E".to_string()),
             interface_index: Some(1),
             ip_addresses: vec!["192.168.1.100".parse().unwrap()],
-            subnet_mask: None, // ✅ Explicitly testing `None`
+            subnet_mask: None,
             gateway: Some("192.168.1.1".parse().unwrap()),
         };
 

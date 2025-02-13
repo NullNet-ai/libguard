@@ -1,6 +1,6 @@
 [package]
 name = "nullnet-libconfmon"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 authors= ["Anton Liashkevich <anton.liashkevich.eng@gmail.com>"]
 repository = "https://github.com/NullNet-ai/libguard"
