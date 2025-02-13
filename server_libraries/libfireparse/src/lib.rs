@@ -3,7 +3,7 @@ mod pfsense;
 mod utils;
 
 pub use models::{Alias, Configuration, Rule};
-use nullnet_libconfmon::{Platform, Snapshot};
+pub use nullnet_libconfmon::{Platform, Snapshot};
 use pfsense::PfSenseParser;
 
 /// Represents possible errors that can occur while parsing firewall configurations.
