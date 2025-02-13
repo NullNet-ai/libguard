@@ -47,6 +47,7 @@ pub mod serde_ipaddr_vec {
     ///
     /// - `vec!["192.168.1.1".parse().unwrap(), "10.0.0.1".parse().unwrap()]`
     ///   becomes `"192.168.1.1,10.0.0.1"`.
+    #[allow(clippy::ptr_arg)]
     pub fn serialize<S>(ips: &Vec<IpAddr>, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
