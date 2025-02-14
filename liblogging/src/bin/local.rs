@@ -1,13 +1,13 @@
 use nullnet_liblogging::{location, ErrorHandler, Location, Logger, SyslogServer};
 
 fn main() {
-    Logger::init(SyslogServer::Local);
+    Logger::init(SyslogServer::Local, log::LevelFilter::Info, "sample_app");
 
     loop {
-        Logger::info("This is an info message");
-        Logger::warn("This is a warning message".to_string());
-        Logger::debug("This is a debug message");
-        Logger::trace("This is a trace message".to_string());
+        log::info!("This is an info message");
+        log::warn!("This is a warning message");
+        log::debug!("This is a debug message");
+        log::trace!("This is a trace message");
         let _ = fallible_method().handle_err(location!());
 
         std::thread::sleep(std::time::Duration::from_secs(5));
