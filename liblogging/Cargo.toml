@@ -10,3 +10,4 @@ readme = "README.md"
 [dependencies]
 log = "0.4.25"
 syslog = "7.0.0"
+chrono = "0.4.39"
