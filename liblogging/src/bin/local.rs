@@ -1,7 +1,7 @@
 use nullnet_liblogging::{location, ErrorHandler, Location, Logger, SyslogServer};
 
 fn main() {
-    Logger::init(SyslogServer::Local, log::LevelFilter::Trace, "sample_app");
+    Logger::init(SyslogServer::Local, "sample_app");
 
     loop {
         let _ = fallible_method().handle_err(location!());

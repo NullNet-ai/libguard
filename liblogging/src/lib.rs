@@ -7,6 +7,7 @@ use crate::syslog_logger::SyslogLogger;
 pub use crate::syslog_logger::SyslogServer;
 pub use error::{Error, ErrorHandler, Location};
 use log::LevelFilter;
+use std::str::FromStr;
 
 pub struct Logger {
     syslog: SyslogLogger,
@@ -14,7 +15,9 @@ pub struct Logger {
 }
 
 impl Logger {
-    pub fn init(syslog_server: SyslogServer, level_filter: LevelFilter, process_name: &str) {
+    pub fn init(syslog_server: SyslogServer, process_name: &str) {
+        let env_log_level = std::env::var("LOG_LEVEL").unwrap_or("trace".to_string());
+        let level_filter = LevelFilter::from_str(&env_log_level).unwrap_or(LevelFilter::Trace);
         if level_filter.to_level().is_some() {
             log::set_boxed_logger(Box::new(Logger {
                 syslog: SyslogLogger::new(syslog_server, process_name),

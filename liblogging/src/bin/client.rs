@@ -3,7 +3,6 @@ use nullnet_liblogging::{location, ErrorHandler, Location, Logger, SyslogServer}
 fn main() {
     Logger::init(
         SyslogServer::Remote("127.0.0.1:514".to_string()),
-        log::LevelFilter::Trace,
         "sample_app",
     );
 
