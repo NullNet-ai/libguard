@@ -9,16 +9,22 @@ pub use crate::syslog_logger::SyslogEndpoint;
 use crate::syslog_logger::SyslogLogger;
 pub use error::{Error, ErrorHandler, Location};
 use log::LevelFilter;
+use std::iter::{IntoIterator, Iterator};
 use std::str::FromStr;
 
-static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<&'static str>> =
-    once_cell::sync::Lazy::new(|| vec!["nullnet", "appguard", "wallguard"]);
+static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
+    once_cell::sync::Lazy::new(|| {
+        vec!["nullnet", "appguard", "wallguard"]
+            .into_iter()
+            .map(str::to_lowercase)
+            .collect()
+    });
 
 /// Logger implementation that logs to both syslog and console
 pub struct Logger {
     syslog: SyslogLogger,
     console: ConsoleLogger,
-    allowed_targets: Vec<&'static str>,
+    allowed_targets: Vec<String>,
 }
 
 impl Logger {
@@ -37,6 +43,7 @@ impl Logger {
         let env_log_level = std::env::var("LOG_LEVEL").unwrap_or("trace".to_string());
         let level_filter = LevelFilter::from_str(&env_log_level).unwrap_or(LevelFilter::Trace);
         if level_filter.to_level().is_some() {
+            let allowed_targets = allowed_targets.into_iter().map(str::to_lowercase).collect();
             log::set_boxed_logger(Box::new(Logger {
                 syslog: SyslogLogger::new(syslog_server, process_name),
                 console: ConsoleLogger::new(),
@@ -54,8 +61,13 @@ impl log::Log for Logger {
     }
 
     fn log(&self, record: &log::Record) {
-        if DEFAULT_ALLOWED_TARGETS.contains(&record.target())
-            || self.allowed_targets.contains(&record.target())
+        if DEFAULT_ALLOWED_TARGETS
+            .iter()
+            .any(|s| record.target().to_lowercase().starts_with(s))
+            || self
+                .allowed_targets
+                .iter()
+                .any(|s| record.target().to_lowercase().starts_with(s))
         {
             self.syslog.log(record);
             self.console.log(record);
