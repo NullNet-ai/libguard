@@ -1,17 +1,20 @@
 use std::fmt::Display;
 
 #[derive(Debug)]
+/// General error type for Nullnet
 pub struct Error {
     message: String,
 }
 
 impl Error {
     #[must_use]
+    /// Returns the error message as a string
     pub fn to_str(&self) -> &str {
         &self.message
     }
 }
 
+/// Trait for logging and handling errors in a unified way
 pub trait ErrorHandler<T, E> {
     #[allow(clippy::missing_errors_doc)]
     fn handle_err(self, loc: Location) -> Result<T, Error>;

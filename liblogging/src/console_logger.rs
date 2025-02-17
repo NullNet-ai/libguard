@@ -10,7 +10,7 @@ const RESET: &str = "\x1b[0m";
 pub(crate) struct ConsoleLogger {}
 
 impl ConsoleLogger {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {}
     }
 }

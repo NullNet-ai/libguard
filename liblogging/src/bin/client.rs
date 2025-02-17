@@ -1,8 +1,8 @@
-use nullnet_liblogging::{location, ErrorHandler, Location, Logger, SyslogServer};
+use nullnet_liblogging::{location, ErrorHandler, Location, Logger, SyslogEndpoint};
 
 fn main() {
     Logger::init(
-        SyslogServer::Remote("127.0.0.1:514".to_string()),
+        SyslogEndpoint::Remote("127.0.0.1:514".to_string()),
         "sample_app",
     );
 
