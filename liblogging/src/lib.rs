@@ -61,13 +61,11 @@ impl log::Log for Logger {
     }
 
     fn log(&self, record: &log::Record) {
+        let target = record.target().to_lowercase();
         if DEFAULT_ALLOWED_TARGETS
             .iter()
-            .any(|s| record.target().to_lowercase().starts_with(s))
-            || self
-                .allowed_targets
-                .iter()
-                .any(|s| record.target().to_lowercase().starts_with(s))
+            .any(|s| target.starts_with(s))
+            || self.allowed_targets.iter().any(|s| target.starts_with(s))
         {
             self.syslog.log(record);
             self.console.log(record);
