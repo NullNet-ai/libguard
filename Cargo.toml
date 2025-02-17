@@ -13,4 +13,4 @@ members = [
 #authors = ["Author Name <author@name.com>"]
 
 [workspace.dependencies]
-nullnet-liblogging = { path = "./liblogging" }
+#nullnet-liblogging = "0.1.0"

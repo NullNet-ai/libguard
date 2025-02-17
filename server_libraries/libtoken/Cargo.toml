@@ -12,4 +12,3 @@ readme = "README.md"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 base64 = "0.22"
-nullnet-liblogging.workspace = true

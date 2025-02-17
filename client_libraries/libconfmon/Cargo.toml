@@ -10,4 +10,3 @@ readme = "README.md"
 
 [dependencies]
 tokio = { version = "1.43.0", features = ["full"] }
-nullnet-liblogging.workspace = true
