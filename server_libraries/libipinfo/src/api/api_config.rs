@@ -15,11 +15,11 @@ impl ApiConfig {
         Self { url, fields }
     }
 
-    pub(crate) fn get_url(&self, ip: &str) -> String {
+    fn get_url(&self, ip: &str) -> String {
         self.url.replace("{ip}", ip)
     }
 
-    pub(crate) fn get_field_names(&self) -> &ApiFields {
+    fn get_field_names(&self) -> &ApiFields {
         &self.fields
     }
 
