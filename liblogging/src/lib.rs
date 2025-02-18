@@ -5,14 +5,11 @@ use std::str::FromStr;
 
 use log::LevelFilter;
 
-pub use error::{Error, ErrorHandler, Location};
-
 use crate::console_logger::ConsoleLogger;
 pub use crate::syslog_logger::SyslogEndpoint;
 use crate::syslog_logger::SyslogLogger;
 
 mod console_logger;
-mod error;
 mod syslog_logger;
 
 static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
