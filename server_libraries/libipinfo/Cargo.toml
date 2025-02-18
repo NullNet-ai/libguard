@@ -7,9 +7,6 @@ license = "MIT"
 description = "IP information library for NullNet"
 readme = "README.md"
 
-[features]
-blacklist = []
-
 [dependencies]
 nullnet-liberror = "0.1.0"
 maxminddb = "0.25.0"
