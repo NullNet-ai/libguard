@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/NullNet-ai/libguard"
 license = "MIT"
-description = "Logging library for NullNet"
+description = "Error handling library for NullNet"
 readme = "README.md"
 
 [dependencies]
