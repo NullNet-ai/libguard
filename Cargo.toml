@@ -8,6 +8,7 @@ members = [
     "client_libraries/traffic_monitor",
     "server_libraries/libdatastore",
     "server_libraries/libfireparse",
+    "server_libraries/libipinfo",
     "server_libraries/libtoken"]
 
 #[workspace.package]
