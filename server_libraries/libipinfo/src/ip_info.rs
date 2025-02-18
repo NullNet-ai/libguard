@@ -1,6 +1,7 @@
 use maxminddb::geoip2::{Asn, City};
 
 #[derive(Debug, PartialEq, Default)]
+/// Struct to hold information about an IP address.
 pub struct IpInfo {
     pub country: Option<String>,
     pub asn: Option<String>,

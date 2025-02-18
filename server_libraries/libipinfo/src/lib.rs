@@ -1,7 +1,8 @@
 #![doc = include_str!("../README.md")]
 
+pub use crate::api::api_fields::ApiFields;
 pub use crate::ip_info::IpInfo;
-use crate::ip_info_provider::IpInfoProvider;
+pub use crate::ip_info_provider::IpInfoProvider;
 use crate::mmdb::mmdb_config::MmdbConfig;
 use crate::web_client::new_web_client;
 use reqwest::Client;
@@ -12,6 +13,7 @@ mod ip_info_provider;
 mod mmdb;
 mod web_client;
 
+/// The main struct for handling IP information lookups.
 pub struct IpInfoHandler {
     web_client: Client,
     providers: Vec<IpInfoProvider>,
@@ -20,6 +22,10 @@ pub struct IpInfoHandler {
 
 impl IpInfoHandler {
     #[must_use]
+    /// Returns a new `IpInfoHandler` with the given providers.
+    ///
+    /// Even if no providers are given, the handler will still use a fallback provider
+    /// (free databases from [dp-ip.com](https://db-ip.com)).
     pub fn new(providers: Vec<IpInfoProvider>) -> Self {
         let web_client = new_web_client();
 
@@ -37,6 +43,7 @@ impl IpInfoHandler {
         }
     }
 
+    /// Looks up the IP information for the given IP address.
     pub async fn lookup(&self, ip: &str) -> Result<IpInfo, ()> {
         for provider in &self.providers {
             let ip_info = provider.lookup_ip(&self.web_client, ip).await;
@@ -44,9 +51,6 @@ impl IpInfoHandler {
                 return ip_info;
             }
         }
-
-        self.fallback.lookup_ip(ip)?;
-
-        Err(())
+        self.fallback.lookup_ip(ip)
     }
 }

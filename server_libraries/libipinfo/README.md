@@ -9,3 +9,6 @@ Providers can be of two types:
 
 This library also exposes a way to configure the JSON schema for the responses of the API providers,
 and permits to download and periodically refresh MMDB databases.
+
+The library internally uses a fallback provider (free databases from [dp-ip.com](https://db-ip.com))
+so that it's able to return information even if the user specifies no providers.

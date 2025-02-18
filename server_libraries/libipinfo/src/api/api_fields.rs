@@ -1,5 +1,6 @@
 use serde_json::Value;
 
+/// Struct to map the field names that can be extracted from the response of a given API provider.
 pub struct ApiFields {
     pub country: Option<&'static str>,
     pub asn: Option<&'static str>,
