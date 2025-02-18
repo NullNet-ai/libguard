@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "liberror",
     "liblogging",
     "sandbox",
     "client_libraries/libconfmon",
@@ -12,5 +13,5 @@ members = [
 #[workspace.package]
 #authors = ["Author Name <author@name.com>"]
 
-[workspace.dependencies]
+#[workspace.dependencies]
 #nullnet-liblogging = "0.1.0"

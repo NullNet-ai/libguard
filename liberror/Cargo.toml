@@ -1,0 +1,11 @@
+[package]
+name = "nullnet-liberror"
+version = "0.1.0"
+edition = "2021"
+repository = "https://github.com/NullNet-ai/libguard"
+license = "MIT"
+description = "Logging library for NullNet"
+readme = "README.md"
+
+[dependencies]
+log = "0.4.25"

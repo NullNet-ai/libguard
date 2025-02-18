@@ -1,4 +1,4 @@
-use nullnet_liblogging::{location, ErrorHandler, Location, Logger, SyslogEndpoint};
+use nullnet_liblogging::{Logger, SyslogEndpoint};
 
 fn main() {
     Logger::init(

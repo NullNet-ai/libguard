@@ -8,7 +8,7 @@ pub struct Error {
 
 impl Error {
     #[must_use]
-    /// Returns the error message as a string
+    /// Returns the error message
     pub fn to_str(&self) -> &str {
         &self.message
     }
@@ -16,6 +16,7 @@ impl Error {
 
 /// Trait for logging and handling errors in a unified way
 pub trait ErrorHandler<T, E> {
+    /// Handle the error and log its location
     #[allow(clippy::missing_errors_doc)]
     fn handle_err(self, loc: Location) -> Result<T, Error>;
 }
@@ -31,12 +32,14 @@ impl<T, E: Display> ErrorHandler<T, E> for Result<T, E> {
     }
 }
 
+/// Struct to store the location in the code (file and line)
 pub struct Location {
     pub file: &'static str,
     pub line: u32,
 }
 
 #[macro_export]
+/// Macro to get the current location in the code (file and line)
 macro_rules! location {
     () => {
         Location {
@@ -47,7 +50,6 @@ macro_rules! location {
 }
 
 #[cfg(test)]
-#[cfg_attr(coverage_nightly, coverage(off))]
 mod tests {
     use super::*;
 
