@@ -23,7 +23,8 @@ async fn with_providers() {
             "",
             31,
         ),
-    ]);
+    ])
+    .unwrap();
 
     let res = handler.lookup("8.8.8.8").await.unwrap();
 

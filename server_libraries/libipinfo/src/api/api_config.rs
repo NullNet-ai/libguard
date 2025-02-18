@@ -73,7 +73,7 @@ mod tests {
         );
 
         let ip_info = api_provider
-            .lookup_ip(&new_web_client(), "8.8.8.8")
+            .lookup_ip(&new_web_client().unwrap(), "8.8.8.8")
             .await
             .unwrap();
         assert_eq!(
