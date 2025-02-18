@@ -26,14 +26,14 @@ impl AliasesParser {
                     .children()
                     .find(|e| e.has_tag_name("name"))
                     .and_then(|e| e.text())
-                    .unwrap_or("Unknown")
+                    .unwrap_or("none")
                     .to_string();
 
                 let r#type = alias
                     .children()
                     .find(|e| e.has_tag_name("type"))
                     .and_then(|e| e.text())
-                    .unwrap_or("Unknown")
+                    .unwrap_or("none")
                     .to_string();
 
                 let address = alias
@@ -214,7 +214,7 @@ mod tests {
 
         assert_eq!(aliases.len(), 1);
         assert_eq!(aliases[0].name, "MissingFields");
-        assert_eq!(aliases[0].r#type, "Unknown");
+        assert_eq!(aliases[0].r#type, "none");
         assert_eq!(aliases[0].value, "None");
         assert_eq!(aliases[0].description, "");
     }

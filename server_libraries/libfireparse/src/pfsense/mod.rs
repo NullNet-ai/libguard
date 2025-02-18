@@ -1,7 +1,11 @@
-use crate::{utils, Configuration, FireparseError};
+use crate::{
+    utils::{self, find_in_snapshot},
+    Configuration, FireparseError,
+};
 use aliases_parser::AliasesParser;
 use hostname_parser::PfSenseHostnameParser;
 use interfaces_parser::PfSenseInterfacesParser;
+use nullnet_libconfmon::{InterfaceSnapshot, Snapshot};
 use roxmltree::Document;
 use rules_parser::PfSenseRulesParser;
 
@@ -15,27 +19,61 @@ mod rules_parser;
 pub struct PfSenseParser {}
 
 impl PfSenseParser {
-    /// Parses a pfSense XML configuration and extracts aliases, rules, and raw data.
+    /// Parses a pfSense configuration snapshot and extracts firewall settings.
     ///
     /// # Arguments
-    /// * `document` - A string slice (`&str`) containing the XML configuration data.
+    /// * `snapshot` - A `Snapshot` containing pfSense configuration and network interface details.
     ///
     /// # Returns
-    /// * `Ok(Configuration)` - If parsing is successful, returns a `Configuration` struct containing:
-    ///   - `raw_data`: Base64-encoded XML data.
-    ///   - `aliases`: Parsed aliases from `<aliases>`.
-    ///   - `rules`: Parsed firewall and NAT rules from `<filter>` and `<nat>`.
-    /// * `Err(FireparseError)` - If parsing fails, returns a `FireparseError::ParserError`.
-    pub fn parse(document: &str) -> Result<Configuration, FireparseError> {
-        let xmltree =
-            Document::parse(document).map_err(|e| FireparseError::ParserError(e.to_string()))?;
+    /// * `Ok(Configuration)` - A `Configuration` struct
+    /// * `Err(FireparseError)` - If any part of the parsing process fails.
+    pub fn parse(snapshot: Snapshot) -> Result<Configuration, FireparseError> {
+        let (xmltree, document_encoded) = PfSenseParser::parse_config_from_snapshot(&snapshot)?;
+        let iterfaces = PfSenseParser::parse_interfaces_info_from_snapshot(&snapshot)?;
 
         Ok(Configuration {
-            raw_content: utils::encode_base64(document.as_bytes()),
+            raw_content: document_encoded,
             aliases: AliasesParser::parse(&xmltree),
             rules: PfSenseRulesParser::parse(&xmltree),
-            interfaces: PfSenseInterfacesParser::parse(&xmltree),
+            interfaces: PfSenseInterfacesParser::parse(&xmltree, iterfaces),
             hostname: PfSenseHostnameParser::parse(&xmltree),
         })
+    }
+
+    /// Extracts and parses `config.xml` from the snapshot.
+    fn parse_config_from_snapshot(
+        snapshot: &Snapshot,
+    ) -> Result<(Document, String), FireparseError> {
+        let pfsense_config =
+            find_in_snapshot(snapshot, "config.xml").ok_or(FireparseError::ParserError(
+                String::from("PfSenseParser: 'config.xml' file is missing in the snapshot"),
+            ))?;
+
+        let config_content = std::str::from_utf8(&pfsense_config.content).map_err(|e| {
+            FireparseError::ParserError(format!(
+                "PfSenseParser: Failed to parse 'config.xml' blob as UTF-8: {}",
+                e
+            ))
+        })?;
+
+        let xmltree = Document::parse(config_content)
+            .map_err(|e| FireparseError::ParserError(e.to_string()))?;
+
+        let document_encoded = utils::encode_base64(config_content.as_bytes());
+
+        Ok((xmltree, document_encoded))
+    }
+
+    /// Extracts and deserializes network interface information from the snapshot.
+    fn parse_interfaces_info_from_snapshot(
+        snapshot: &Snapshot,
+    ) -> Result<Vec<InterfaceSnapshot>, FireparseError> {
+        let ifaces_data =
+            find_in_snapshot(snapshot, "#NetworkInterfaces").ok_or(FireparseError::ParserError(
+                String::from("PfSenseParser: '#NetworkInterfaces' file is missing in the snapshot"),
+            ))?;
+
+        InterfaceSnapshot::deserialize_snapshot(&ifaces_data.content)
+            .map_err(|e| FireparseError::ParserError(format!("PfSenseParser: Failed to deserialize network interfaces data from the snapshot. {}", e)))
     }
 }

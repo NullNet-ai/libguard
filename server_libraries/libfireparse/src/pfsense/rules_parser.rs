@@ -1,6 +1,6 @@
 use roxmltree::{Document, Node};
 
-use super::endpoint_parser::EndpoingParser;
+use super::endpoint_parser::EndpointParser;
 use crate::Rule;
 
 /// A parser for extracting firewall and NAT rules from a pfSense XML configuration.
@@ -49,7 +49,7 @@ impl PfSenseRulesParser {
     fn parse_rules(node: Node<'_, '_>, rule_type: &str) -> Vec<Rule> {
         let mut rules = Vec::new();
 
-        for rule in node.children().filter(|e| e.has_tag_name("rule")) {
+        for (index, rule) in (0_u64..).zip(node.children().filter(|e| e.has_tag_name("rule"))) {
             let disabled = rule.children().any(|e| e.has_tag_name("disabled"));
 
             let policy = rule
@@ -78,11 +78,18 @@ impl PfSenseRulesParser {
                 .unwrap_or("")
                 .to_string();
 
-            let (source_addr, source_port) =
-                EndpoingParser::parse(rule.children().find(|e| e.has_tag_name("source")));
+            let interface = rule
+                .children()
+                .find(|e| e.has_tag_name("interface"))
+                .and_then(|e| e.text())
+                .unwrap_or("none")
+                .to_string();
 
-            let (destination_addr, destination_port) =
-                EndpoingParser::parse(rule.children().find(|e| e.has_tag_name("destination")));
+            let (source_addr, source_port, source_type, source_inversed) =
+                EndpointParser::parse(rule.children().find(|e| e.has_tag_name("source")));
+
+            let (destination_addr, destination_port, destination_type, destination_inversed) =
+                EndpointParser::parse(rule.children().find(|e| e.has_tag_name("destination")));
 
             rules.push(Rule {
                 disabled,
@@ -92,8 +99,14 @@ impl PfSenseRulesParser {
                 description,
                 source_port,
                 source_addr,
+                source_type,
+                source_inversed,
                 destination_addr,
                 destination_port,
+                destination_type,
+                destination_inversed,
+                interface,
+                order: index,
             });
         }
 
@@ -112,10 +125,11 @@ impl PfSenseRulesParser {
         match ipprotocol {
             "inet" => "IPv4",
             "inet6" => "IPv6",
-            _ => "Unknown",
+            _ => "none",
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::PfSenseRulesParser;
@@ -153,8 +167,14 @@ mod tests {
         assert_eq!(rules[0].description, "Default allow LAN to any rule");
         assert_eq!(rules[0].source_addr, "lan");
         assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].source_type, "network");
+        assert_eq!(rules[0].source_inversed, false);
         assert_eq!(rules[0].destination_addr, "*");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].destination_type, "address");
+        assert_eq!(rules[0].destination_inversed, false);
+        assert_eq!(rules[0].interface, "lan");
+        assert_eq!(rules[0].order, 0);
     }
 
     #[test]
@@ -192,8 +212,14 @@ mod tests {
         assert_eq!(rules[0].description, "NAT Rule");
         assert_eq!(rules[0].source_addr, "*");
         assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].source_type, "address");
+        assert_eq!(rules[0].source_inversed, false);
         assert_eq!(rules[0].destination_addr, "wanip");
         assert_eq!(rules[0].destination_port, "8091");
+        assert_eq!(rules[0].destination_type, "network");
+        assert_eq!(rules[0].destination_inversed, false);
+        assert_eq!(rules[0].interface, "wan");
+        assert_eq!(rules[0].order, 0);
     }
 
     #[test]
@@ -249,11 +275,17 @@ mod tests {
         assert_eq!(rules[0].description, "Allow LAN");
         assert_eq!(rules[0].source_addr, "lan");
         assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].source_type, "network");
+        assert_eq!(rules[0].source_inversed, false);
         assert_eq!(rules[0].destination_addr, "*");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].destination_type, "address");
+        assert_eq!(rules[0].destination_inversed, false);
+        assert_eq!(rules[0].interface, "lan");
+        assert_eq!(rules[0].order, 0);
 
         // Verify the second rule (NAT)
-        assert_eq!(rules[0].disabled, true);
+        assert_eq!(rules[1].disabled, true);
         assert_eq!(rules[1].r#type, "nat");
         assert_eq!(rules[1].policy, "pass");
         assert_eq!(rules[1].protocol, "IPv4/tcp");
@@ -262,6 +294,10 @@ mod tests {
         assert_eq!(rules[1].source_port, "*");
         assert_eq!(rules[1].destination_addr, "wanip");
         assert_eq!(rules[1].destination_port, "8091");
+        assert_eq!(rules[1].destination_type, "network");
+        assert_eq!(rules[1].destination_inversed, false);
+        assert_eq!(rules[1].interface, "wan");
+        assert_eq!(rules[1].order, 0);
     }
 
     #[test]
@@ -279,6 +315,7 @@ mod tests {
                     <destination>
                         <address>restricted_zone</address>
                     </destination>
+                    <interface>opt1</interface>
                 </rule>
             </filter>
         </pfsense>
@@ -295,7 +332,43 @@ mod tests {
         assert_eq!(rules[0].description, "Block traffic");
         assert_eq!(rules[0].source_addr, "*");
         assert_eq!(rules[0].source_port, "*");
+        assert_eq!(rules[0].source_type, "address");
+        assert_eq!(rules[0].source_inversed, false);
         assert_eq!(rules[0].destination_addr, "restricted_zone");
         assert_eq!(rules[0].destination_port, "*");
+        assert_eq!(rules[0].destination_type, "address");
+        assert_eq!(rules[0].destination_inversed, false);
+        assert_eq!(rules[0].interface, "opt1");
+        assert_eq!(rules[0].order, 0);
+    }
+
+    #[test]
+    fn test_parse_ordering() {
+        let xml = r#"
+        <pfsense>
+            <filter>
+                <rule>
+                    <type>reject</type>
+                    <interface>opt1</interface>
+                </rule>
+                <rule>
+                    <type>reject</type>
+                    <interface>opt1</interface>
+                </rule>
+                <rule>
+                    <type>reject</type>
+                    <interface>opt1</interface>
+                </rule>
+            </filter>
+        </pfsense>
+        "#;
+
+        let doc = Document::parse(xml).expect("Failed to parse XML");
+        let rules = PfSenseRulesParser::parse(&doc);
+
+        assert_eq!(rules.len(), 3);
+        assert_eq!(rules[0].order, 0);
+        assert_eq!(rules[1].order, 1);
+        assert_eq!(rules[2].order, 2);
     }
 }

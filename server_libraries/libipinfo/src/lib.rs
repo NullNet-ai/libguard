@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 pub use crate::ip_info::IpInfo;
 use crate::ip_info_provider::IpInfoProvider;
 use crate::mmdb::mmdb_config::MmdbConfig;

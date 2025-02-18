@@ -1,43 +1,33 @@
 pub use detector::{Detector, State};
 pub use error::{Error, ErrorKind};
+pub use interface_snapshot::InterfaceSnapshot;
 pub use platform::Platform;
 pub use watcher::{
     r#impl::{Watcher, WatcherHandler},
-    types::Snapshot,
+    types::{FileData, Snapshot},
 };
 
 mod detector;
 mod error;
+mod interface_snapshot;
 mod platform;
 mod watcher;
 
-/// Creates a new `Watcher` to monitor file changes.
+/// Creates and initializes a new `Watcher` to monitor file changes on a specified platform.
 ///
 /// # Parameters
-/// - `platform`: The platform for which the watcher is being created (e.g., `"pfsense"` or `"opnsense"`).
-/// - `poll_interval`: The interval (in milliseconds) at which files are polled for changes.
-/// - `callback`: A closure or function to execute when changes are detected.
+/// - `platform`: A string representing the target platform for the watcher (e.g., `"pfsense"` or `"opnsense"`).
+/// - `poll_interval`: The polling interval in milliseconds to check for file changes.
+/// - `handler`: A user-defined function or closure that gets executed when a change is detected.
+///   This function must implement the `WatcherHandler` trait.
 ///
 /// # Returns
-/// - `Ok(Watcher<F, Fut>)`: A new instance of the `Watcher` if successfully initialized.
-/// - `Err(Error)`: An error if initialization fails.
+/// - `Ok(Watcher<T>)`: A successfully initialized `Watcher` instance configured for the given platform.
+/// - `Err(Error)`: Returns an error if initialization fails.
 ///
 /// # Errors
-/// - Returns an error with `ErrorKind::ErrorUnsupportedPlatform` if the platform is not supported.
-/// - Returns an error with `ErrorKind::ErrorInitializingWatcher` if the watcher fails to initialize.
-///
-/// # Example
-/// ```rust
-/// use nullnet_libconfmon::{make_watcher, Error};
-///
-/// #[tokio::main]
-/// async fn main() -> Result<(), Error> {
-///     let watcher = make_watcher("pfsense", 1000, |snapshot| async move {
-///         println!("Changes detected in snapshot: {:?}", snapshot);
-///     }).await?;
-///     Ok(())
-/// }
-/// ```
+/// - Returns `ErrorKind::ErrorUnsupportedPlatform` if the specified platform is not recognized.
+/// - Returns `ErrorKind::ErrorInitializingWatcher` if the watcher fails to initialize.
 pub async fn make_watcher<T>(
     platform: &str,
     poll_interval: u64,

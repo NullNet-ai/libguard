@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Alias {
     pub r#type: String,
     pub name: String,
@@ -8,20 +8,26 @@ pub struct Alias {
     pub description: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Rule {
     pub disabled: bool,
     pub r#type: String,
     pub policy: String,
     pub protocol: String,
+    pub source_inversed: bool,
     pub source_port: String,
     pub source_addr: String,
+    pub source_type: String,
     pub destination_port: String,
     pub destination_addr: String,
+    pub destination_type: String,
+    pub destination_inversed: bool,
     pub description: String,
+    pub interface: String,
+    pub order: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct NetworkInterface {
     pub name: String,
     pub device: String,

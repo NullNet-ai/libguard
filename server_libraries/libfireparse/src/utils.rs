@@ -1,4 +1,5 @@
 use base64::{engine::general_purpose, Engine as _};
+use nullnet_libconfmon::{FileData, Snapshot};
 
 /// Encodes binary data into a Base64-encoded string.
 ///
@@ -15,4 +16,19 @@ where
     T: AsRef<[u8]>,
 {
     general_purpose::STANDARD.encode(data)
+}
+
+/// Finds a file entry in a given snapshot by its filename.
+///
+/// # Arguments
+/// - `snapshot`: A reference to a `Snapshot`, which is a collection of `FileData` entries.
+/// - `filename`: The name of the file to search for.
+///
+/// # Returns
+/// - `Some(&FileData)`: A reference to the matching `FileData` entry if found.
+/// - `None`: If no file with the specified filename exists in the snapshot.
+pub fn find_in_snapshot<'a>(snapshot: &'a Snapshot, filename: &str) -> Option<&'a FileData> {
+    snapshot
+        .iter()
+        .find(|file_data| file_data.filename == filename)
 }
