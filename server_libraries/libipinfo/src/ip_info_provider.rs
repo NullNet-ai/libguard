@@ -2,6 +2,7 @@ use crate::api::api_config::ApiConfig;
 use crate::api::api_fields::ApiFields;
 use crate::mmdb::mmdb_config::MmdbConfig;
 use crate::IpInfo;
+use nullnet_liberror::Error;
 use reqwest::Client;
 
 /// An IP information provider.
@@ -51,7 +52,7 @@ impl IpInfoProvider {
         }
     }
 
-    pub(crate) async fn lookup_ip(&self, client: &Client, ip: &str) -> Result<IpInfo, ()> {
+    pub(crate) async fn lookup_ip(&self, client: &Client, ip: &str) -> Result<IpInfo, Error> {
         match &self.inner {
             IpInfoProviderInner::Api(config) => config.lookup_ip(client, ip).await,
             IpInfoProviderInner::Mmdb(config) => config.lookup_ip(ip),

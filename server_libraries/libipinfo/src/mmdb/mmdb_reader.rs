@@ -12,7 +12,7 @@ pub(crate) enum MmdbReader {
 impl MmdbReader {
     pub(crate) fn lookup<'de, T: Deserialize<'de>>(&'de self, ip: IpAddr) -> Option<T> {
         match self {
-            MmdbReader::Reader(reader) => reader.lookup(ip).unwrap(),
+            MmdbReader::Reader(reader) => reader.lookup(ip).ok(),
             MmdbReader::Empty => None,
         }
     }

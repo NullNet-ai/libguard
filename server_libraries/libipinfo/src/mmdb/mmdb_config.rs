@@ -15,6 +15,7 @@ use crate::mmdb::mmdb_reader::MmdbReader;
 use crate::mmdb::refresh_mmdb_data::refresh_mmdb_data;
 use crate::IpInfo;
 use maxminddb::geoip2::{Asn, City};
+use nullnet_liberror::{location, Error, ErrorHandler, Location};
 use std::sync::{Arc, RwLock};
 
 pub(crate) struct MmdbConfig {
@@ -45,18 +46,14 @@ impl MmdbConfig {
         }
     }
 
-    pub(crate) fn lookup_ip(&self, ip: &str) -> Result<IpInfo, ()> {
-        let ip = ip.parse().unwrap(); // .handle_err(location!())?
+    pub(crate) fn lookup_ip(&self, ip: &str) -> Result<IpInfo, Error> {
+        let ip = ip.parse().handle_err(location!())?;
 
-        let location_reader = self.location_reader.read().unwrap();
-        // .handle_err(location!())?
+        let location_reader = self.location_reader.read().handle_err(location!())?;
         let location = location_reader.lookup::<City>(ip);
-        // drop(location_reader);
 
-        let asn_reader = self.asn_reader.read().unwrap();
-        // .handle_err(location!())?
+        let asn_reader = self.asn_reader.read().handle_err(location!())?;
         let asn = asn_reader.lookup::<Asn>(ip);
-        // drop(asn_reader);
 
         Ok(IpInfo::from_mmdb(location.as_ref(), asn.as_ref()))
     }

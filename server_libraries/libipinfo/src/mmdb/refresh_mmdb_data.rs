@@ -1,6 +1,7 @@
 use crate::mmdb::mmdb_reader::MmdbReader;
 use crate::web_client::new_web_client;
 use maxminddb::Reader;
+use nullnet_liberror::{location, Error, ErrorHandler, Location};
 use reqwest::Client;
 use std::fmt::Write;
 use std::io::Read;
@@ -12,34 +13,44 @@ pub(crate) async fn refresh_mmdb_data(
     url: &str,
     refresh_days: u64,
 ) {
-    let client = new_web_client();
+    let client = new_web_client().unwrap_or_default();
 
     loop {
         let url = format_url_with_date(url).unwrap_or(url.to_string());
-        fetch_mmdb(&mmdb_reader, &url, &client).await
-        // .unwrap_or_default()
-        ;
+        fetch_mmdb(&mmdb_reader, &url, &client)
+            .await
+            .unwrap_or_default();
         tokio::time::sleep(Duration::from_secs(refresh_days * 60 * 60 * 24)).await;
     }
 }
 
-async fn fetch_mmdb(mmdb_reader: &Arc<RwLock<MmdbReader>>, url: &str, client: &Client) {
-    // log::info!("Fetching IP info MMDB from remote...");
+async fn fetch_mmdb(
+    mmdb_reader: &Arc<RwLock<MmdbReader>>,
+    url: &str,
+    client: &Client,
+) -> Result<(), Error> {
+    log::info!("Fetching IP info MMDB from remote...");
 
-    let zipped_bytes = client.get(url).send().await.unwrap().bytes().await.unwrap();
+    let zipped_bytes = client
+        .get(url)
+        .send()
+        .await
+        .handle_err(location!())?
+        .bytes()
+        .await
+        .handle_err(location!())?;
 
     let mmdb: Vec<u8> = flate2::read::GzDecoder::new(&zipped_bytes[..])
         .bytes()
         .flatten()
         .collect();
 
-    *mmdb_reader.write().unwrap() = MmdbReader::Reader(
-        Reader::from_source(mmdb).unwrap(), // .handle_err(location!())?
-    );
+    *mmdb_reader.write().handle_err(location!())? =
+        MmdbReader::Reader(Reader::from_source(mmdb).handle_err(location!())?);
 
-    // log::info!("IP info MMDB updated successfully");
+    log::info!("IP info MMDB updated successfully");
 
-    // Ok(())
+    Ok(())
 }
 
 // <`https://docs.rs/chrono/0.4.39/chrono/format/strftime/index.html`>

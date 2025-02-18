@@ -5,6 +5,7 @@ pub use crate::ip_info::IpInfo;
 pub use crate::ip_info_provider::IpInfoProvider;
 use crate::mmdb::mmdb_config::MmdbConfig;
 use crate::web_client::new_web_client;
+use nullnet_liberror::Error;
 use reqwest::Client;
 
 mod api;
@@ -21,13 +22,13 @@ pub struct IpInfoHandler {
 }
 
 impl IpInfoHandler {
-    #[must_use]
     /// Returns a new `IpInfoHandler` with the given providers.
     ///
     /// Even if no providers are given, the handler will still use a fallback provider
     /// (free databases from [dp-ip.com](https://db-ip.com)).
-    pub fn new(providers: Vec<IpInfoProvider>) -> Self {
-        let web_client = new_web_client();
+    #[allow(clippy::missing_errors_doc)]
+    pub fn new(providers: Vec<IpInfoProvider>) -> Result<Self, Error> {
+        let web_client = new_web_client()?;
 
         let fallback = MmdbConfig::new(
             "https://download.db-ip.com/free/dbip-city-lite-{%Y-%m}.mmdb.gz",
@@ -36,15 +37,16 @@ impl IpInfoHandler {
             31,
         );
 
-        Self {
+        Ok(Self {
             web_client,
             providers,
             fallback,
-        }
+        })
     }
 
     /// Looks up the IP information for the given IP address.
-    pub async fn lookup(&self, ip: &str) -> Result<IpInfo, ()> {
+    #[allow(clippy::missing_errors_doc)]
+    pub async fn lookup(&self, ip: &str) -> Result<IpInfo, Error> {
         for provider in &self.providers {
             let ip_info = provider.lookup_ip(&self.web_client, ip).await;
             if ip_info.is_ok() {

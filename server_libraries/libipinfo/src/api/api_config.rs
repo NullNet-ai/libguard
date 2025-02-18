@@ -1,5 +1,6 @@
 use crate::api::api_fields::ApiFields;
 use crate::IpInfo;
+use nullnet_liberror::{location, Error, ErrorHandler, Location};
 use reqwest::Client;
 use serde_json::Value;
 
@@ -22,19 +23,15 @@ impl ApiConfig {
         &self.fields
     }
 
-    pub(crate) async fn lookup_ip(&self, client: &Client, ip: &str) -> Result<IpInfo, ()> {
+    pub(crate) async fn lookup_ip(&self, client: &Client, ip: &str) -> Result<IpInfo, Error> {
         let json: Value = client
             .get(self.get_url(ip))
             .send()
             .await
-            .unwrap()
-            // .handle_err(location!())?
+            .handle_err(location!())?
             .json()
             .await
-            .map_err(|_| ())?;
-        // .handle_err(location!())
-
-        // println!("{:?}", json);
+            .handle_err(location!())?;
 
         let names = self.get_field_names();
 
