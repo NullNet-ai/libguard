@@ -9,40 +9,52 @@ pub enum SyslogEndpoint {
 }
 
 pub(crate) struct SyslogLogger {
-    logger: BasicLogger,
+    logger: Option<BasicLogger>,
 }
 
 impl SyslogLogger {
-    pub(crate) fn new(syslog_endpoint: SyslogEndpoint, process_name: &str) -> Self {
-        let formatter = Formatter3164 {
-            facility: Facility::LOG_USER,
-            hostname: None,
-            process: process_name.to_string(),
-            pid: std::process::id(),
-        };
+    pub(crate) fn new(syslog_endpoint: Option<SyslogEndpoint>, process_name: &str) -> Self {
+        if let Some(syslog_endpoint) = syslog_endpoint {
+            let formatter = Formatter3164 {
+                facility: Facility::LOG_USER,
+                hostname: None,
+                process: process_name.to_string(),
+                pid: std::process::id(),
+            };
 
-        let logger = BasicLogger::new(
-            match syslog_endpoint {
-                SyslogEndpoint::Local => syslog::unix(formatter),
-                SyslogEndpoint::Remote(server) => syslog::tcp(formatter, server),
+            let logger = BasicLogger::new(
+                match syslog_endpoint {
+                    SyslogEndpoint::Local => syslog::unix(formatter),
+                    SyslogEndpoint::Remote(server) => syslog::tcp(formatter, server),
+                }
+                .expect("could not connect to syslog server"),
+            );
+
+            Self {
+                logger: Some(logger),
             }
-            .expect("could not connect to syslog server"),
-        );
-
-        Self { logger }
+        } else {
+            Self { logger: None }
+        }
     }
 }
 
 impl log::Log for SyslogLogger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        self.logger.enabled(metadata)
+        self.logger
+            .as_ref()
+            .is_some_and(|logger| logger.enabled(metadata))
     }
 
     fn log(&self, record: &log::Record) {
-        self.logger.log(record);
+        if let Some(logger) = self.logger.as_ref() {
+            logger.log(record);
+        }
     }
 
     fn flush(&self) {
-        self.logger.flush();
+        if let Some(logger) = self.logger.as_ref() {
+            logger.flush();
+        }
     }
 }

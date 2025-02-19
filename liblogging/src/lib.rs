@@ -22,7 +22,7 @@ static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
 
 /// Logger implementation that logs to both syslog and console
 pub struct Logger {
-    syslog: Option<SyslogLogger>,
+    syslog: SyslogLogger,
     console: ConsoleLogger,
     allowed_targets: Vec<String>,
 }
@@ -45,7 +45,7 @@ impl Logger {
         if level_filter.to_level().is_some() {
             let allowed_targets = allowed_targets.into_iter().map(str::to_lowercase).collect();
             log::set_boxed_logger(Box::new(Logger {
-                syslog: syslog_endpoint.map(|s| SyslogLogger::new(s, process_name)),
+                syslog: SyslogLogger::new(syslog_endpoint, process_name),
                 console: ConsoleLogger::new(),
                 allowed_targets,
             }))
@@ -57,7 +57,7 @@ impl Logger {
 
 impl log::Log for Logger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        self.syslog.as_ref().is_some_and(|s| s.enabled(metadata)) || self.console.enabled(metadata)
+        self.syslog.enabled(metadata) || self.console.enabled(metadata)
     }
 
     fn log(&self, record: &log::Record) {
@@ -67,17 +67,13 @@ impl log::Log for Logger {
             .any(|s| target.starts_with(s))
             || self.allowed_targets.iter().any(|s| target.starts_with(s))
         {
-            if let Some(s) = self.syslog.as_ref() {
-                s.log(record);
-            }
+            self.syslog.log(record);
             self.console.log(record);
         }
     }
 
     fn flush(&self) {
-        if let Some(s) = self.syslog.as_ref() {
-            s.flush();
-        }
+        self.syslog.flush();
         self.console.flush();
     }
 }
