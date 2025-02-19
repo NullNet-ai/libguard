@@ -22,7 +22,7 @@ static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
 
 /// Logger implementation that logs to both syslog and console
 pub struct Logger {
-    syslog: SyslogLogger,
+    syslog: Option<SyslogLogger>,
     console: ConsoleLogger,
     allowed_targets: Vec<String>,
 }
@@ -31,12 +31,12 @@ impl Logger {
     /// Initializes the logger with the given syslog server, process name, and allowed targets
     ///
     /// # Arguments
-    /// * `syslog_server` - The syslog server to log to
+    /// * `syslog_endpoint` - The syslog endpoint to log to
     /// * `process_name` - The name of the process
     /// * `allowed_targets` - The list of allowed targets; if any are specified,
     ///   only logs from targets starting with one of these entries will be printed.
     pub fn init(
-        syslog_server: SyslogEndpoint,
+        syslog_endpoint: Option<SyslogEndpoint>,
         process_name: &str,
         allowed_targets: Vec<&'static str>,
     ) {
@@ -45,7 +45,7 @@ impl Logger {
         if level_filter.to_level().is_some() {
             let allowed_targets = allowed_targets.into_iter().map(str::to_lowercase).collect();
             log::set_boxed_logger(Box::new(Logger {
-                syslog: SyslogLogger::new(syslog_server, process_name),
+                syslog: syslog_endpoint.map(|s| SyslogLogger::new(s, process_name)),
                 console: ConsoleLogger::new(),
                 allowed_targets,
             }))
@@ -57,7 +57,7 @@ impl Logger {
 
 impl log::Log for Logger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        self.syslog.enabled(metadata) || self.console.enabled(metadata)
+        self.syslog.as_ref().is_some_and(|s| s.enabled(metadata)) || self.console.enabled(metadata)
     }
 
     fn log(&self, record: &log::Record) {
@@ -67,13 +67,17 @@ impl log::Log for Logger {
             .any(|s| target.starts_with(s))
             || self.allowed_targets.iter().any(|s| target.starts_with(s))
         {
-            self.syslog.log(record);
+            if let Some(s) = self.syslog.as_ref() {
+                s.log(record);
+            }
             self.console.log(record);
         }
     }
 
     fn flush(&self) {
-        self.syslog.flush();
+        if let Some(s) = self.syslog.as_ref() {
+            s.flush();
+        }
         self.console.flush();
     }
 }

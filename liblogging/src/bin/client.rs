@@ -2,7 +2,7 @@ use nullnet_liblogging::{Logger, SyslogEndpoint};
 
 fn main() {
     Logger::init(
-        SyslogEndpoint::Remote("127.0.0.1:514".to_string()),
+        Some(SyslogEndpoint::Remote("127.0.0.1:514".to_string())),
         "sample_app",
         vec!["client"],
     );

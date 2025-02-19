@@ -13,7 +13,7 @@ pub(crate) struct SyslogLogger {
 }
 
 impl SyslogLogger {
-    pub(crate) fn new(syslog_server: SyslogEndpoint, process_name: &str) -> Self {
+    pub(crate) fn new(syslog_endpoint: SyslogEndpoint, process_name: &str) -> Self {
         let formatter = Formatter3164 {
             facility: Facility::LOG_USER,
             hostname: None,
@@ -22,7 +22,7 @@ impl SyslogLogger {
         };
 
         let logger = BasicLogger::new(
-            match syslog_server {
+            match syslog_endpoint {
                 SyslogEndpoint::Local => syslog::unix(formatter),
                 SyslogEndpoint::Remote(server) => syslog::tcp(formatter, server),
             }
