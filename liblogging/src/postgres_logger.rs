@@ -1,7 +1,9 @@
+// <https://www.atlassian.com/data/sql/how-to-start-a-postgresql-server-on-mac-os-x>
+
 use postgres::{Client, Config, NoTls};
 use std::sync::Mutex;
 
-/// A Postgres endpoints
+/// A Postgres endpoint
 pub struct PostgresEndpoint {
     user: String,
     password: String,
@@ -13,6 +15,15 @@ pub struct PostgresEndpoint {
 
 impl PostgresEndpoint {
     /// Creates a new Postgres endpoint
+    ///
+    /// # Arguments
+    /// * `host` - The host of the Postgres server
+    /// * `port` - The port of the Postgres server
+    /// * `user` - The user to connect to the Postgres server
+    /// * `password` - The password to connect to the Postgres server
+    /// * `db_name` - The name of the database to connect to
+    /// * `table_name` - The name of the table to log to
+    #[must_use]
     pub fn new(
         host: String,
         port: u16,
@@ -93,12 +104,13 @@ impl log::Log for PostgresLogger {
                 let level = record.level().as_str();
                 let message = record.args().to_string();
                 // send query to postgres
-                let mut logger = logger.lock().unwrap();
                 let query = format!(
                     "INSERT INTO {} (timestamp, level, message) VALUES ($1, $2, $3)",
                     self.table_name
                 );
                 logger
+                    .lock()
+                    .unwrap()
                     .execute(query.as_str(), &[&now, &level, &message])
                     .expect("could not insert log into postgres");
             }

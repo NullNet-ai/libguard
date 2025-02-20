@@ -6,6 +6,8 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
+pub use crate::postgres_logger::PostgresEndpoint;
+use crate::postgres_logger::PostgresLogger;
 pub use crate::syslog_logger::SyslogEndpoint;
 use crate::syslog_logger::SyslogLogger;
 
@@ -25,6 +27,7 @@ static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
 pub struct Logger {
     syslog: SyslogLogger,
     console: ConsoleLogger,
+    postgres: PostgresLogger,
     allowed_targets: Vec<String>,
 }
 
@@ -38,6 +41,7 @@ impl Logger {
     ///   only logs from targets starting with one of these entries will be printed.
     pub fn init(
         syslog_endpoint: Option<SyslogEndpoint>,
+        postgres_endpoint: Option<PostgresEndpoint>,
         process_name: &str,
         allowed_targets: Vec<&'static str>,
     ) {
@@ -48,6 +52,7 @@ impl Logger {
             log::set_boxed_logger(Box::new(Logger {
                 syslog: SyslogLogger::new(syslog_endpoint, process_name),
                 console: ConsoleLogger::new(),
+                postgres: PostgresLogger::new(postgres_endpoint),
                 allowed_targets,
             }))
             .unwrap_or_default();
@@ -58,7 +63,9 @@ impl Logger {
 
 impl log::Log for Logger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        self.syslog.enabled(metadata) || self.console.enabled(metadata)
+        self.syslog.enabled(metadata)
+            || self.console.enabled(metadata)
+            || self.postgres.enabled(metadata)
     }
 
     fn log(&self, record: &log::Record) {
@@ -70,11 +77,13 @@ impl log::Log for Logger {
         {
             self.syslog.log(record);
             self.console.log(record);
+            self.postgres.log(record);
         }
     }
 
     fn flush(&self) {
         self.syslog.flush();
         self.console.flush();
+        self.postgres.flush();
     }
 }
