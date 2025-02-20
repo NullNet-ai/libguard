@@ -4,9 +4,9 @@ fn main() {
     let postgres_endpoint = PostgresEndpoint::new(
         "localhost".to_string(),
         5432,
+        "postgres".to_string(),
         "admin".to_string(),
-        "admin".to_string(),
-        "logs".to_string(),
+        "postgres".to_string(),
         "log_messages".to_string(),
     );
     Logger::init(None, Some(postgres_endpoint), "sample_app", vec!["simple"]);

@@ -63,11 +63,17 @@ impl PostgresLogger {
                 .connect(NoTls)
                 .expect("could not connect to postgres");
 
+            // delete table
+            // let query = format!("DROP TABLE IF EXISTS {}", postgres_endpoint.table_name);
+            // logger
+            //     .execute(query.as_str(), &[])
+            //     .expect("could not delete logs table in postgres");
+
             // create postgres table if it doesn't exist
             let query = format!(
                 "CREATE TABLE IF NOT EXISTS {} (
                 id SERIAL PRIMARY KEY,
-                timestamp TIMESTAMP NOT NULL,
+                timestamp TEXT NOT NULL,
                 level TEXT NOT NULL,
                 message TEXT NOT NULL
             )",
