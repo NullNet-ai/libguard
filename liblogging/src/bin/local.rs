@@ -1,7 +1,7 @@
 use nullnet_liblogging::{Logger, SyslogEndpoint};
 
 fn main() {
-    Logger::init(Some(SyslogEndpoint::Local), None, vec!["local"]);
+    Logger::init(Some(SyslogEndpoint::Local), false, vec!["local"]);
 
     loop {
         log::error!("This is an error message");

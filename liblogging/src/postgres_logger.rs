@@ -1,47 +1,8 @@
 // <https://www.atlassian.com/data/sql/how-to-start-a-postgresql-server-on-mac-os-x>
 
 use postgres::{Client, Config, NoTls};
+use std::env;
 use std::sync::Mutex;
-
-/// A Postgres endpoint
-pub struct PostgresEndpoint {
-    user: String,
-    password: String,
-    db_name: String,
-    table_name: String,
-    host: String,
-    port: u16,
-}
-
-impl PostgresEndpoint {
-    /// Creates a new Postgres endpoint
-    ///
-    /// # Arguments
-    /// * `host` - The host of the Postgres server
-    /// * `port` - The port of the Postgres server
-    /// * `user` - The user to connect to the Postgres server
-    /// * `password` - The password to connect to the Postgres server
-    /// * `db_name` - The name of the database to connect to
-    /// * `table_name` - The name of the table to log to
-    #[must_use]
-    pub fn new(
-        host: String,
-        port: u16,
-        user: String,
-        password: String,
-        db_name: String,
-        table_name: String,
-    ) -> Self {
-        Self {
-            user,
-            password,
-            db_name,
-            table_name,
-            host,
-            port,
-        }
-    }
-}
 
 pub(crate) struct PostgresLogger {
     logger: Option<Mutex<Client>>,
@@ -49,15 +10,24 @@ pub(crate) struct PostgresLogger {
 }
 
 impl PostgresLogger {
-    pub(crate) fn new(postgres_endpoint: Option<PostgresEndpoint>) -> Self {
-        if let Some(postgres_endpoint) = postgres_endpoint {
+    pub(crate) fn new(postgres_endpoint: bool) -> Self {
+        if postgres_endpoint {
+            let user = env::var("POSTGRES_USER").unwrap_or(String::from("postgres"));
+            let password = env::var("POSTGRES_PASSWORD").unwrap_or(String::from("postgres"));
+            let db_name = env::var("POSTGRES_DB_NAME").unwrap_or(String::from("postgres"));
+            let host = env::var("POSTGRES_HOST").unwrap_or(String::from("localhost"));
+            let port = env::var("POSTGRES_PORT")
+                .unwrap_or(String::from("5432"))
+                .parse::<u16>()
+                .unwrap_or(5432);
+            let table_name = env::var("POSTGRES_TABLE_NAME").unwrap_or(String::from("logs"));
             let mut config = Config::new();
             config
-                .user(&postgres_endpoint.user)
-                .password(&postgres_endpoint.password)
-                .dbname(&postgres_endpoint.db_name)
-                .host(&postgres_endpoint.host)
-                .port(postgres_endpoint.port);
+                .user(user.as_str())
+                .password(password.as_str())
+                .dbname(db_name.as_str())
+                .host(host.as_str())
+                .port(port);
             // .hostaddr(IpAddr::from);
             let mut logger = config
                 .connect(NoTls)
@@ -71,13 +41,12 @@ impl PostgresLogger {
 
             // create postgres table if it doesn't exist
             let query = format!(
-                "CREATE TABLE IF NOT EXISTS {} (
+                "CREATE TABLE IF NOT EXISTS {table_name} (
                 id SERIAL PRIMARY KEY,
                 timestamp TEXT NOT NULL,
                 level TEXT NOT NULL,
                 message TEXT NOT NULL
-            )",
-                postgres_endpoint.table_name
+            )"
             );
             logger
                 .execute(query.as_str(), &[])
@@ -85,7 +54,7 @@ impl PostgresLogger {
 
             Self {
                 logger: Some(Mutex::new(logger)),
-                table_name: postgres_endpoint.table_name,
+                table_name,
             }
         } else {
             Self {

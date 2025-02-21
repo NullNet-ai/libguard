@@ -1,15 +1,7 @@
-use nullnet_liblogging::{Logger, PostgresEndpoint};
+use nullnet_liblogging::Logger;
 
 fn main() {
-    let postgres_endpoint = PostgresEndpoint::new(
-        "localhost".to_string(),
-        5432,
-        "postgres".to_string(),
-        "admin".to_string(),
-        "postgres".to_string(),
-        "log_messages".to_string(),
-    );
-    Logger::init(None, Some(postgres_endpoint), vec!["simple"]);
+    Logger::init(None, true, vec!["simple"]);
 
     loop {
         log::error!("This is an error message");

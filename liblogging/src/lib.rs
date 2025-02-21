@@ -6,7 +6,6 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
-pub use crate::postgres_logger::PostgresEndpoint;
 use crate::postgres_logger::PostgresLogger;
 pub use crate::syslog_logger::SyslogEndpoint;
 use crate::syslog_logger::SyslogLogger;
@@ -41,7 +40,7 @@ impl Logger {
     ///   only logs from targets starting with one of these entries will be printed.
     pub fn init(
         syslog_endpoint: Option<SyslogEndpoint>,
-        postgres_endpoint: Option<PostgresEndpoint>,
+        postgres_endpoint: bool,
         allowed_targets: Vec<&'static str>,
     ) {
         let env_log_level = std::env::var("LOG_LEVEL").unwrap_or("trace".to_string());
