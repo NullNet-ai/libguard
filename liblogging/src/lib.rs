@@ -40,6 +40,7 @@ impl Logger {
     ///   only logs from targets starting with one of these entries will be printed.
     pub fn init(
         syslog_endpoint: Option<SyslogEndpoint>,
+        console_logger: bool,
         postgres_endpoint: bool,
         allowed_targets: Vec<&'static str>,
     ) {
@@ -49,7 +50,7 @@ impl Logger {
             let allowed_targets = allowed_targets.into_iter().map(str::to_lowercase).collect();
             log::set_boxed_logger(Box::new(Logger {
                 syslog: SyslogLogger::new(syslog_endpoint),
-                console: ConsoleLogger::new(),
+                console: ConsoleLogger::new(console_logger),
                 postgres: PostgresLogger::new(postgres_endpoint),
                 allowed_targets,
             }))

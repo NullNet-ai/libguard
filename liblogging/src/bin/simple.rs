@@ -6,7 +6,7 @@ fn main() {
     let default_runner = "sample program".to_string();
     let runner = args.get(1).unwrap_or(&default_runner);
 
-    Logger::init(None, true, vec!["simple"]);
+    Logger::init(None, true, true, vec!["simple"]);
 
     loop {
         log::error!("This is an error message from {runner}");

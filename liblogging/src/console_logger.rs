@@ -7,17 +7,19 @@ const BLUE: &str = "\x1b[34m";
 const MAGENTA: &str = "\x1b[35m";
 const RESET: &str = "\x1b[0m";
 
-pub(crate) struct ConsoleLogger {}
+pub(crate) struct ConsoleLogger {
+    enabled: bool,
+}
 
 impl ConsoleLogger {
-    pub(crate) fn new() -> Self {
-        Self {}
+    pub(crate) fn new(enabled: bool) -> Self {
+        Self { enabled }
     }
 }
 
 impl Log for ConsoleLogger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        metadata.level() <= log::max_level()
+        self.enabled && metadata.level() <= log::max_level()
     }
 
     fn log(&self, record: &log::Record) {
