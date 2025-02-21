@@ -10,6 +10,6 @@ fn main() {
         log::debug!("This is a debug message");
         log::trace!("This is a trace message");
 
-        std::thread::sleep(std::time::Duration::from_secs(5));
+        std::thread::sleep(std::time::Duration::from_secs(10));
     }
 }
