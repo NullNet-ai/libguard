@@ -2,6 +2,9 @@
 
 All releases with the relative changes are documented in this file.
 
+## [0.2.0] - 2025-02-21
+- Add PostgreSQL logger
+
 ## [0.1.2] - 2025-02-19
 - Make it possible to avoid using the syslog logger
 
