@@ -1,5 +1,3 @@
-// <https://www.atlassian.com/data/sql/how-to-start-a-postgresql-server-on-mac-os-x>
-
 use postgres::{Client, Config, NoTls};
 use std::env;
 use std::sync::Mutex;
