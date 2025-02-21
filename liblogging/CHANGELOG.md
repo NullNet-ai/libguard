@@ -2,7 +2,7 @@
 
 All releases with the relative changes are documented in this file.
 
-## [0.2.0] - 2025-02-21
+## [0.2.0] - UNRELEASED
 - Added PostgreSQL logger
 - Made console logging optional
 

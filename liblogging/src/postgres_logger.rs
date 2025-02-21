@@ -1,10 +1,12 @@
-use postgres::{Client, Config, NoTls};
+use postgres::{Client, Config, Error, NoTls};
 use std::env;
 use std::sync::{Arc, Mutex};
 
+#[derive(Default)]
 pub(crate) struct PostgresLogger {
     logger: Option<Arc<Mutex<Client>>>,
     is_reconnecting: Arc<Mutex<bool>>,
+    unsent_entries: Arc<Mutex<Vec<PostgresEntry>>>,
 }
 
 impl PostgresLogger {
@@ -30,24 +32,22 @@ impl PostgresLogger {
 
             Self {
                 logger: Some(Arc::new(Mutex::new(logger))),
-                is_reconnecting: Arc::new(Mutex::new(false)),
+                ..Self::default()
             }
         } else {
-            Self {
-                logger: None,
-                is_reconnecting: Arc::new(Mutex::new(false)),
-            }
+            Self::default()
         }
     }
 
-    pub(crate) fn reconnect(&self) {
+    pub(crate) fn reconnect(&self, err: &Error) {
         let Some(logger) = self.logger.clone() else {
             return;
         };
         *self.is_reconnecting.lock().unwrap() = true;
-        log::error!("Could not log to postgres, trying to reconnect...");
+        log::error!("Could not log to postgres: {err}");
         let is_reconnecting = self.is_reconnecting.clone();
         std::thread::spawn(move || loop {
+            std::thread::sleep(std::time::Duration::from_secs(10));
             match CONFIG.connect(NoTls) {
                 Ok(client) => {
                     *logger.lock().unwrap() = client;
@@ -56,7 +56,6 @@ impl PostgresLogger {
                 }
                 Err(e) => {
                     log::error!("Could not reconnect to postgres: {e}");
-                    std::thread::sleep(std::time::Duration::from_secs(10));
                 }
             }
         });
@@ -73,27 +72,71 @@ impl log::Log for PostgresLogger {
     fn log(&self, record: &log::Record) {
         if let Some(logger) = self.logger.as_ref() {
             if self.enabled(record.metadata()) {
-                let timestamp = chrono::Utc::now();
-                let level = record.level().as_str();
-                let message = record.args().to_string();
+                let e = PostgresEntry::new(record);
                 // send query to postgres
                 let query = format!(
                     "INSERT INTO {} (timestamp, level, message) VALUES ($1, $2, $3)",
                     POSTGRES_TABLE_NAME.as_str()
                 );
-                if logger
+                let result = logger
                     .lock()
                     .unwrap()
-                    .execute(query.as_str(), &[&timestamp, &level, &message])
-                    .is_err_and(|_| !*self.is_reconnecting.lock().unwrap())
-                {
-                    self.reconnect();
+                    .execute(query.as_str(), &[&e.timestamp, &e.level, &e.message]);
+                if let Err(err) = result {
+                    self.unsent_entries.lock().unwrap().push(e);
+                    if !*self.is_reconnecting.lock().unwrap() {
+                        self.reconnect(&err);
+                    }
+                } else {
+                    self.flush();
                 };
             }
         }
     }
 
-    fn flush(&self) {}
+    fn flush(&self) {
+        if let Some(logger) = self.logger.as_ref() {
+            let query = format!(
+                "INSERT INTO {} (timestamp, level, message) VALUES ($1, $2, $3)",
+                POSTGRES_TABLE_NAME.as_str()
+            );
+            let Ok(stmt) = logger.lock().unwrap().prepare(query.as_str()) else {
+                return;
+            };
+            // use a batch insert instead of this
+            let mut unsent_entries = self.unsent_entries.lock().unwrap();
+            for e in unsent_entries.iter() {
+                if logger
+                    .lock()
+                    .unwrap()
+                    .execute(&stmt, &[&e.timestamp, &e.level, &e.message])
+                    .is_err()
+                {
+                    return;
+                }
+            }
+            unsent_entries.clear();
+        }
+    }
+}
+
+struct PostgresEntry {
+    timestamp: chrono::DateTime<chrono::Utc>,
+    level: String,
+    message: String,
+}
+
+impl PostgresEntry {
+    fn new(record: &log::Record) -> Self {
+        let timestamp = chrono::Utc::now();
+        let level = record.level().to_string();
+        let message = record.args().to_string();
+        Self {
+            timestamp,
+            level,
+            message,
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
