@@ -6,10 +6,12 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
+use crate::postgres_logger::PostgresLogger;
 pub use crate::syslog_logger::SyslogEndpoint;
 use crate::syslog_logger::SyslogLogger;
 
 mod console_logger;
+mod postgres_logger;
 mod syslog_logger;
 
 static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
@@ -24,6 +26,7 @@ static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
 pub struct Logger {
     syslog: SyslogLogger,
     console: ConsoleLogger,
+    postgres: PostgresLogger,
     allowed_targets: Vec<String>,
 }
 
@@ -37,7 +40,7 @@ impl Logger {
     ///   only logs from targets starting with one of these entries will be printed.
     pub fn init(
         syslog_endpoint: Option<SyslogEndpoint>,
-        process_name: &str,
+        postgres_endpoint: bool,
         allowed_targets: Vec<&'static str>,
     ) {
         let env_log_level = std::env::var("LOG_LEVEL").unwrap_or("trace".to_string());
@@ -45,8 +48,9 @@ impl Logger {
         if level_filter.to_level().is_some() {
             let allowed_targets = allowed_targets.into_iter().map(str::to_lowercase).collect();
             log::set_boxed_logger(Box::new(Logger {
-                syslog: SyslogLogger::new(syslog_endpoint, process_name),
+                syslog: SyslogLogger::new(syslog_endpoint),
                 console: ConsoleLogger::new(),
+                postgres: PostgresLogger::new(postgres_endpoint),
                 allowed_targets,
             }))
             .unwrap_or_default();
@@ -57,7 +61,9 @@ impl Logger {
 
 impl log::Log for Logger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        self.syslog.enabled(metadata) || self.console.enabled(metadata)
+        self.syslog.enabled(metadata)
+            || self.console.enabled(metadata)
+            || self.postgres.enabled(metadata)
     }
 
     fn log(&self, record: &log::Record) {
@@ -69,11 +75,13 @@ impl log::Log for Logger {
         {
             self.syslog.log(record);
             self.console.log(record);
+            self.postgres.log(record);
         }
     }
 
     fn flush(&self) {
         self.syslog.flush();
         self.console.flush();
+        self.postgres.flush();
     }
 }
