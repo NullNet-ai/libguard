@@ -1,23 +1,16 @@
 use postgres::{Client, Config, NoTls};
 use std::env;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 pub(crate) struct PostgresLogger {
-    logger: Option<Mutex<Client>>,
+    logger: Option<Arc<Mutex<Client>>>,
+    is_reconnecting: Arc<Mutex<bool>>,
 }
 
 impl PostgresLogger {
     pub(crate) fn new(postgres_endpoint: bool) -> Self {
         if postgres_endpoint {
-            let mut config = Config::new();
-            config
-                .user(POSTGRES_USER.as_str())
-                .password(POSTGRES_PASSWORD.as_str())
-                .dbname(POSTGRES_DB_NAME.as_str())
-                .host(POSTGRES_HOST.as_str())
-                .port(*POSTGRES_PORT);
-            // .hostaddr(IpAddr::from);
-            let mut logger = config
+            let mut logger = CONFIG
                 .connect(NoTls)
                 .expect("could not connect to postgres");
 
@@ -36,11 +29,36 @@ impl PostgresLogger {
                 .expect("could not create logs table in postgres");
 
             Self {
-                logger: Some(Mutex::new(logger)),
+                logger: Some(Arc::new(Mutex::new(logger))),
+                is_reconnecting: Arc::new(Mutex::new(false)),
             }
         } else {
-            Self { logger: None }
+            Self {
+                logger: None,
+                is_reconnecting: Arc::new(Mutex::new(false)),
+            }
         }
+    }
+
+    pub(crate) fn reconnect(&self) {
+        let Some(logger) = self.logger.clone() else {
+            return;
+        };
+        *self.is_reconnecting.lock().unwrap() = true;
+        let is_reconnecting = self.is_reconnecting.clone();
+        std::thread::spawn(move || loop {
+            match CONFIG.connect(NoTls) {
+                Ok(client) => {
+                    *logger.lock().unwrap() = client;
+                    *is_reconnecting.lock().unwrap() = false;
+                    return;
+                }
+                Err(e) => {
+                    log::error!("Could not reconnect to postgres: {e}");
+                    std::thread::sleep(std::time::Duration::from_secs(10));
+                }
+            }
+        });
     }
 }
 
@@ -62,17 +80,34 @@ impl log::Log for PostgresLogger {
                     "INSERT INTO {} (timestamp, level, message) VALUES ($1, $2, $3)",
                     POSTGRES_TABLE_NAME.as_str()
                 );
-                logger
+                if logger
                     .lock()
                     .unwrap()
                     .execute(query.as_str(), &[&now, &level, &message])
-                    .expect("could not insert log into postgres");
+                    .is_err_and(|_| !*self.is_reconnecting.lock().unwrap())
+                {
+                    log::error!("Could not log to postgres, trying to reconnect...");
+                    self.reconnect();
+                };
             }
         }
     }
 
     fn flush(&self) {}
 }
+
+// -------------------------------------------------------------------------------------------------
+
+static CONFIG: once_cell::sync::Lazy<Config> = once_cell::sync::Lazy::new(|| {
+    let mut config = Config::new();
+    config
+        .user(POSTGRES_USER.as_str())
+        .password(POSTGRES_PASSWORD.as_str())
+        .dbname(POSTGRES_DB_NAME.as_str())
+        .host(POSTGRES_HOST.as_str())
+        .port(*POSTGRES_PORT);
+    config
+});
 
 static POSTGRES_USER: once_cell::sync::Lazy<String> =
     once_cell::sync::Lazy::new(|| env::var("POSTGRES_USER").unwrap_or(String::from("postgres")));
