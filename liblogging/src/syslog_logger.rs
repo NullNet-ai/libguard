@@ -13,12 +13,12 @@ pub(crate) struct SyslogLogger {
 }
 
 impl SyslogLogger {
-    pub(crate) fn new(syslog_endpoint: Option<SyslogEndpoint>, process_name: &str) -> Self {
+    pub(crate) fn new(syslog_endpoint: Option<SyslogEndpoint>) -> Self {
         if let Some(syslog_endpoint) = syslog_endpoint {
             let formatter = Formatter3164 {
                 facility: Facility::LOG_USER,
                 hostname: None,
-                process: process_name.to_string(),
+                process: String::from("nullnet"),
                 pid: std::process::id(),
             };
 

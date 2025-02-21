@@ -42,7 +42,6 @@ impl Logger {
     pub fn init(
         syslog_endpoint: Option<SyslogEndpoint>,
         postgres_endpoint: Option<PostgresEndpoint>,
-        process_name: &str,
         allowed_targets: Vec<&'static str>,
     ) {
         let env_log_level = std::env::var("LOG_LEVEL").unwrap_or("trace".to_string());
@@ -50,7 +49,7 @@ impl Logger {
         if level_filter.to_level().is_some() {
             let allowed_targets = allowed_targets.into_iter().map(str::to_lowercase).collect();
             log::set_boxed_logger(Box::new(Logger {
-                syslog: SyslogLogger::new(syslog_endpoint, process_name),
+                syslog: SyslogLogger::new(syslog_endpoint),
                 console: ConsoleLogger::new(),
                 postgres: PostgresLogger::new(postgres_endpoint),
                 allowed_targets,

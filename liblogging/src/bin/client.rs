@@ -4,7 +4,6 @@ fn main() {
     Logger::init(
         Some(SyslogEndpoint::Remote("127.0.0.1:514".to_string())),
         None,
-        "sample_app",
         vec!["client"],
     );
 

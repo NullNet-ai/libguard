@@ -9,7 +9,7 @@ fn main() {
         "postgres".to_string(),
         "log_messages".to_string(),
     );
-    Logger::init(None, Some(postgres_endpoint), "sample_app", vec!["simple"]);
+    Logger::init(None, Some(postgres_endpoint), vec!["simple"]);
 
     loop {
         log::error!("This is an error message");
