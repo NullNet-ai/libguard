@@ -45,6 +45,7 @@ impl PostgresLogger {
             return;
         };
         *self.is_reconnecting.lock().unwrap() = true;
+        log::error!("Could not log to postgres, trying to reconnect...");
         let is_reconnecting = self.is_reconnecting.clone();
         std::thread::spawn(move || loop {
             match CONFIG.connect(NoTls) {
@@ -86,7 +87,6 @@ impl log::Log for PostgresLogger {
                     .execute(query.as_str(), &[&now, &level, &message])
                     .is_err_and(|_| !*self.is_reconnecting.lock().unwrap())
                 {
-                    log::error!("Could not log to postgres, trying to reconnect...");
                     self.reconnect();
                 };
             }
