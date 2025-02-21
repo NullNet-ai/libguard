@@ -18,7 +18,7 @@ impl PostgresLogger {
             let query = format!(
                 "CREATE TABLE IF NOT EXISTS {} (
                 id SERIAL PRIMARY KEY,
-                timestamp TEXT NOT NULL,
+                timestamp TIMESTAMPTZ NOT NULL,
                 level TEXT NOT NULL,
                 message TEXT NOT NULL
             )",
@@ -73,7 +73,7 @@ impl log::Log for PostgresLogger {
     fn log(&self, record: &log::Record) {
         if let Some(logger) = self.logger.as_ref() {
             if self.enabled(record.metadata()) {
-                let now = chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Micros, true);
+                let timestamp = chrono::Utc::now();
                 let level = record.level().as_str();
                 let message = record.args().to_string();
                 // send query to postgres
@@ -84,7 +84,7 @@ impl log::Log for PostgresLogger {
                 if logger
                     .lock()
                     .unwrap()
-                    .execute(query.as_str(), &[&now, &level, &message])
+                    .execute(query.as_str(), &[&timestamp, &level, &message])
                     .is_err_and(|_| !*self.is_reconnecting.lock().unwrap())
                 {
                     self.reconnect();
