@@ -6,47 +6,32 @@ use std::sync::Mutex;
 
 pub(crate) struct PostgresLogger {
     logger: Option<Mutex<Client>>,
-    table_name: String,
 }
 
 impl PostgresLogger {
     pub(crate) fn new(postgres_endpoint: bool) -> Self {
         if postgres_endpoint {
-            let user = env::var("POSTGRES_USER").unwrap_or(String::from("postgres"));
-            let password = env::var("POSTGRES_PASSWORD").unwrap_or(String::from("postgres"));
-            let db_name = env::var("POSTGRES_DB_NAME").unwrap_or(String::from("postgres"));
-            let host = env::var("POSTGRES_HOST").unwrap_or(String::from("localhost"));
-            let port = env::var("POSTGRES_PORT")
-                .unwrap_or(String::from("5432"))
-                .parse::<u16>()
-                .unwrap_or(5432);
-            let table_name = env::var("POSTGRES_TABLE_NAME").unwrap_or(String::from("logs"));
             let mut config = Config::new();
             config
-                .user(user.as_str())
-                .password(password.as_str())
-                .dbname(db_name.as_str())
-                .host(host.as_str())
-                .port(port);
+                .user(POSTGRES_USER.as_str())
+                .password(POSTGRES_PASSWORD.as_str())
+                .dbname(POSTGRES_DB_NAME.as_str())
+                .host(POSTGRES_HOST.as_str())
+                .port(*POSTGRES_PORT);
             // .hostaddr(IpAddr::from);
             let mut logger = config
                 .connect(NoTls)
                 .expect("could not connect to postgres");
 
-            // delete table
-            // let query = format!("DROP TABLE IF EXISTS {}", postgres_endpoint.table_name);
-            // logger
-            //     .execute(query.as_str(), &[])
-            //     .expect("could not delete logs table in postgres");
-
             // create postgres table if it doesn't exist
             let query = format!(
-                "CREATE TABLE IF NOT EXISTS {table_name} (
+                "CREATE TABLE IF NOT EXISTS {} (
                 id SERIAL PRIMARY KEY,
                 timestamp TEXT NOT NULL,
                 level TEXT NOT NULL,
                 message TEXT NOT NULL
-            )"
+            )",
+                POSTGRES_TABLE_NAME.as_str()
             );
             logger
                 .execute(query.as_str(), &[])
@@ -54,13 +39,9 @@ impl PostgresLogger {
 
             Self {
                 logger: Some(Mutex::new(logger)),
-                table_name,
             }
         } else {
-            Self {
-                logger: None,
-                table_name: String::new(),
-            }
+            Self { logger: None }
         }
     }
 }
@@ -81,7 +62,7 @@ impl log::Log for PostgresLogger {
                 // send query to postgres
                 let query = format!(
                     "INSERT INTO {} (timestamp, level, message) VALUES ($1, $2, $3)",
-                    self.table_name
+                    POSTGRES_TABLE_NAME.as_str()
                 );
                 logger
                     .lock()
@@ -94,3 +75,26 @@ impl log::Log for PostgresLogger {
 
     fn flush(&self) {}
 }
+
+static POSTGRES_USER: once_cell::sync::Lazy<String> =
+    once_cell::sync::Lazy::new(|| env::var("POSTGRES_USER").unwrap_or(String::from("postgres")));
+
+static POSTGRES_PASSWORD: once_cell::sync::Lazy<String> = once_cell::sync::Lazy::new(|| {
+    env::var("POSTGRES_PASSWORD").unwrap_or(String::from("postgres"))
+});
+
+static POSTGRES_DB_NAME: once_cell::sync::Lazy<String> =
+    once_cell::sync::Lazy::new(|| env::var("POSTGRES_DB_NAME").unwrap_or(String::from("postgres")));
+
+static POSTGRES_HOST: once_cell::sync::Lazy<String> =
+    once_cell::sync::Lazy::new(|| env::var("POSTGRES_HOST").unwrap_or(String::from("localhost")));
+
+static POSTGRES_PORT: once_cell::sync::Lazy<u16> = once_cell::sync::Lazy::new(|| {
+    env::var("POSTGRES_PORT")
+        .unwrap_or(String::from("5432"))
+        .parse::<u16>()
+        .unwrap_or(5432)
+});
+
+static POSTGRES_TABLE_NAME: once_cell::sync::Lazy<String> =
+    once_cell::sync::Lazy::new(|| env::var("POSTGRES_TABLE_NAME").unwrap_or(String::from("logs")));

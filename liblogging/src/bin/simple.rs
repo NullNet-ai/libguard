@@ -1,3 +1,7 @@
+// To make it work remotely:
+// 1. edit postgresql.conf and set listen_addresses = '*'
+// 2. edit pg_hba.conf and add: "host all all 0.0.0.0/0	trust"
+
 use nullnet_liblogging::Logger;
 
 fn main() {
