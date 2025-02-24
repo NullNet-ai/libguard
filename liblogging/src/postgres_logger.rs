@@ -1,7 +1,7 @@
 use postgres::{Client, Config, Error, NoTls};
+use serde::Serialize;
 use std::env;
 use std::sync::{Arc, Mutex};
-use serde::Serialize;
 
 #[derive(Default)]
 pub(crate) struct PostgresLogger {

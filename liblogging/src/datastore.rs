@@ -1,54 +1,46 @@
-use nullnet_libdatastore::{ErrorKind as DSErrorKind, Error as DSError, Response as DSResponse, BatchCreateBody, BatchCreateRequest, CreateParams, DatastoreClient, DatastoreConfig, Query, CreateRequest};
 use crate::postgres_logger::PostgresEntry;
+use nullnet_libdatastore::{
+    BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient,
+    DatastoreConfig, Error as DSError, ErrorKind as DSErrorKind, Query, Response as DSResponse,
+};
 
 #[derive(Debug, Clone)]
-pub struct DatastoreWrapper {
+pub(crate) struct DatastoreWrapper {
     inner: DatastoreClient,
 }
 
 impl DatastoreWrapper {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         let config = DatastoreConfig::from_env();
         let inner = DatastoreClient::new(config);
         Self { inner }
     }
 
-    pub fn set_token_for_request<T>(request: &mut Request<T>, token: &str) -> Result<(), DSError> {
-        let value = MetadataValue::from_str(token).map_err(|e| DSError {
-            kind: DSErrorKind::ErrorRequestFailed,
-            message: e.to_string(),
-        })?;
-
-        request.metadata_mut().insert("authorization", value);
-
-        Ok(())
-    }
-
-    async fn logs_insert_single(
+    pub(crate) async fn logs_insert_single(
         &self,
         token: &str,
         log: PostgresEntry,
     ) -> Result<DSResponse, DSError> {
-        let mut request = CreateRequest {
+        let body = serde_json::to_string(&log).map_err(|e| DSError {
+            kind: DSErrorKind::ErrorRequestFailed,
+            message: e.to_string(),
+        })?;
+
+        let request = CreateRequest {
             params: Some(CreateParams {
                 table: String::from("logs"),
             }),
             query: Some(Query {
                 pluck: String::from("id"),
-                durability: String::from("hard"),
+                durability: String::from("soft"),
             }),
-            body: serde_json::to_string(&log).map_err(|e| DSError {
-                kind: DSErrorKind::ErrorRequestFailed,
-                message: e.to_string(),
-            })?,
+            body,
         };
 
-        Self::set_token_for_request(&mut request, token)?;
-
-        self.inner.create(request).await
+        self.inner.create(request, token).await
     }
 
-    pub async fn logs_insert_batch(
+    pub(crate) async fn logs_insert_batch(
         &self,
         token: &str,
         logs: Vec<PostgresEntry>,
@@ -58,7 +50,7 @@ impl DatastoreWrapper {
             message: e.to_string(),
         })?;
 
-        let mut request = BatchCreateRequest {
+        let request = BatchCreateRequest {
             params: Some(CreateParams {
                 table: String::from("logs"),
             }),
@@ -68,13 +60,11 @@ impl DatastoreWrapper {
             }),
             body: Some(BatchCreateBody {
                 records,
-                entity_prefix: String::from("PK"),
+                entity_prefix: String::from("LO"),
             }),
         };
 
-        Self::set_token_for_request(&mut request, token)?;
-
-        self.inner.batch_create(request).await
+        self.inner.batch_create(request, token).await
     }
 }
 
