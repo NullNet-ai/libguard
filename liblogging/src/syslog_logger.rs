@@ -1,20 +1,12 @@
 use syslog::{BasicLogger, Facility, Formatter3164};
 
-/// Possible syslog endpoints
-pub enum SyslogEndpoint {
-    /// Use the local syslog server
-    Local,
-    /// Use a remote syslog server
-    Remote(String),
-}
-
 pub(crate) struct SyslogLogger {
     logger: Option<BasicLogger>,
 }
 
 impl SyslogLogger {
-    pub(crate) fn new(syslog_endpoint: Option<SyslogEndpoint>) -> Self {
-        if let Some(syslog_endpoint) = syslog_endpoint {
+    pub(crate) fn new(syslog_endpoint: bool) -> Self {
+        if syslog_endpoint {
             let formatter = Formatter3164 {
                 facility: Facility::LOG_USER,
                 hostname: None,
@@ -23,11 +15,7 @@ impl SyslogLogger {
             };
 
             let logger = BasicLogger::new(
-                match syslog_endpoint {
-                    SyslogEndpoint::Local => syslog::unix(formatter),
-                    SyslogEndpoint::Remote(server) => syslog::tcp(formatter, server),
-                }
-                .expect("could not connect to syslog server"),
+                syslog::unix(formatter).expect("could not connect to the local syslog socket"),
             );
 
             Self {

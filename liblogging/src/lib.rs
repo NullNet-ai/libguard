@@ -7,7 +7,6 @@ use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
 use crate::postgres_logger::PostgresLogger;
-pub use crate::syslog_logger::SyslogEndpoint;
 use crate::syslog_logger::SyslogLogger;
 
 mod console_logger;
@@ -39,7 +38,7 @@ impl Logger {
     /// * `allowed_targets` - The list of allowed targets; if any are specified,
     ///   only logs from targets starting with one of these entries will be printed.
     pub fn init(
-        syslog_endpoint: Option<SyslogEndpoint>,
+        syslog_endpoint: bool,
         console_logger: bool,
         postgres_endpoint: bool,
         allowed_targets: Vec<&'static str>,
