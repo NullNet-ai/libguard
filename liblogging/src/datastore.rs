@@ -1,8 +1,5 @@
 use crate::postgres_logger::PostgresEntry;
-use nullnet_libdatastore::{
-    BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient,
-    DatastoreConfig, Error as DSError, ErrorKind as DSErrorKind, Query, Response as DSResponse,
-};
+use nullnet_libdatastore::{BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient, DatastoreConfig, Error as DSError, ErrorKind as DSErrorKind, LoginBody, LoginData, LoginRequest, Query, Response as DSResponse};
 
 #[derive(Debug, Clone)]
 pub(crate) struct DatastoreWrapper {
@@ -14,6 +11,26 @@ impl DatastoreWrapper {
         let config = DatastoreConfig::from_env();
         let inner = DatastoreClient::new(config);
         Self { inner }
+    }
+
+    #[allow(clippy::missing_errors_doc)]
+    pub async fn login(
+        &self,
+        account_id: String,
+        account_secret: String,
+    ) -> Result<String, DSError> {
+        let request = LoginRequest {
+            body: Some(LoginBody {
+                data: Some(LoginData {
+                    account_id,
+                    account_secret,
+                }),
+            }),
+        };
+
+        let response = self.inner.login(request).await?;
+
+        Ok(response.token)
     }
 
     pub(crate) async fn logs_insert_single(
