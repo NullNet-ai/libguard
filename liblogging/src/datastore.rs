@@ -1,5 +1,9 @@
 use crate::postgres_logger::PostgresEntry;
-use nullnet_libdatastore::{BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient, DatastoreConfig, Error as DSError, ErrorKind as DSErrorKind, LoginBody, LoginData, LoginRequest, Query, Response as DSResponse};
+use nullnet_libdatastore::{
+    BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient,
+    DatastoreConfig, Error as DSError, ErrorKind as DSErrorKind, LoginBody, LoginData,
+    LoginRequest, Query, Response as DSResponse,
+};
 
 #[derive(Debug, Clone)]
 pub(crate) struct DatastoreWrapper {

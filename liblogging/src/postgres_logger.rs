@@ -1,13 +1,14 @@
-use postgres::{Client, Config, Error, NoTls};
+use crate::datastore::DatastoreWrapper;
+use futures::executor::block_on;
 use serde::Serialize;
-use std::env;
 use std::sync::{Arc, Mutex};
 
 #[derive(Default)]
 pub(crate) struct PostgresLogger {
-    logger: Option<Arc<Mutex<Client>>>,
-    is_reconnecting: Arc<Mutex<bool>>,
+    logger: Option<DatastoreWrapper>,
+    // is_reconnecting: Arc<Mutex<bool>>,
     unsent_entries: Arc<Mutex<Vec<PostgresEntry>>>,
+    token: String,
 }
 
 impl PostgresLogger {
@@ -16,51 +17,34 @@ impl PostgresLogger {
             return Self::default();
         }
 
-        let mut logger = CONFIG
-            .connect(NoTls)
-            .expect("could not connect to postgres");
-
-        // create postgres table if it doesn't exist
-        let query = format!(
-            "CREATE TABLE IF NOT EXISTS {} (
-                id SERIAL PRIMARY KEY,
-                timestamp TIMESTAMPTZ NOT NULL,
-                level TEXT NOT NULL,
-                message TEXT NOT NULL
-            )",
-            POSTGRES_TABLE_NAME.as_str()
-        );
-        logger
-            .execute(query.as_str(), &[])
-            .expect("could not create logs table in postgres");
-
         Self {
-            logger: Some(Arc::new(Mutex::new(logger))),
+            logger: Some(DatastoreWrapper::new()),
             ..Self::default()
         }
     }
 
-    pub(crate) fn reconnect(&self, err: &Error) {
-        let Some(logger) = self.logger.clone() else {
-            return;
-        };
-        *self.is_reconnecting.lock().unwrap() = true;
-        log::error!("Could not log to postgres: {err}");
-        let is_reconnecting = self.is_reconnecting.clone();
-        std::thread::spawn(move || loop {
-            std::thread::sleep(std::time::Duration::from_secs(10));
-            match CONFIG.connect(NoTls) {
-                Ok(client) => {
-                    *logger.lock().unwrap() = client;
-                    *is_reconnecting.lock().unwrap() = false;
-                    return;
-                }
-                Err(e) => {
-                    log::error!("Could not reconnect to postgres: {e}");
-                }
-            }
-        });
-    }
+    // not needed with the current libdatastore implementation
+    // pub(crate) fn reconnect(&self, err: &Error) {
+    //     let Some(logger) = self.logger.clone() else {
+    //         return;
+    //     };
+    //     *self.is_reconnecting.lock().unwrap() = true;
+    //     log::error!("Could not log to postgres: {err}");
+    //     let is_reconnecting = self.is_reconnecting.clone();
+    //     std::thread::spawn(move || loop {
+    //         std::thread::sleep(std::time::Duration::from_secs(10));
+    //         match CONFIG.connect(NoTls) {
+    //             Ok(client) => {
+    //                 logger = client;
+    //                 *is_reconnecting.lock().unwrap() = false;
+    //                 return;
+    //             }
+    //             Err(e) => {
+    //                 log::error!("Could not reconnect to postgres: {e}");
+    //             }
+    //         }
+    //     });
+    // }
 }
 
 impl log::Log for PostgresLogger {
@@ -74,54 +58,35 @@ impl log::Log for PostgresLogger {
         if let Some(logger) = self.logger.as_ref() {
             if self.enabled(record.metadata()) {
                 let e = PostgresEntry::new(record);
-                // send query to postgres
-                let query = format!(
-                    "INSERT INTO {} (timestamp, level, message) VALUES ($1, $2, $3)",
-                    POSTGRES_TABLE_NAME.as_str()
-                );
-                let result = logger
-                    .lock()
-                    .unwrap()
-                    .execute(query.as_str(), &[&e.timestamp, &e.level, &e.message]);
-                if let Err(err) = result {
+                // send single log entry to datastore
+                if let Err(_) = block_on(logger.logs_insert_single(&self.token, e.clone())) {
+                    // log::error!("Could not log to Datastore: {err}");
                     self.unsent_entries.lock().unwrap().push(e);
-                    if !*self.is_reconnecting.lock().unwrap() {
-                        self.reconnect(&err);
-                    }
                 } else {
                     self.flush();
-                };
+                }
             }
         }
     }
 
     fn flush(&self) {
         if let Some(logger) = self.logger.as_ref() {
-            let query = format!(
-                "INSERT INTO {} (timestamp, level, message) VALUES ($1, $2, $3)",
-                POSTGRES_TABLE_NAME.as_str()
-            );
-            let Ok(stmt) = logger.lock().unwrap().prepare(query.as_str()) else {
-                return;
-            };
-            // use a batch insert instead of this
             let mut unsent_entries = self.unsent_entries.lock().unwrap();
-            for e in unsent_entries.iter() {
-                if logger
-                    .lock()
-                    .unwrap()
-                    .execute(&stmt, &[&e.timestamp, &e.level, &e.message])
-                    .is_err()
-                {
-                    return;
-                }
+            if unsent_entries.is_empty() {
+                return;
             }
-            unsent_entries.clear();
+            // send log entries batch to datastore
+            if let Err(_) = block_on(logger.logs_insert_batch(&self.token, unsent_entries.clone()))
+            {
+                // log::error!("Could not log to Datastore: {err}");
+            } else {
+                unsent_entries.clear();
+            }
         }
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub(crate) struct PostgresEntry {
     timestamp: String,
     level: String,
@@ -140,39 +105,3 @@ impl PostgresEntry {
         }
     }
 }
-
-// -------------------------------------------------------------------------------------------------
-
-static CONFIG: once_cell::sync::Lazy<Config> = once_cell::sync::Lazy::new(|| {
-    let mut config = Config::new();
-    config
-        .user(POSTGRES_USER.as_str())
-        .password(POSTGRES_PASSWORD.as_str())
-        .dbname(POSTGRES_DB_NAME.as_str())
-        .host(POSTGRES_HOST.as_str())
-        .port(*POSTGRES_PORT);
-    config
-});
-
-static POSTGRES_USER: once_cell::sync::Lazy<String> =
-    once_cell::sync::Lazy::new(|| env::var("POSTGRES_USER").unwrap_or(String::from("postgres")));
-
-static POSTGRES_PASSWORD: once_cell::sync::Lazy<String> = once_cell::sync::Lazy::new(|| {
-    env::var("POSTGRES_PASSWORD").unwrap_or(String::from("postgres"))
-});
-
-static POSTGRES_DB_NAME: once_cell::sync::Lazy<String> =
-    once_cell::sync::Lazy::new(|| env::var("POSTGRES_DB_NAME").unwrap_or(String::from("postgres")));
-
-static POSTGRES_HOST: once_cell::sync::Lazy<String> =
-    once_cell::sync::Lazy::new(|| env::var("POSTGRES_HOST").unwrap_or(String::from("localhost")));
-
-static POSTGRES_PORT: once_cell::sync::Lazy<u16> = once_cell::sync::Lazy::new(|| {
-    env::var("POSTGRES_PORT")
-        .unwrap_or(String::from("5432"))
-        .parse::<u16>()
-        .unwrap_or(5432)
-});
-
-static POSTGRES_TABLE_NAME: once_cell::sync::Lazy<String> =
-    once_cell::sync::Lazy::new(|| env::var("POSTGRES_TABLE_NAME").unwrap_or(String::from("logs")));
