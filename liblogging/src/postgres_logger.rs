@@ -1,6 +1,7 @@
 use postgres::{Client, Config, Error, NoTls};
 use std::env;
 use std::sync::{Arc, Mutex};
+use serde::Serialize;
 
 #[derive(Default)]
 pub(crate) struct PostgresLogger {
@@ -120,15 +121,16 @@ impl log::Log for PostgresLogger {
     }
 }
 
-struct PostgresEntry {
-    timestamp: chrono::DateTime<chrono::Utc>,
+#[derive(Serialize)]
+pub(crate) struct PostgresEntry {
+    timestamp: String,
     level: String,
     message: String,
 }
 
 impl PostgresEntry {
     fn new(record: &log::Record) -> Self {
-        let timestamp = chrono::Utc::now();
+        let timestamp = chrono::Utc::now().to_rfc3339();
         let level = record.level().to_string();
         let message = record.args().to_string();
         Self {
