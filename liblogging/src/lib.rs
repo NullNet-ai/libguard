@@ -93,9 +93,10 @@ pub struct LoggerConfig {
     pub syslog: bool,
     /// Whether to log to `PostgreSQL`
     pub postgres: bool,
-    /// The list of allowed targets; if any are specified,
-    /// only logs from targets starting with one of these entries will be printed
-    /// (logs from "nullnet*", "appguard*", and "wallguard*" will always be printed).
+    /// The list of allowed targets.<br>
+    ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
+    ///   Use this parameter to specify additional targets
+    ///   (e.g., specifying "serde" will emit logs for all targets whose name is in the form `serde*`).
     pub allowed_targets: Vec<&'static str>,
 }
 
@@ -106,9 +107,10 @@ impl LoggerConfig {
     /// * `console_logger` - Whether to log to console
     /// * `syslog_endpoint` - Whether to log to syslog
     /// * `postgres_endpoint` - Whether to log to `PostgreSQL`
-    /// * `allowed_targets` - The list of allowed targets; if any are specified,
-    ///   only logs from targets starting with one of these entries will be printed
-    ///   (logs from "nullnet*", "appguard*", and "wallguard*" will always be printed).
+    /// * `allowed_targets` - The list of allowed targets.<br>
+    ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
+    ///   Use this parameter to specify additional targets
+    ///   (e.g., specifying "serde" will emit logs for all targets whose name is in the form `serde*`).
     #[must_use]
     pub fn new(
         console: bool,

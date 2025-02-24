@@ -30,3 +30,10 @@ You can configure the connection by setting the following environment variables:
 - `POSTGRES_PASSWORD` (default: `postgres`)
 - `POSTGRES_DB_NAME` (default: `postgres`)
 - `POSTGRES_TABLE_NAME` (default: `logs`)
+
+### Allowed targets
+
+By default, only logs from targets in the form `nullnet*`, `appguard*`, and `wallguard*` will be emitted.
+
+To allow additional targets, set them in the `LoggerConfig` passed to the `Logger::init` method
+(e.g., specifying "serde" will emit logs for all targets whose name is in the form `serde*`).
