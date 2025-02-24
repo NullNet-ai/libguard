@@ -5,7 +5,7 @@
 // 2. edit pg_hba.conf and add: "host all all 0.0.0.0/0	trust"
 // -------------------------------------------------------------------------------------------------
 
-use nullnet_liblogging::Logger;
+use nullnet_liblogging::{Logger, LoggerConfig};
 
 fn main() {
     // read first command line argument
@@ -13,7 +13,7 @@ fn main() {
     let default_runner = "sample program".to_string();
     let runner = args.get(1).unwrap_or(&default_runner);
 
-    Logger::init(true, true, true, vec!["simple"]);
+    Logger::init(LoggerConfig::default());
 
     loop {
         log::error!("This is an error message from {runner}");

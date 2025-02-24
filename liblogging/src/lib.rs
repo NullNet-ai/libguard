@@ -21,36 +21,35 @@ static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
             .collect()
     });
 
-/// Logger implementation that logs to both syslog and console
+/// Logger implementation that logs to console, syslog, and `PostgreSQL`
 pub struct Logger {
-    syslog: SyslogLogger,
     console: ConsoleLogger,
+    syslog: SyslogLogger,
     postgres: PostgresLogger,
     allowed_targets: Vec<String>,
 }
 
 impl Logger {
-    /// Initializes the logger with the given syslog server, process name, and allowed targets
+    /// Initializes the logger with the given configuration
     ///
     /// # Arguments
-    /// * `syslog_endpoint` - The syslog endpoint to log to
-    /// * `process_name` - The name of the process
-    /// * `allowed_targets` - The list of allowed targets; if any are specified,
-    ///   only logs from targets starting with one of these entries will be printed.
-    pub fn init(
-        syslog_endpoint: bool,
-        console_logger: bool,
-        postgres_endpoint: bool,
-        allowed_targets: Vec<&'static str>,
-    ) {
+    /// * `logger_config` - The logger configuration
+    pub fn init(logger_config: LoggerConfig) {
+        let LoggerConfig {
+            console,
+            syslog,
+            postgres,
+            allowed_targets,
+        } = logger_config;
+
         let env_log_level = std::env::var("LOG_LEVEL").unwrap_or("trace".to_string());
         let level_filter = LevelFilter::from_str(&env_log_level).unwrap_or(LevelFilter::Trace);
         if level_filter.to_level().is_some() {
             let allowed_targets = allowed_targets.into_iter().map(str::to_lowercase).collect();
             log::set_boxed_logger(Box::new(Logger {
-                syslog: SyslogLogger::new(syslog_endpoint),
-                console: ConsoleLogger::new(console_logger),
-                postgres: PostgresLogger::new(postgres_endpoint),
+                console: ConsoleLogger::new(console),
+                syslog: SyslogLogger::new(syslog),
+                postgres: PostgresLogger::new(postgres),
                 allowed_targets,
             }))
             .unwrap_or_default();
@@ -83,5 +82,56 @@ impl log::Log for Logger {
         self.syslog.flush();
         self.console.flush();
         self.postgres.flush();
+    }
+}
+
+/// Logger configuration
+pub struct LoggerConfig {
+    /// Whether to log to console
+    pub console: bool,
+    /// Whether to log to syslog
+    pub syslog: bool,
+    /// Whether to log to `PostgreSQL`
+    pub postgres: bool,
+    /// The list of allowed targets; if any are specified,
+    /// only logs from targets starting with one of these entries will be printed
+    /// (logs from "nullnet*", "appguard*", and "wallguard*" will always be printed).
+    pub allowed_targets: Vec<&'static str>,
+}
+
+impl LoggerConfig {
+    /// Creates a new logger configuration
+    ///
+    /// # Arguments
+    /// * `console_logger` - Whether to log to console
+    /// * `syslog_endpoint` - Whether to log to syslog
+    /// * `postgres_endpoint` - Whether to log to `PostgreSQL`
+    /// * `allowed_targets` - The list of allowed targets; if any are specified,
+    ///   only logs from targets starting with one of these entries will be printed
+    ///   (logs from "nullnet*", "appguard*", and "wallguard*" will always be printed).
+    #[must_use]
+    pub fn new(
+        console: bool,
+        syslog: bool,
+        postgres: bool,
+        allowed_targets: Vec<&'static str>,
+    ) -> Self {
+        Self {
+            console,
+            syslog,
+            postgres,
+            allowed_targets,
+        }
+    }
+}
+
+impl Default for LoggerConfig {
+    fn default() -> Self {
+        Self {
+            console: true,
+            syslog: true,
+            postgres: true,
+            allowed_targets: vec![],
+        }
     }
 }
