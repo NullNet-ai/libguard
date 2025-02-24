@@ -1,28 +1,29 @@
 use syslog::{BasicLogger, Facility, Formatter3164};
 
+#[derive(Default)]
 pub(crate) struct SyslogLogger {
     logger: Option<BasicLogger>,
 }
 
 impl SyslogLogger {
     pub(crate) fn new(syslog_endpoint: bool) -> Self {
-        if syslog_endpoint {
-            let formatter = Formatter3164 {
-                facility: Facility::LOG_USER,
-                hostname: None,
-                process: String::from("nullnet"),
-                pid: std::process::id(),
-            };
+        if !syslog_endpoint {
+            return Self::default();
+        }
 
-            let logger = BasicLogger::new(
-                syslog::unix(formatter).expect("could not connect to the local syslog socket"),
-            );
+        let formatter = Formatter3164 {
+            facility: Facility::LOG_USER,
+            hostname: None,
+            process: String::from("nullnet"),
+            pid: std::process::id(),
+        };
 
-            Self {
-                logger: Some(logger),
-            }
-        } else {
-            Self { logger: None }
+        let logger = BasicLogger::new(
+            syslog::unix(formatter).expect("could not connect to the local syslog socket"),
+        );
+
+        Self {
+            logger: Some(logger),
         }
     }
 }

@@ -11,31 +11,31 @@ pub(crate) struct PostgresLogger {
 
 impl PostgresLogger {
     pub(crate) fn new(postgres_endpoint: bool) -> Self {
-        if postgres_endpoint {
-            let mut logger = CONFIG
-                .connect(NoTls)
-                .expect("could not connect to postgres");
+        if !postgres_endpoint {
+            return Self::default();
+        }
 
-            // create postgres table if it doesn't exist
-            let query = format!(
-                "CREATE TABLE IF NOT EXISTS {} (
+        let mut logger = CONFIG
+            .connect(NoTls)
+            .expect("could not connect to postgres");
+
+        // create postgres table if it doesn't exist
+        let query = format!(
+            "CREATE TABLE IF NOT EXISTS {} (
                 id SERIAL PRIMARY KEY,
                 timestamp TIMESTAMPTZ NOT NULL,
                 level TEXT NOT NULL,
                 message TEXT NOT NULL
             )",
-                POSTGRES_TABLE_NAME.as_str()
-            );
-            logger
-                .execute(query.as_str(), &[])
-                .expect("could not create logs table in postgres");
+            POSTGRES_TABLE_NAME.as_str()
+        );
+        logger
+            .execute(query.as_str(), &[])
+            .expect("could not create logs table in postgres");
 
-            Self {
-                logger: Some(Arc::new(Mutex::new(logger))),
-                ..Self::default()
-            }
-        } else {
-            Self::default()
+        Self {
+            logger: Some(Arc::new(Mutex::new(logger))),
+            ..Self::default()
         }
     }
 
