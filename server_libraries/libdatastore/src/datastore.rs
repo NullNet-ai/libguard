@@ -161,6 +161,13 @@ pub struct UpdateRequest {
 pub struct DeleteRequest {
     #[prost(message, optional, tag = "1")]
     pub params: ::core::option::Option<Params>,
+    #[prost(message, optional, tag = "2")]
+    pub query: ::core::option::Option<DeleteQuery>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DeleteQuery {
+    #[prost(string, tag = "1")]
+    pub is_permanent: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateRequest {
@@ -171,6 +178,7 @@ pub struct CreateRequest {
     #[prost(string, tag = "3")]
     pub body: ::prost::alloc::string::String,
 }
+/// BATCH CREATE
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct BatchCreateRequest {
     #[prost(message, optional, tag = "1")]
@@ -186,6 +194,34 @@ pub struct BatchCreateBody {
     pub records: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub entity_prefix: ::prost::alloc::string::String,
+}
+/// BATCH UPDATE
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchUpdateRequest {
+    #[prost(message, optional, tag = "1")]
+    pub params: ::core::option::Option<Params>,
+    #[prost(message, optional, tag = "3")]
+    pub body: ::core::option::Option<BatchUpdateBody>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchUpdateBody {
+    #[prost(message, repeated, tag = "1")]
+    pub advance_filters: ::prost::alloc::vec::Vec<AdvanceFilter>,
+    #[prost(string, tag = "2")]
+    pub updates: ::prost::alloc::string::String,
+}
+/// BATCH DELETE
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchDeleteRequest {
+    #[prost(message, optional, tag = "1")]
+    pub params: ::core::option::Option<Params>,
+    #[prost(message, optional, tag = "3")]
+    pub body: ::core::option::Option<BatchDeleteBody>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BatchDeleteBody {
+    #[prost(message, repeated, tag = "1")]
+    pub advance_filters: ::prost::alloc::vec::Vec<AdvanceFilter>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateParams {
@@ -483,6 +519,48 @@ pub mod store_service_client {
                 .insert(GrpcMethod::new("datastore.StoreService", "BatchCreate"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn batch_update(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BatchUpdateRequest>,
+        ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/datastore.StoreService/BatchUpdate",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("datastore.StoreService", "BatchUpdate"));
+            self.inner.unary(req, path, codec).await
+        }
+        pub async fn batch_delete(
+            &mut self,
+            request: impl tonic::IntoRequest<super::BatchDeleteRequest>,
+        ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/datastore.StoreService/BatchDelete",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("datastore.StoreService", "BatchDelete"));
+            self.inner.unary(req, path, codec).await
+        }
         pub async fn login(
             &mut self,
             request: impl tonic::IntoRequest<super::LoginRequest>,
@@ -546,6 +624,14 @@ pub mod store_service_server {
         async fn batch_create(
             &self,
             request: tonic::Request<super::BatchCreateRequest>,
+        ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status>;
+        async fn batch_update(
+            &self,
+            request: tonic::Request<super::BatchUpdateRequest>,
+        ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status>;
+        async fn batch_delete(
+            &self,
+            request: tonic::Request<super::BatchDeleteRequest>,
         ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status>;
         async fn login(
             &self,
@@ -928,6 +1014,96 @@ pub mod store_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = BatchCreateSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/datastore.StoreService/BatchUpdate" => {
+                    #[allow(non_camel_case_types)]
+                    struct BatchUpdateSvc<T: StoreService>(pub Arc<T>);
+                    impl<
+                        T: StoreService,
+                    > tonic::server::UnaryService<super::BatchUpdateRequest>
+                    for BatchUpdateSvc<T> {
+                        type Response = super::Response;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::BatchUpdateRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as StoreService>::batch_update(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = BatchUpdateSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/datastore.StoreService/BatchDelete" => {
+                    #[allow(non_camel_case_types)]
+                    struct BatchDeleteSvc<T: StoreService>(pub Arc<T>);
+                    impl<
+                        T: StoreService,
+                    > tonic::server::UnaryService<super::BatchDeleteRequest>
+                    for BatchDeleteSvc<T> {
+                        type Response = super::Response;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::BatchDeleteRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as StoreService>::batch_delete(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = BatchDeleteSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
