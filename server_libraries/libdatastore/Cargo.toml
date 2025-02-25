@@ -1,6 +1,6 @@
 [package]
 name = "nullnet-libdatastore"
-version = "0.1.3"
+version = "0.2.0"
 edition = "2021"
 authors= ["Anton Liashkevich <anton.liashkevich.eng@gmail.com>"]
 repository = "https://github.com/NullNet-ai/libguard"
@@ -9,6 +9,7 @@ description = "Nullnet datastore driver"
 readme = "README.md"
 
 [dependencies]
+nullnet-liberror = { version = "0.1.0", path = "../../liberror" }
 prost = "0.13.4"
 tonic = { version = "0.12.3", features = ["tls", "tls-roots"] }
 

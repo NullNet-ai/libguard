@@ -10,6 +10,8 @@ service StoreService {
     rpc Delete(DeleteRequest) returns (Response);
     rpc Create(CreateRequest) returns (Response);
     rpc BatchCreate(BatchCreateRequest) returns (Response);
+    rpc BatchUpdate(BatchUpdateRequest) returns (Response);
+    rpc BatchDelete(BatchDeleteRequest) returns (Response);
     rpc Login(LoginRequest) returns (LoginResponse);
 }
 
@@ -114,7 +116,11 @@ message UpdateRequest {
 
 message DeleteRequest {
     Params params = 1;
+    DeleteQuery query = 2;
 }
+ message DeleteQuery{
+    string is_permanent = 1;
+ }
 
 message CreateRequest {
     CreateParams params = 1;
@@ -122,6 +128,8 @@ message CreateRequest {
     string body = 3;
 }
 
+
+//BATCH CREATE
 message BatchCreateRequest {
     CreateParams params = 1;
     Query query = 2;
@@ -131,6 +139,27 @@ message BatchCreateRequest {
 message BatchCreateBody {
     string records = 1;
     string entity_prefix = 2;
+}
+
+//BATCH UPDATE
+message BatchUpdateRequest {
+    Params params = 1;
+    BatchUpdateBody body = 3;
+}
+
+message BatchUpdateBody {
+    repeated AdvanceFilter advance_filters = 1;
+    string updates = 2;
+}
+
+//BATCH DELETE
+message BatchDeleteRequest {
+    Params params = 1;
+    BatchDeleteBody body = 3;
+}
+
+message BatchDeleteBody {
+    repeated AdvanceFilter advance_filters = 1;
 }
 
 message CreateParams {
