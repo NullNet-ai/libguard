@@ -9,7 +9,8 @@
 
 use nullnet_liblogging::{Logger, LoggerConfig};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // read first command line argument
     let args: Vec<String> = std::env::args().collect();
     let default_runner = "sample program".to_string();

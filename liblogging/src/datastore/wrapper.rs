@@ -1,5 +1,5 @@
 use nullnet_liberror::{Error, ErrorHandler, location, Location};
-use crate::postgres_logger::PostgresEntry;
+use crate::datastore::entry::DatastoreEntry;
 use nullnet_libdatastore::{BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient, DatastoreConfig, LoginBody, LoginData, LoginRequest, Query, ResponseData};
 
 #[derive(Debug, Clone)]
@@ -37,7 +37,7 @@ impl DatastoreWrapper {
     pub(crate) async fn logs_insert_single(
         &self,
         token: &str,
-        log: PostgresEntry,
+        log: DatastoreEntry,
     ) -> Result<ResponseData, Error> {
         let body = serde_json::to_string(&log).handle_err(location!())?;
 
@@ -58,7 +58,7 @@ impl DatastoreWrapper {
     pub(crate) async fn logs_insert_batch(
         &self,
         token: &str,
-        logs: Vec<PostgresEntry>,
+        logs: Vec<DatastoreEntry>,
     ) -> Result<ResponseData, Error> {
         let records = serde_json::to_string(&logs).handle_err(location!())?;
 

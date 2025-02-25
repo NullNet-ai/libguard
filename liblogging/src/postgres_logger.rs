@@ -1,13 +1,12 @@
-use crate::datastore::DatastoreWrapper;
-use futures::executor::block_on;
-use serde::Serialize;
-use std::sync::{Arc, Mutex};
+use crate::datastore::entry::DatastoreEntry;
+use std::sync::mpsc::Sender;
+use crate::datastore::transmitter::datastore_transmitter;
 
 #[derive(Default)]
 pub(crate) struct PostgresLogger {
-    logger: Option<DatastoreWrapper>,
+    logger: Option<Sender<DatastoreEntry>>,
     // is_reconnecting: Arc<Mutex<bool>>,
-    unsent_entries: Arc<Mutex<Vec<PostgresEntry>>>,
+    // unsent_entries: Arc<Mutex<Vec<DatastoreEntry>>>,
     token: String,
 }
 
@@ -17,8 +16,14 @@ impl PostgresLogger {
             return Self::default();
         }
 
+        let (sender, receiver) = std::sync::mpsc::channel();
+
+        tokio::spawn(async move {
+            datastore_transmitter(receiver).await
+        });
+
         Self {
-            logger: Some(DatastoreWrapper::new()),
+            logger: Some(sender),
             ..Self::default()
         }
     }
@@ -57,51 +62,15 @@ impl log::Log for PostgresLogger {
     fn log(&self, record: &log::Record) {
         if let Some(logger) = self.logger.as_ref() {
             if self.enabled(record.metadata()) {
-                let e = PostgresEntry::new(record);
-                // send single log entry to datastore
-                if let Err(_) = block_on(logger.logs_insert_single(&self.token, e.clone())) {
-                    // log::error!("Could not log to Datastore: {err}");
-                    self.unsent_entries.lock().unwrap().push(e);
-                } else {
-                    self.flush();
-                }
+                let e = DatastoreEntry::new(record);
+                // send log entry to transmitter
+                logger
+                    .send(e)
+                    // .map_err(|e| log::error!("Could not send log entry to transmitter: {e}"))
+                    .expect("Could not send log entry to transmitter");
             }
         }
     }
 
-    fn flush(&self) {
-        if let Some(logger) = self.logger.as_ref() {
-            let mut unsent_entries = self.unsent_entries.lock().unwrap();
-            if unsent_entries.is_empty() {
-                return;
-            }
-            // send log entries batch to datastore
-            if let Err(_) = block_on(logger.logs_insert_batch(&self.token, unsent_entries.clone()))
-            {
-                // log::error!("Could not log to Datastore: {err}");
-            } else {
-                unsent_entries.clear();
-            }
-        }
-    }
-}
-
-#[derive(Serialize, Clone)]
-pub(crate) struct PostgresEntry {
-    timestamp: String,
-    level: String,
-    message: String,
-}
-
-impl PostgresEntry {
-    fn new(record: &log::Record) -> Self {
-        let timestamp = chrono::Utc::now().to_rfc3339();
-        let level = record.level().to_string();
-        let message = record.args().to_string();
-        Self {
-            timestamp,
-            level,
-            message,
-        }
-    }
+    fn flush(&self) {}
 }
