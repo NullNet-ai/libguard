@@ -8,6 +8,7 @@ description = "Logging library for NullNet"
 readme = "README.md"
 
 [dependencies]
+nullnet-liberror = { version = "0.1.0", path = "../liberror" }
 nullnet-libdatastore = { path = "../server_libraries/libdatastore" }
 log = "0.4.26"
 syslog = "7.0.0"

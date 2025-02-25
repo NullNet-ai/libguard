@@ -1,9 +1,6 @@
+use nullnet_liberror::{Error, ErrorHandler, location, Location};
 use crate::postgres_logger::PostgresEntry;
-use nullnet_libdatastore::{
-    BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient,
-    DatastoreConfig, Error as DSError, ErrorKind as DSErrorKind, LoginBody, LoginData,
-    LoginRequest, Query, Response as DSResponse,
-};
+use nullnet_libdatastore::{BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient, DatastoreConfig, LoginBody, LoginData, LoginRequest, Query, ResponseData};
 
 #[derive(Debug, Clone)]
 pub(crate) struct DatastoreWrapper {
@@ -22,7 +19,7 @@ impl DatastoreWrapper {
         &self,
         account_id: String,
         account_secret: String,
-    ) -> Result<String, DSError> {
+    ) -> Result<String, Error> {
         let request = LoginRequest {
             body: Some(LoginBody {
                 data: Some(LoginData {
@@ -41,11 +38,8 @@ impl DatastoreWrapper {
         &self,
         token: &str,
         log: PostgresEntry,
-    ) -> Result<DSResponse, DSError> {
-        let body = serde_json::to_string(&log).map_err(|e| DSError {
-            kind: DSErrorKind::ErrorRequestFailed,
-            message: e.to_string(),
-        })?;
+    ) -> Result<ResponseData, Error> {
+        let body = serde_json::to_string(&log).handle_err(location!())?;
 
         let request = CreateRequest {
             params: Some(CreateParams {
@@ -65,11 +59,8 @@ impl DatastoreWrapper {
         &self,
         token: &str,
         logs: Vec<PostgresEntry>,
-    ) -> Result<DSResponse, DSError> {
-        let records = serde_json::to_string(&logs).map_err(|e| DSError {
-            kind: DSErrorKind::ErrorRequestFailed,
-            message: e.to_string(),
-        })?;
+    ) -> Result<ResponseData, Error> {
+        let records = serde_json::to_string(&logs).handle_err(location!())?;
 
         let request = BatchCreateRequest {
             params: Some(CreateParams {
