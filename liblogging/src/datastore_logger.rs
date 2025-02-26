@@ -1,5 +1,6 @@
 use crate::datastore::entry::DatastoreEntry;
 use crate::datastore::transmitter::DatastoreTransmitter;
+use crate::DatastoreCredentials;
 use std::sync::mpsc::Sender;
 
 #[derive(Default)]
@@ -8,16 +9,16 @@ pub(crate) struct DatastoreLogger {
 }
 
 impl DatastoreLogger {
-    pub(crate) fn new(datastore_endpoint: bool) -> Self {
-        if !datastore_endpoint {
+    pub(crate) fn new(datastore_credentials: Option<DatastoreCredentials>) -> Self {
+        let Some(credentials) = datastore_credentials else {
             return Self::default();
-        }
+        };
 
         let (sender, receiver) = std::sync::mpsc::channel();
 
         tokio::spawn(async move {
-            let transmitter = DatastoreTransmitter::new();
-            transmitter.transmit(receiver).await
+            let transmitter = DatastoreTransmitter::new(credentials);
+            transmitter.transmit(receiver).await;
         });
 
         Self {
