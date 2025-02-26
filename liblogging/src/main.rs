@@ -1,11 +1,4 @@
 // Sample program to test the logging library
-// -------------------------------------------------------------------------------------------------
-// <https://www.atlassian.com/data/sql/how-to-start-a-postgresql-server-on-mac-os-x>
-// -------------------------------------------------------------------------------------------------
-// To make it work remotely:
-// 1. Edit postgresql.conf and set listen_addresses = '*'
-// 2. Edit pg_hba.conf and add: "host all all 0.0.0.0/0	trust"
-// -------------------------------------------------------------------------------------------------
 
 use nullnet_liblogging::{Logger, LoggerConfig};
 

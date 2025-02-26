@@ -3,16 +3,13 @@ use crate::datastore::transmitter::datastore_transmitter;
 use std::sync::mpsc::Sender;
 
 #[derive(Default)]
-pub(crate) struct PostgresLogger {
+pub(crate) struct DatastoreLogger {
     logger: Option<Sender<DatastoreEntry>>,
-    // is_reconnecting: Arc<Mutex<bool>>,
-    // unsent_entries: Arc<Mutex<Vec<DatastoreEntry>>>,
-    token: String,
 }
 
-impl PostgresLogger {
-    pub(crate) fn new(postgres_endpoint: bool) -> Self {
-        if !postgres_endpoint {
+impl DatastoreLogger {
+    pub(crate) fn new(datastore_endpoint: bool) -> Self {
+        if !datastore_endpoint {
             return Self::default();
         }
 
@@ -22,7 +19,6 @@ impl PostgresLogger {
 
         Self {
             logger: Some(sender),
-            ..Self::default()
         }
     }
 
@@ -32,7 +28,7 @@ impl PostgresLogger {
     //         return;
     //     };
     //     *self.is_reconnecting.lock().unwrap() = true;
-    //     log::error!("Could not log to postgres: {err}");
+    //     log::error!("Could not log to datastore: {err}");
     //     let is_reconnecting = self.is_reconnecting.clone();
     //     std::thread::spawn(move || loop {
     //         std::thread::sleep(std::time::Duration::from_secs(10));
@@ -43,14 +39,14 @@ impl PostgresLogger {
     //                 return;
     //             }
     //             Err(e) => {
-    //                 log::error!("Could not reconnect to postgres: {e}");
+    //                 log::error!("Could not reconnect to datastore: {e}");
     //             }
     //         }
     //     });
     // }
 }
 
-impl log::Log for PostgresLogger {
+impl log::Log for DatastoreLogger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
         self.logger
             .as_ref()

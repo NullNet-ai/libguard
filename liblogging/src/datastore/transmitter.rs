@@ -2,7 +2,7 @@ use crate::datastore::entry::DatastoreEntry;
 use crate::datastore::wrapper::DatastoreWrapper;
 use std::sync::mpsc::Receiver;
 
-pub(crate) struct DatastoreTransmitter {
+struct DatastoreTransmitter {
     datastore: DatastoreWrapper,
     token: String,
     unsent_entries: Vec<DatastoreEntry>,
@@ -38,7 +38,6 @@ impl DatastoreTransmitter {
 }
 
 pub(crate) async fn datastore_transmitter(receiver: Receiver<DatastoreEntry>) {
-    println!("datastore_transmitter");
     let mut transmitter = DatastoreTransmitter::new();
     while let Ok(e) = receiver.recv() {
         if let Err(_) = transmitter
