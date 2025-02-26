@@ -1,6 +1,9 @@
-use nullnet_liberror::{Error, ErrorHandler, location, Location};
 use crate::datastore::entry::DatastoreEntry;
-use nullnet_libdatastore::{BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient, DatastoreConfig, LoginBody, LoginData, LoginRequest, Query, ResponseData};
+use nullnet_libdatastore::{
+    BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient,
+    DatastoreConfig, LoginBody, LoginData, LoginRequest, Query, ResponseData,
+};
+use nullnet_liberror::{location, Error, ErrorHandler, Location};
 
 #[derive(Debug, Clone)]
 pub(crate) struct DatastoreWrapper {
@@ -15,11 +18,7 @@ impl DatastoreWrapper {
     }
 
     #[allow(clippy::missing_errors_doc)]
-    pub async fn login(
-        &self,
-        account_id: String,
-        account_secret: String,
-    ) -> Result<String, Error> {
+    pub async fn login(&self, account_id: String, account_secret: String) -> Result<String, Error> {
         let request = LoginRequest {
             body: Some(LoginBody {
                 data: Some(LoginData {

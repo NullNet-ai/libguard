@@ -10,9 +10,9 @@ use crate::postgres_logger::PostgresLogger;
 use crate::syslog_logger::SyslogLogger;
 
 mod console_logger;
+mod datastore;
 mod postgres_logger;
 mod syslog_logger;
-mod datastore;
 
 static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
     once_cell::sync::Lazy::new(|| {

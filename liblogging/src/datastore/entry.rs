@@ -6,7 +6,7 @@ use serde::Serialize;
 pub(crate) struct DatastoreEntry {
     timestamp: String,
     level: String,
-    message : String,
+    message: String,
 }
 
 impl DatastoreEntry {
@@ -17,7 +17,7 @@ impl DatastoreEntry {
         Self {
             timestamp,
             level,
-            message
+            message,
         }
     }
 }

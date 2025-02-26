@@ -1,6 +1,6 @@
 use crate::datastore::entry::DatastoreEntry;
-use std::sync::mpsc::Sender;
 use crate::datastore::transmitter::datastore_transmitter;
+use std::sync::mpsc::Sender;
 
 #[derive(Default)]
 pub(crate) struct PostgresLogger {
@@ -18,9 +18,7 @@ impl PostgresLogger {
 
         let (sender, receiver) = std::sync::mpsc::channel();
 
-        tokio::spawn(async move {
-            datastore_transmitter(receiver).await
-        });
+        tokio::spawn(async move { datastore_transmitter(receiver).await });
 
         Self {
             logger: Some(sender),
@@ -66,7 +64,6 @@ impl log::Log for PostgresLogger {
                 // send log entry to transmitter
                 logger
                     .send(e)
-                    // .map_err(|e| log::error!("Could not send log entry to transmitter: {e}"))
                     .expect("Could not send log entry to transmitter");
             }
         }

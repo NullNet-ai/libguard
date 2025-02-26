@@ -27,7 +27,8 @@ impl DatastoreTransmitter {
         // send log entries batch to datastore
         if let Err(_) = self
             .datastore
-            .logs_insert_batch(&self.token, unsent_entries.clone()).await
+            .logs_insert_batch(&self.token, unsent_entries.clone())
+            .await
         {
             // log::error!("Could not log to Datastore: {err}");
         } else {
