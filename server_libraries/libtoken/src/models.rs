@@ -6,9 +6,10 @@ use serde::Deserialize;
 pub struct Device {
     pub id: String,
     pub categories: Vec<String>,
-    pub code: String,
+    pub code: Option<String>,
     pub tombstone: u32,
     pub status: String,
+    pub previous_status: Option<String>,
     pub version: u32,
     pub created_date: Option<String>,
     pub created_time: Option<String>,
@@ -21,6 +22,10 @@ pub struct Device {
     pub requested_by: Option<String>,
     pub timestamp: Option<String>,
     pub tags: Vec<String>,
+    pub first_name: Option<String>,
+    pub middle_name: Option<String>,
+    pub last_name: Option<String>,
+    pub date_of_birth: Option<String>,
 }
 
 /// Represents an organization associated with an account.
@@ -32,6 +37,7 @@ pub struct Organization {
     pub code: Option<String>,
     pub tombstone: u32,
     pub status: String,
+    pub previous_status: Option<String>,
     pub version: u32,
     pub created_date: String,
     pub created_time: String,
@@ -52,8 +58,10 @@ pub struct Organization {
 /// Acts as a container for the relationships between devices and organizations.
 #[derive(Debug, Deserialize)]
 pub struct Account {
-    pub device: Device,
+    #[serde(alias = "contact")]
+    pub device: Option<Device>,
     pub organization: Organization,
     pub organization_id: String,
     pub account_id: String,
+    pub organization_account_id: Option<String>,
 }

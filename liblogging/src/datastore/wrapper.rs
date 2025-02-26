@@ -62,7 +62,7 @@ impl DatastoreWrapper {
 
         let request = CreateRequest {
             params: Some(CreateParams {
-                table: String::from("logs"),
+                table: String::from("wallguard_logs"),
             }),
             query: Some(Query {
                 pluck: String::from("id"),
