@@ -59,7 +59,7 @@ pub struct Organization {
 #[derive(Debug, Deserialize)]
 pub struct Account {
     #[serde(alias = "contact")]
-    pub device: Option<Device>,
+    pub device: Device,
     pub organization: Organization,
     pub organization_id: String,
     pub account_id: String,
