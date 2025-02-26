@@ -1,5 +1,5 @@
 use crate::datastore::entry::DatastoreEntry;
-use crate::datastore::transmitter::datastore_transmitter;
+use crate::datastore::transmitter::DatastoreTransmitter;
 use std::sync::mpsc::Sender;
 
 #[derive(Default)]
@@ -15,7 +15,10 @@ impl DatastoreLogger {
 
         let (sender, receiver) = std::sync::mpsc::channel();
 
-        tokio::spawn(async move { datastore_transmitter(receiver).await });
+        tokio::spawn(async move {
+            let transmitter = DatastoreTransmitter::new();
+            transmitter.transmit(receiver).await
+        });
 
         Self {
             logger: Some(sender),
