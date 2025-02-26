@@ -25,36 +25,15 @@ impl DatastoreLogger {
             logger: Some(sender),
         }
     }
-
-    // not needed with the current libdatastore implementation
-    // pub(crate) fn reconnect(&self, err: &Error) {
-    //     let Some(logger) = self.logger.clone() else {
-    //         return;
-    //     };
-    //     *self.is_reconnecting.lock().unwrap() = true;
-    //     log::error!("Could not log to datastore: {err}");
-    //     let is_reconnecting = self.is_reconnecting.clone();
-    //     std::thread::spawn(move || loop {
-    //         std::thread::sleep(std::time::Duration::from_secs(10));
-    //         match CONFIG.connect(NoTls) {
-    //             Ok(client) => {
-    //                 logger = client;
-    //                 *is_reconnecting.lock().unwrap() = false;
-    //                 return;
-    //             }
-    //             Err(e) => {
-    //                 log::error!("Could not reconnect to datastore: {e}");
-    //             }
-    //         }
-    //     });
-    // }
 }
 
 impl log::Log for DatastoreLogger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        self.logger
-            .as_ref()
-            .is_some_and(|_| metadata.level() <= log::max_level())
+        self.logger.as_ref().is_some_and(|_| {
+            metadata.level() <= log::max_level()
+                && !metadata.target().starts_with("nullnet_libdatastore")
+                && !metadata.target().starts_with("nullnet_libtoken")
+        })
     }
 
     fn log(&self, record: &log::Record) {

@@ -13,7 +13,7 @@ async fn main() {
         true,
         false,
         Some(DatastoreCredentials::new("app_id", "app_secret")),
-        Vec::new(),
+        vec!["sample"],
     );
 
     Logger::init(logger_config);

@@ -62,21 +62,24 @@ impl Logger {
 
 impl log::Log for Logger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        self.syslog.enabled(metadata)
-            || self.console.enabled(metadata)
-            || self.datastore.enabled(metadata)
+        !metadata.target().starts_with("nullnet_liblogging")
+            && (self.syslog.enabled(metadata)
+                || self.console.enabled(metadata)
+                || self.datastore.enabled(metadata))
     }
 
     fn log(&self, record: &log::Record) {
-        let target = record.target().to_lowercase();
-        if DEFAULT_ALLOWED_TARGETS
-            .iter()
-            .any(|s| target.starts_with(s))
-            || self.allowed_targets.iter().any(|s| target.starts_with(s))
-        {
-            self.syslog.log(record);
-            self.console.log(record);
-            self.datastore.log(record);
+        if self.enabled(record.metadata()) {
+            let target = record.target().to_lowercase();
+            if DEFAULT_ALLOWED_TARGETS
+                .iter()
+                .any(|s| target.starts_with(s))
+                || self.allowed_targets.iter().any(|s| target.starts_with(s))
+            {
+                self.syslog.log(record);
+                self.console.log(record);
+                self.datastore.log(record);
+            }
         }
     }
 
