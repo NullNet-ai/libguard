@@ -84,7 +84,7 @@ impl DatastoreWrapper {
 
         let request = BatchCreateRequest {
             params: Some(CreateParams {
-                table: String::from("logs"),
+                table: String::from("wallguard_logs"),
             }),
             query: Some(Query {
                 pluck: String::new(),
