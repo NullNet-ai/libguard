@@ -37,7 +37,7 @@ async fn main() {
 
         let _ = client.run().await;
     } else if args.mode.to_lowercase() == "server" {
-        let visitor_addr: SocketAddr = "0.0.0.0:8080".parse().expect("Wrong visitor address");
+        let visitor_addr: SocketAddr = args.visitor_addr.parse().expect("Wrong visitor address");
 
         let profile = libtunnel::ClientProfile {
             id: String::from("test"),
@@ -45,7 +45,7 @@ async fn main() {
             visitor_addr: visitor_addr,
         };
 
-        let server_addr = "0.0.0.0:9000".parse().expect("Wrond server bind addr");
+        let server_addr = args.server_addr.parse().expect("Wrond server bind addr");
 
         let mut server = libtunnel::Server::new(server_addr);
 
