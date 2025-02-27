@@ -1,5 +1,5 @@
 use clap::Parser;
-use nullnet_liblogging::LoggerConfig;
+// use nullnet_liblogging::LoggerConfig;
 use std::net::SocketAddr;
 
 #[derive(Parser, Debug, Clone)]
@@ -19,7 +19,7 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
-    nullnet_liblogging::Logger::init(LoggerConfig::new(true, false, false, vec![]));
+    // nullnet_liblogging::Logger::init(LoggerConfig::default());
 
     let args = Args::parse();
 

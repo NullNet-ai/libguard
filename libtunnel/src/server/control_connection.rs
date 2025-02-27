@@ -45,7 +45,7 @@ impl ControlConnection {
         let mut visitor_stream = visitor.unwrap();
 
         tokio::spawn(async move {
-            log::info!("Data channel established");
+            println!("Data channel established");
             let _ = copy_bidirectional(&mut client_stream, &mut visitor_stream).await;
         });
         Ok(())
@@ -59,16 +59,16 @@ impl ControlConnection {
     ) {
         tokio::select! {
             _ = shutdown_rx.recv() => {
-                log::info!("Control connection received a shutdown signal");
+                println!("Control connection received a shutdown signal");
             },
             result = Self::accept_visitors(stream, addr, visitor_tx) => {
                 if let Err(error) = result {
-                    log::error!("Control connection error: {}", error.to_str())
+                    println!("Control connection error: {}", error.to_str())
                 }
             }
         }
 
-        log::info!("Control connection is terminated");
+        println!("Control connection is terminated");
         // @TODO: Notify the manager
     }
 
@@ -81,7 +81,7 @@ impl ControlConnection {
 
         loop {
             let (visitor, addr) = listener.accept().await.handle_err(location!())?;
-            log::info!("Accepted visitor from: {}", addr);
+            println!("Accepted visitor from: {}", addr);
 
             protocol::write_message(&mut stream, Message::ForwardConnectionRequest).await?;
             visitor_tx.send(visitor).await.handle_err(location!())?;

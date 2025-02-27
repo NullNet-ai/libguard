@@ -43,6 +43,8 @@ impl Message {
 
 #[cfg(test)]
 mod tests {
+    use crate::str_hash;
+
     use super::*;
 
     #[test]
@@ -153,5 +155,23 @@ mod tests {
         let m2 = Message::Rejection.serialize().unwrap();
 
         assert_eq!(m1.len(), m2.len());
+    }
+
+    #[test]
+
+    fn can_transfer_hash() {
+
+        let identifier = String::from("test");
+
+        let hash = str_hash(&identifier);
+
+        let msg = Message::DataConnectionRequest((Payload{data: hash.clone()}));
+
+        let msg = Message::deserialize(&msg.serialize().unwrap()).unwrap();
+
+        match msg {
+            Message::DataConnectionRequest(payload) => assert_eq!(payload.data, hash),
+            _ => panic!()
+        }
     }
 }
