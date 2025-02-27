@@ -74,6 +74,8 @@ impl DatastoreWrapper {
             }),
         };
 
+        // println!("Attempt to send 1 log entry to the datastore");
+
         let token = self.get_and_set_token_safe().await?;
 
         self.inner.create(request, &token).await
@@ -98,6 +100,11 @@ impl DatastoreWrapper {
                 entity_prefix: String::from("LO"),
             }),
         };
+
+        // println!(
+        //     "Attempt to send {} log entries to the datastore",
+        //     logs.len()
+        // );
 
         let token = self.get_and_set_token_safe().await?;
 
