@@ -175,8 +175,15 @@ pub struct CreateRequest {
     pub params: ::core::option::Option<CreateParams>,
     #[prost(message, optional, tag = "2")]
     pub query: ::core::option::Option<Query>,
-    #[prost(string, tag = "3")]
-    pub body: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "3")]
+    pub body: ::core::option::Option<CreateBody>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateBody {
+    #[prost(string, tag = "1")]
+    pub record: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub entity_prefix: ::prost::alloc::string::String,
 }
 /// BATCH CREATE
 #[derive(Clone, PartialEq, ::prost::Message)]

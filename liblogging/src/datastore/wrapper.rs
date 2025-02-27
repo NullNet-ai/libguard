@@ -2,7 +2,7 @@ use crate::datastore::credentials::DatastoreCredentials;
 use crate::datastore::entry::DatastoreEntry;
 use crate::datastore::token::TokenWrapper;
 use nullnet_libdatastore::{
-    BatchCreateBody, BatchCreateRequest, CreateParams, CreateRequest, DatastoreClient,
+    BatchCreateBody, BatchCreateRequest, CreateBody, CreateParams, CreateRequest, DatastoreClient,
     DatastoreConfig, LoginBody, LoginData, LoginRequest, Query, ResponseData,
 };
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
@@ -58,7 +58,7 @@ impl DatastoreWrapper {
         &mut self,
         log: DatastoreEntry,
     ) -> Result<ResponseData, Error> {
-        let body = serde_json::to_string(&log).handle_err(location!())?;
+        let record = serde_json::to_string(&log).handle_err(location!())?;
 
         let request = CreateRequest {
             params: Some(CreateParams {
@@ -68,7 +68,10 @@ impl DatastoreWrapper {
                 pluck: String::from("id"),
                 durability: String::from("soft"),
             }),
-            body,
+            body: Some(CreateBody {
+                record,
+                entity_prefix: String::from("LO"),
+            }),
         };
 
         let token = self.get_and_set_token_safe().await?;
