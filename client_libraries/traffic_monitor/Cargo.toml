@@ -8,6 +8,9 @@ license = "MIT"
 description = "Traffic monitor library for NullNet targets"
 readme = "README.md"
 
+[features]
+export-pcap = []
+
 [dependencies]
 pcap = "2.2.0"
 chrono = { version = "0.4.39", features = ["clock"] }

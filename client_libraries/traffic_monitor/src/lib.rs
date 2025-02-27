@@ -58,20 +58,30 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
         Ok(Ok(cap)) => cap,
         Ok(Err(err)) | Err(err) => {
             eprintln!(
-                "Failed to initialize capture on {}: {}. Aborting monitoring...",
-                device_name, err
+                "Failed to initialize capture on {device_name}: {err}. Aborting monitoring..."
             );
             return;
         }
     };
 
     if let Err(err) = cap.filter(bpf_program, true) {
-        eprintln!(
-            "PCAP filter error on {}: {}. Aborting monitoring...",
-            device_name, err
-        );
+        eprintln!("PCAP filter error on {device_name}: {err}. Aborting monitoring...");
         return;
     }
+
+    let mut savefile = if cfg!(feature = "export-pcap") {
+        let file_name = format!("{device_name}.pcap");
+        let res = cap.savefile(&file_name);
+        match res {
+            Ok(savefile) => Some(savefile),
+            Err(err) => {
+                eprintln!("Failed to create savefile '{file_name}': {err}");
+                None
+            }
+        }
+    } else {
+        None
+    };
 
     let link_type = cap.get_datalink().0;
 
@@ -84,6 +94,10 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
                 timestamp: Utc::now().to_rfc3339(),
             };
             tx.send(packet).unwrap_or_default();
+            // Save packet to file
+            if let Some(file) = savefile.as_mut() {
+                file.write(&p);
+            }
         }
     }
 }
