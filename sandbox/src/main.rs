@@ -1,21 +1,61 @@
-use nullnet_libdatastore::{DatastoreClient, DatastoreConfig, LoginBody, LoginData, LoginRequest};
+use clap::Parser;
+use nullnet_liblogging::LoggerConfig;
+use std::net::SocketAddr;
+
+#[derive(Parser, Debug, Clone)]
+struct Args {
+    #[arg(long, default_value = "client")]
+    pub mode: String,
+
+    #[arg(long, default_value = "127.0.0.1:9000")]
+    pub server_addr: String,
+
+    #[arg(long, default_value = "127.0.0.1:8080")]
+    pub visitor_addr: String,
+
+    #[arg(long, default_value = "127.0.0.1:5000")]
+    pub service_addr: String,
+}
 
 #[tokio::main]
 async fn main() {
-    let config = DatastoreConfig::new(String::from("192.168.2.19"), 6000, false);
+    nullnet_liblogging::Logger::init(LoggerConfig::new(true, false, false, vec![]));
 
-    let client = DatastoreClient::new(config);
+    let args = Args::parse();
 
-    let login_request = LoginRequest {
-        body: Some(LoginBody {
-            data: Some(LoginData {
-                account_id: String::from("device_Hello@gmail.com"),
-                account_secret: String::from("12341234"),
-            }),
-        }),
-    };
+    if args.mode.to_lowercase() == "client" {
+        let server_addr = args.server_addr.parse().expect("Wrond server bind addr");
+        let local_addr = args.service_addr.parse().expect("Wrong local addr");
 
-    let login_response = client.login(login_request).await.unwrap();
+        let config = libtunnel::Config {
+            id: String::from("test"),
+            server_addr,
+            local_addr,
+        };
 
-    println!("Token: {login_response:?}");
+        let client = libtunnel::Client::new(config);
+
+        let _ = client.run().await;
+    } else if args.mode.to_lowercase() == "server" {
+        let visitor_addr: SocketAddr = "0.0.0.0:8080".parse().expect("Wrong visitor address");
+
+        let profile = libtunnel::ClientProfile {
+            id: String::from("test"),
+            token: String::from("not_used_yet"),
+            visitor_addr: visitor_addr,
+        };
+
+        let server_addr = "0.0.0.0:9000".parse().expect("Wrond server bind addr");
+
+        let mut server = libtunnel::Server::new(server_addr);
+
+        server
+            .register_profile(profile)
+            .await
+            .expect("Failed to register client profile");
+
+        let _ = server.run().await;
+    } else {
+        panic!("Unsupported mode: {}", args.mode);
+    }
 }
