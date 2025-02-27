@@ -70,7 +70,7 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
     }
 
     let mut savefile = if cfg!(feature = "export-pcap") {
-        let file_name = format!("{device_name}.pcap");
+        let file_name = format!("./{device_name}.pcap");
         let res = cap.savefile(&file_name);
         match res {
             Ok(savefile) => Some(savefile),
