@@ -1,7 +1,7 @@
 use crate::datastore::credentials::DatastoreCredentials;
 use crate::datastore::entry::DatastoreEntry;
 use crate::datastore::wrapper::DatastoreWrapper;
-use std::sync::mpsc::Receiver;
+use tokio::sync::mpsc::Receiver;
 
 pub(crate) struct DatastoreTransmitter {
     datastore: DatastoreWrapper,
@@ -17,28 +17,31 @@ impl DatastoreTransmitter {
         }
     }
 
-    pub(crate) async fn transmit(mut self, receiver: Receiver<DatastoreEntry>) {
-        while let Ok(e) = receiver.recv() {
-            if self.datastore.logs_insert_single(e.clone()).await.is_err() {
-                self.unsent_entries.push(e);
-            } else {
-                self.flush().await;
+    pub(crate) async fn transmit(mut self, mut receiver: Receiver<DatastoreEntry>) {
+        loop {
+            if receiver.recv_many(&mut self.unsent_entries, 10_000).await == 0 {
+                return;
             }
-        }
-    }
 
-    async fn flush(&mut self) {
-        if self.unsent_entries.is_empty() {
-            return;
-        }
-        // send log entries batch to datastore
-        if self
-            .datastore
-            .logs_insert_batch(self.unsent_entries.clone())
-            .await
-            .is_ok()
-        {
-            self.unsent_entries.clear();
+            let insert_ok = match self.unsent_entries.len() {
+                // channel closed
+                0 => return,
+                // received single log entry
+                1 => {
+                    let e = self.unsent_entries.first().unwrap();
+                    self.datastore.logs_insert_single(e.clone()).await.is_ok()
+                }
+                // received multiple log entries, or buffer accumulated multiple entries due to errors
+                _ => self
+                    .datastore
+                    .logs_insert_batch(self.unsent_entries.clone())
+                    .await
+                    .is_ok(),
+            };
+
+            if insert_ok {
+                self.unsent_entries.clear();
+            }
         }
     }
 }

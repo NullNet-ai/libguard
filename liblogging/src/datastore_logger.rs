@@ -1,7 +1,8 @@
 use crate::datastore::entry::DatastoreEntry;
 use crate::datastore::transmitter::DatastoreTransmitter;
 use crate::DatastoreCredentials;
-use std::sync::mpsc::Sender;
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::Sender;
 
 #[derive(Default)]
 pub(crate) struct DatastoreLogger {
@@ -14,7 +15,7 @@ impl DatastoreLogger {
             return Self::default();
         };
 
-        let (sender, receiver) = std::sync::mpsc::channel();
+        let (sender, receiver) = mpsc::channel(10_000);
 
         tokio::spawn(async move {
             let transmitter = DatastoreTransmitter::new(credentials);
@@ -41,9 +42,7 @@ impl log::Log for DatastoreLogger {
             if self.enabled(record.metadata()) {
                 let e = DatastoreEntry::new(record);
                 // send log entry to transmitter
-                logger
-                    .send(e)
-                    .expect("Could not send log entry to transmitter");
+                let _ = logger.try_send(e);
             }
         }
     }

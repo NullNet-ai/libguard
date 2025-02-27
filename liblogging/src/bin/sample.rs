@@ -25,6 +25,6 @@ async fn main() {
         log::debug!("This is a debug message from {runner}");
         log::trace!("This is a trace message from {runner}");
 
-        std::thread::sleep(std::time::Duration::from_secs(10));
+        tokio::time::sleep(std::time::Duration::from_secs(10)).await;
     }
 }
