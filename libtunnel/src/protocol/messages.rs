@@ -111,6 +111,7 @@ mod tests {
 
     #[test]
     fn messages_are_distinguishable() {
+
         let s1 = Message::Heartbeat.serialize().unwrap();
         let s2 = Message::Acknowledgment.serialize().unwrap();
 
@@ -131,7 +132,10 @@ mod tests {
     }
 
     #[test]
-    fn open_messages_have_the_same_length() {
+    fn open_and_confirmation_messages_have_the_same_length() {
+        // Message length of ControlConnectionRequest should be equal to DataConnectionRequest
+        // As well as length of Acknowledgment should be equal to Rejection.
+
         let payload = Payload {
             data: [1; PAYLOAD_SIZE],
         };
@@ -142,6 +146,11 @@ mod tests {
         let m2 = Message::DataConnectionRequest(payload.clone())
             .serialize()
             .unwrap();
+
+        assert_eq!(m1.len(), m2.len());
+
+        let m1 = Message::Acknowledgment.serialize().unwrap();
+        let m2 = Message::Rejection.serialize().unwrap();
 
         assert_eq!(m1.len(), m2.len());
     }

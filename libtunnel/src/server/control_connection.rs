@@ -1,5 +1,6 @@
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
 use std::net::SocketAddr;
+use tokio::io::copy_bidirectional;
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{broadcast, mpsc};
 use tokio::task::JoinHandle;
@@ -32,6 +33,22 @@ impl ControlConnection {
     pub async fn shutdown(self) -> Result<(), Error> {
         let _ = self.shutdown_tx.send(()).handle_err(location!());
         self.handle.await.handle_err(location!())
+    }
+
+    pub async fn open_data_channel(&mut self, mut client_stream: TcpStream) -> Result<(), Error> {
+        let visitor = self.visitor_rx.recv().await;
+
+        if visitor.is_none() {
+            return Err("Failed to receive a visitor").handle_err(location!());
+        }
+
+        let mut visitor_stream = visitor.unwrap();
+
+        tokio::spawn(async move {
+            log::info!("Data channel established");
+            let _ = copy_bidirectional(&mut client_stream, &mut visitor_stream).await;
+        });
+        Ok(())
     }
 
     async fn run(

@@ -1,7 +1,6 @@
-use super::control_connection::ControlConnection;
 use super::control_connection_manager::ControlConnectionManager;
 use super::{profile::ClientProfile, profile_manager::ProfileManager};
-use crate::{protocol, Message, Payload};
+use crate::{protocol, str_hash, Hash, Message, Payload};
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::{TcpListener, TcpStream};
@@ -14,6 +13,17 @@ pub struct Server {
 }
 
 impl Server {
+    pub fn new(bind_addr: SocketAddr) -> Self {
+        let profile_manager = Arc::new(Mutex::new(ProfileManager::new()));
+        let connections_manager = Arc::new(Mutex::new(ControlConnectionManager::new()));
+
+        Self {
+            bind_addr,
+            profile_manager,
+            connections_manager,
+        }
+    }
+
     pub async fn run(&mut self) -> Result<(), Error> {
         let listener = TcpListener::bind(self.bind_addr)
             .await
@@ -30,11 +40,13 @@ impl Server {
 
             match message {
                 Message::ControlConnectionRequest(payload) => {
+                    log::info!("Control connection request received {:?}", &payload.data);
                     self.on_control_connection_established(stream, payload)
                         .await;
                 }
                 Message::DataConnectionRequest(payload) => {
-                    self.on_data_connection_established(payload).await;
+                    log::info!("Data connection request received {:?}", &payload.data);
+                    self.on_data_connection_established(stream, payload).await;
                 }
                 _ => {
                     log::error!("Unexpected opening message, aborting connection ...");
@@ -49,10 +61,9 @@ impl Server {
         let connections_manager = self.connections_manager.clone();
 
         tokio::spawn(async move {
-            // @TODO: Parse payload
-            let client_id = String::from("");
+            let client_id_hash = payload.data;
 
-            if let Some(profile) = profile_manager.lock().await.get(&client_id) {
+            if let Some(profile) = profile_manager.lock().await.get(&client_id_hash) {
                 match protocol::write_message(&mut stream, Message::Acknowledgment).await {
                     Ok(_) => {
                         connections_manager
@@ -62,13 +73,13 @@ impl Server {
                             .await;
                     }
                     Err(err) => {
-                        log::error!("Failed to sernd Acknowledgment message. {}", err.to_str())
+                        log::error!("Failed to send Acknowledgment message. {}", err.to_str())
                     }
                 };
             } else {
                 match protocol::write_message(&mut stream, Message::Rejection).await {
                     Err(err) => {
-                        log::error!("Failed to sernd Rejection message. {}", err.to_str())
+                        log::error!("Failed to send Rejection message. {}", err.to_str())
                     }
                     _ => {}
                 };
@@ -76,7 +87,39 @@ impl Server {
         });
     }
 
-    async fn on_data_connection_established(&mut self, payload: Payload) {}
+    async fn on_data_connection_established(&mut self, mut stream: TcpStream, payload: Payload) {
+        let connections_manager = self.connections_manager.clone();
+
+        tokio::spawn(async move {
+            let control_id: Hash = payload.data;
+
+            if connections_manager.lock().await.exists(&control_id) {
+                match protocol::write_message(&mut stream, Message::Acknowledgment).await {
+                    Ok(_) => {
+                        // @TODO: Since open_data_channel would block in an attempt
+                        // to receive a visitor stream, we might want ot add timeout
+                        // or imrove the API to not hold the lock on connections_manager
+                        if let Err(err) = connections_manager
+                            .lock()
+                            .await
+                            .open_data_channel(&control_id, stream)
+                            .await
+                        {
+                            log::error!("Failed to open data channel, {}", err.to_str());
+                        }
+                    }
+                    Err(err) => {
+                        log::error!("Failed to send Acknowledgment message. {}", err.to_str());
+                    }
+                };
+            } else {
+                match protocol::write_message(&mut stream, Message::Rejection).await {
+                    Err(err) => log::error!("Failed to send Rejection message. {}", err.to_str()),
+                    _ => {}
+                };
+            }
+        });
+    }
 
     pub async fn register_profile(&mut self, profile: ClientProfile) -> Result<(), Error> {
         self.profile_manager.lock().await.register(profile)
@@ -84,6 +127,7 @@ impl Server {
 
     pub async fn remove_profile(&mut self, id: &str) -> Result<(), Error> {
         // @TODO: After profile has been removed, we need to shutdown open channels
-        self.profile_manager.lock().await.remove(id)
+        let hash = str_hash(id);
+        self.profile_manager.lock().await.remove(&hash)
     }
 }

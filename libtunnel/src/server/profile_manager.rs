@@ -1,9 +1,11 @@
 use super::profile::ClientProfile;
+use crate::{str_hash, PAYLOAD_SIZE};
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
 use std::collections::HashMap;
 
+pub type Hash = [u8; PAYLOAD_SIZE];
 pub struct ProfileManager {
-    profiles: HashMap<String, ClientProfile>,
+    profiles: HashMap<Hash, ClientProfile>,
 }
 
 impl ProfileManager {
@@ -14,19 +16,21 @@ impl ProfileManager {
     }
 
     pub fn register(&mut self, profile: ClientProfile) -> Result<(), Error> {
-        if self.profiles.contains_key(&profile.id) {
+        let hash: Hash = str_hash(&profile.id);
+
+        if self.profiles.contains_key(&hash) {
             return Err(format!("Profile '{}' is already registered", &profile.id))
                 .handle_err(location!());
         }
 
-        let _ = self.profiles.insert(profile.id.clone(), profile);
+        let _ = self.profiles.insert(hash, profile);
 
         Ok(())
     }
 
-    pub fn remove(&mut self, id: &str) -> Result<(), Error> {
+    pub fn remove(&mut self, id: &Hash) -> Result<(), Error> {
         if !self.profiles.contains_key(id) {
-            return Err(format!("Profile with id '{}' is not registered", id))
+            return Err(format!("Profile with id '{:?}' is not registered", id))
                 .handle_err(location!());
         }
 
@@ -35,7 +39,7 @@ impl ProfileManager {
         Ok(())
     }
 
-    pub fn get(&self, id: &str) -> Option<ClientProfile> {
-        self.profiles.get(id).cloned()
+    pub fn get(&self, hash: &Hash) -> Option<ClientProfile> {
+        self.profiles.get(hash).cloned()
     }
 }

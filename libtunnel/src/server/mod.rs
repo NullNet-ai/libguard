@@ -4,4 +4,5 @@ mod profile;
 mod profile_manager;
 mod server;
 
+pub use profile::*;
 pub use server::*;
