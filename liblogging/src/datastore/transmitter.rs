@@ -26,14 +26,11 @@ impl DatastoreTransmitter {
 
             // loop until datastore returns error
             loop {
-                let insert_ok = match self.unsent_entries.len() {
+                let insert_ok = match self.unsent_entries.as_slice() {
                     // channel closed
-                    0 => return,
+                    [] => return,
                     // received single log entry
-                    1 => {
-                        let e = self.unsent_entries.first().unwrap();
-                        self.datastore.logs_insert_single(e.clone()).await.is_ok()
-                    }
+                    [e] => self.datastore.logs_insert_single(e.clone()).await.is_ok(),
                     // received multiple log entries, or buffer accumulated multiple entries due to errors
                     _ => self
                         .datastore
@@ -46,11 +43,11 @@ impl DatastoreTransmitter {
                     // println!("Inserted {} log entries", self.unsent_entries.len());
                     self.unsent_entries.clear();
                     break;
-                } else {
-                    // println!("Insertion failed");
-                    // wait 10 seconds before retrying
-                    tokio::time::sleep(std::time::Duration::from_secs(10)).await;
                 }
+
+                // println!("Insertion failed");
+                // wait 10 seconds before retrying
+                tokio::time::sleep(std::time::Duration::from_secs(10)).await;
             }
         }
     }
