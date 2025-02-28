@@ -4,7 +4,7 @@ use nullnet_libdatastore::{DatastoreClient, DatastoreConfig, LoginBody, LoginDat
 async fn main() {
     let config = DatastoreConfig::new(String::from("192.168.2.19"), 6000, false);
 
-    let client = DatastoreClient::new(config);
+    let mut client = DatastoreClient::new(config).await.unwrap();
 
     let login_request = LoginRequest {
         body: Some(LoginBody {

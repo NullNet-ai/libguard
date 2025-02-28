@@ -1,3 +1,7 @@
+use crate::store_service_client::StoreServiceClient;
+use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use tonic::transport::{Channel, ClientTlsConfig};
+
 /// Configuration structure for the datastore.
 ///
 /// This struct encapsulates the configuration details required to connect to the datastore,
@@ -43,6 +47,31 @@ impl DatastoreConfig {
     #[must_use]
     pub fn new(host: String, port: u16, tls: bool) -> Self {
         Self { host, port, tls }
+    }
+
+    /// Establishes a connection to the datastore service.
+    ///
+    /// # Returns
+    /// * `Ok(StoreServiceClient<Channel>)` - The client for interacting with the datastore service.
+    /// * `Err(Error)` - If the connection fails.
+    pub(crate) async fn connect(&self) -> Result<StoreServiceClient<Channel>, Error> {
+        let protocol = if self.tls { "https" } else { "http" };
+        let host = self.host.as_str();
+        let port = self.port;
+
+        let mut endpoint = Channel::from_shared(format!("{protocol}://{host}:{port}"))
+            .handle_err(location!())?
+            .connect_timeout(std::time::Duration::from_secs(10));
+
+        if self.tls {
+            endpoint = endpoint
+                .tls_config(ClientTlsConfig::new().with_native_roots())
+                .handle_err(location!())?;
+        }
+
+        let channel: Channel = endpoint.connect().await.handle_err(location!())?;
+
+        Ok(StoreServiceClient::new(channel))
     }
 }
 

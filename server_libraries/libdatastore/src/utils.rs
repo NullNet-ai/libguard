@@ -31,7 +31,7 @@ pub(crate) fn authorize_request<T>(request: T, token: &str) -> Result<Request<T>
 /// * `Ok(ResponseData)` - If the response indicates success.
 /// * `Err(Error)` - If the response indicates failure, an error is returned with details.
 pub(crate) fn validate_response_and_convert_to_reponse_data(
-    response: Response,
+    response: &Response,
 ) -> Result<ResponseData, Error> {
     if !response.success {
         return Err(format!(
