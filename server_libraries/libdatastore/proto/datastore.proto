@@ -125,7 +125,12 @@ message DeleteRequest {
 message CreateRequest {
     CreateParams params = 1;
     Query query = 2;
-    string body = 3;
+    CreateBody body = 3;
+}
+
+message CreateBody{
+    string record = 1;
+    string entity_prefix = 2;
 }
 
 
