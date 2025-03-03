@@ -6,7 +6,7 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
-pub use crate::datastore::credentials::DatastoreConfig;
+pub use crate::datastore::config::DatastoreConfig;
 use crate::datastore_logger::DatastoreLogger;
 use crate::syslog_logger::SyslogLogger;
 
@@ -104,7 +104,7 @@ impl LoggerConfig {
     /// # Arguments
     /// * `console` - Whether to log to console
     /// * `syslog` - Whether to log to syslog
-    /// * `datastore` - Datastore credentials for logging (use `None` to disable logging to Datastore)
+    /// * `datastore` - Datastore logging configuration (use `None` to disable logging to Datastore)
     /// * `allowed_targets` - The list of allowed targets.<br>
     ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
     ///   Use this parameter to specify additional targets

@@ -1,5 +1,5 @@
 #[derive(Debug)]
-/// Datastore credentials
+/// Datastore configuration
 pub struct DatastoreConfig {
     pub(crate) app_id: String,
     pub(crate) app_secret: String,

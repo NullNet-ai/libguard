@@ -1,4 +1,4 @@
-use crate::datastore::credentials::DatastoreConfig;
+use crate::datastore::config::DatastoreConfig;
 use crate::datastore::wrapper::ServerWrapper;
 use libwallguard::Log;
 use tokio::sync::mpsc::Receiver;
@@ -9,8 +9,8 @@ pub(crate) struct DatastoreTransmitter {
 }
 
 impl DatastoreTransmitter {
-    pub(crate) async fn new(datastore_credentials: DatastoreConfig) -> Self {
-        let datastore = ServerWrapper::new(datastore_credentials).await;
+    pub(crate) async fn new(datastore_config: DatastoreConfig) -> Self {
+        let datastore = ServerWrapper::new(datastore_config).await;
         Self {
             server: datastore,
             unsent_entries: Vec::new(),

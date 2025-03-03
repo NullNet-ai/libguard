@@ -11,15 +11,15 @@ pub(crate) struct DatastoreLogger {
 }
 
 impl DatastoreLogger {
-    pub(crate) fn new(datastore_credentials: Option<DatastoreConfig>) -> Self {
-        let Some(credentials) = datastore_credentials else {
+    pub(crate) fn new(datastore_config: Option<DatastoreConfig>) -> Self {
+        let Some(config) = datastore_config else {
             return Self::default();
         };
 
         let (sender, receiver) = mpsc::channel(10_000);
 
         tokio::spawn(async move {
-            let transmitter = DatastoreTransmitter::new(credentials).await;
+            let transmitter = DatastoreTransmitter::new(config).await;
             transmitter.transmit(receiver).await;
         });
 

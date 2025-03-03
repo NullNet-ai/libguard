@@ -1,4 +1,4 @@
-use crate::datastore::credentials::DatastoreConfig;
+use crate::datastore::config::DatastoreConfig;
 use crate::datastore::token::TokenWrapper;
 use libwallguard::{Authentication, CommonResponse, Log, Logs, WallGuardGrpcInterface};
 
