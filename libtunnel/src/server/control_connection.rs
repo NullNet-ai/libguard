@@ -19,7 +19,7 @@ impl ControlConnection {
         let (shutdown_tx, shutdown_rx) = broadcast::channel(1);
         let (visitor_tx, visitor_rx) = mpsc::channel(1024);
 
-        let addr = profile.visitor_addr.clone();
+        let addr = profile.visitor_addr;
         let handle =
             tokio::spawn(async move { Self::run(stream, addr, visitor_tx, shutdown_rx).await });
 

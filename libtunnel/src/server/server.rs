@@ -76,13 +76,9 @@ impl Server {
                         println!("Failed to send Acknowledgment message. {}", err.to_str())
                     }
                 };
-            } else {
-                match protocol::write_message(&mut stream, Message::Rejection).await {
-                    Err(err) => {
-                        println!("Failed to send Rejection message. {}", err.to_str())
-                    }
-                    _ => {}
-                };
+            } else if let Err(err) = protocol::write_message(&mut stream, Message::Rejection).await
+            {
+                println!("Failed to send Rejection message. {}", err.to_str());
             }
         });
     }
@@ -112,11 +108,9 @@ impl Server {
                         println!("Failed to send Acknowledgment message. {}", err.to_str());
                     }
                 };
-            } else {
-                match protocol::write_message(&mut stream, Message::Rejection).await {
-                    Err(err) => println!("Failed to send Rejection message. {}", err.to_str()),
-                    _ => {}
-                };
+            } else if let Err(err) = protocol::write_message(&mut stream, Message::Rejection).await
+            {
+                println!("Failed to send Rejection message. {}", err.to_str());
             }
         });
     }

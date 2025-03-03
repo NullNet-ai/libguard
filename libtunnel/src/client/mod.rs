@@ -27,7 +27,7 @@ impl Client {
             .handle_err(location!())?;
 
         let hash = str_hash(&config.id);
-        Self::request_open_control_connection(&mut server_stream, hash.clone()).await?;
+        Self::request_open_control_connection(&mut server_stream, hash).await?;
 
         println!("Control connection established");
 
@@ -49,7 +49,6 @@ impl Client {
                 }
             };
         }
-
     }
 
     async fn run_data_connection(config: Config) -> Result<(), Error> {
@@ -60,7 +59,7 @@ impl Client {
             .handle_err(location!())?;
 
         let hash = str_hash(&config.id);
-        Self::request_open_data_connection(&mut server_stream, hash.clone()).await?;
+        Self::request_open_data_connection(&mut server_stream, hash).await?;
 
         let mut local_stream = TcpStream::connect(&config.local_addr)
             .await
