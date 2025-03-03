@@ -8,13 +8,13 @@ pub struct DatastoreConfig {
 }
 
 impl DatastoreConfig {
-    /// Create new `DatastoreConfig`
+    /// Creates a new `DatastoreConfig`
     ///
     /// # Arguments
     ///
     /// * `id` - Application or Account ID
     /// * `secret` - Application or Account Secret
-    /// * `server_addr` - Server address
+    /// * `server_addr` - Server address (use `0.0.0.0` if running from the server itself)
     /// * `server_port` - Server port
     pub fn new<S: Into<String>>(id: S, secret: S, server_addr: S, server_port: u16) -> Self {
         Self {
