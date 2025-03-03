@@ -49,7 +49,6 @@ impl Client {
                 }
             };
         }
-
     }
 
     async fn run_data_connection(config: Config) -> Result<(), Error> {

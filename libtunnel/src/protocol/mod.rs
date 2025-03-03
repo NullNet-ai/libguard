@@ -16,7 +16,10 @@ pub async fn write_message(stream: &mut TcpStream, message: Message) -> Result<(
     Ok(())
 }
 
-pub async fn write_with_confirmation(stream: &mut TcpStream, message: Message) -> Result<(), Error> {
+pub async fn write_with_confirmation(
+    stream: &mut TcpStream,
+    message: Message,
+) -> Result<(), Error> {
     write_message(stream, message).await?;
 
     // @TODO: Timeout needs to be implemented

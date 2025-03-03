@@ -113,7 +113,6 @@ mod tests {
 
     #[test]
     fn messages_are_distinguishable() {
-
         let s1 = Message::Heartbeat.serialize().unwrap();
         let s2 = Message::Acknowledgment.serialize().unwrap();
 
@@ -160,18 +159,17 @@ mod tests {
     #[test]
 
     fn can_transfer_hash() {
-
         let identifier = String::from("test");
 
         let hash = str_hash(&identifier);
 
-        let msg = Message::DataConnectionRequest((Payload{data: hash.clone()}));
+        let msg = Message::DataConnectionRequest((Payload { data: hash.clone() }));
 
         let msg = Message::deserialize(&msg.serialize().unwrap()).unwrap();
 
         match msg {
             Message::DataConnectionRequest(payload) => assert_eq!(payload.data, hash),
-            _ => panic!()
+            _ => panic!(),
         }
     }
 }

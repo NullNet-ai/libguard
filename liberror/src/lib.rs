@@ -24,7 +24,7 @@ pub trait ErrorHandler<T, E> {
 impl<T, E: Display> ErrorHandler<T, E> for Result<T, E> {
     fn handle_err(self, location: Location) -> Result<T, Error> {
         self.map_err(|e| {
-            log::error!("[{}:{}] {e}", location.file, location.line);
+            log::error!(target: location.module_path, "[{}:{}] {e}", location.file, location.line);
             Error {
                 message: e.to_string(),
             }
@@ -32,17 +32,19 @@ impl<T, E: Display> ErrorHandler<T, E> for Result<T, E> {
     }
 }
 
-/// Struct to store the location in the code (file and line)
+/// Struct to store the location in the code (module path, file, and line)
 pub struct Location {
+    pub module_path: &'static str,
     pub file: &'static str,
     pub line: u32,
 }
 
 #[macro_export]
-/// Macro to get the current location in the code (file and line)
+/// Macro to get the current location in the code (module path, file, and line)
 macro_rules! location {
     () => {
         Location {
+            module_path: module_path!(),
             file: file!(),
             line: line!(),
         }

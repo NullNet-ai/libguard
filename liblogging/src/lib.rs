@@ -6,11 +6,13 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
-use crate::postgres_logger::PostgresLogger;
+pub use crate::datastore::config::DatastoreConfig;
+use crate::datastore_logger::DatastoreLogger;
 use crate::syslog_logger::SyslogLogger;
 
 mod console_logger;
-mod postgres_logger;
+mod datastore;
+mod datastore_logger;
 mod syslog_logger;
 
 static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
@@ -21,11 +23,11 @@ static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
             .collect()
     });
 
-/// Logger implementation that logs to console, syslog, and `PostgreSQL`
+/// Logger implementation that logs to console, syslog, and Datastore
 pub struct Logger {
     console: ConsoleLogger,
     syslog: SyslogLogger,
-    postgres: PostgresLogger,
+    datastore: DatastoreLogger,
     allowed_targets: Vec<String>,
 }
 
@@ -38,7 +40,7 @@ impl Logger {
         let LoggerConfig {
             console,
             syslog,
-            postgres,
+            datastore,
             allowed_targets,
         } = logger_config;
 
@@ -49,7 +51,7 @@ impl Logger {
             log::set_boxed_logger(Box::new(Logger {
                 console: ConsoleLogger::new(console),
                 syslog: SyslogLogger::new(syslog),
-                postgres: PostgresLogger::new(postgres),
+                datastore: DatastoreLogger::new(datastore),
                 allowed_targets,
             }))
             .unwrap_or_default();
@@ -60,53 +62,49 @@ impl Logger {
 
 impl log::Log for Logger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        self.syslog.enabled(metadata)
-            || self.console.enabled(metadata)
-            || self.postgres.enabled(metadata)
+        !metadata.target().starts_with("nullnet_liblogging")
+            && (self.syslog.enabled(metadata)
+                || self.console.enabled(metadata)
+                || self.datastore.enabled(metadata))
     }
 
     fn log(&self, record: &log::Record) {
-        let target = record.target().to_lowercase();
-        if DEFAULT_ALLOWED_TARGETS
-            .iter()
-            .any(|s| target.starts_with(s))
-            || self.allowed_targets.iter().any(|s| target.starts_with(s))
-        {
-            self.syslog.log(record);
-            self.console.log(record);
-            self.postgres.log(record);
+        if self.enabled(record.metadata()) {
+            let target = record.target().to_lowercase();
+            if DEFAULT_ALLOWED_TARGETS
+                .iter()
+                .any(|s| target.starts_with(s))
+                || self.allowed_targets.iter().any(|s| target.starts_with(s))
+            {
+                self.syslog.log(record);
+                self.console.log(record);
+                self.datastore.log(record);
+            }
         }
     }
 
     fn flush(&self) {
         self.syslog.flush();
         self.console.flush();
-        self.postgres.flush();
+        self.datastore.flush();
     }
 }
 
 /// Logger configuration
 pub struct LoggerConfig {
-    /// Whether to log to console
-    pub console: bool,
-    /// Whether to log to syslog
-    pub syslog: bool,
-    /// Whether to log to `PostgreSQL`
-    pub postgres: bool,
-    /// The list of allowed targets.<br>
-    ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
-    ///   Use this parameter to specify additional targets
-    ///   (e.g., specifying "serde" will emit logs for all targets whose name is in the form `serde*`).
-    pub allowed_targets: Vec<&'static str>,
+    console: bool,
+    syslog: bool,
+    datastore: Option<DatastoreConfig>,
+    allowed_targets: Vec<&'static str>,
 }
 
 impl LoggerConfig {
     /// Creates a new logger configuration
     ///
     /// # Arguments
-    /// * `console_logger` - Whether to log to console
-    /// * `syslog_endpoint` - Whether to log to syslog
-    /// * `postgres_endpoint` - Whether to log to `PostgreSQL`
+    /// * `console` - Whether to log to console
+    /// * `syslog` - Whether to log to syslog
+    /// * `datastore` - Datastore logging configuration (use `None` to disable logging to Datastore)
     /// * `allowed_targets` - The list of allowed targets.<br>
     ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
     ///   Use this parameter to specify additional targets
@@ -115,25 +113,14 @@ impl LoggerConfig {
     pub fn new(
         console: bool,
         syslog: bool,
-        postgres: bool,
+        datastore: Option<DatastoreConfig>,
         allowed_targets: Vec<&'static str>,
     ) -> Self {
         Self {
             console,
             syslog,
-            postgres,
+            datastore,
             allowed_targets,
-        }
-    }
-}
-
-impl Default for LoggerConfig {
-    fn default() -> Self {
-        Self {
-            console: true,
-            syslog: true,
-            postgres: true,
-            allowed_targets: vec![],
         }
     }
 }

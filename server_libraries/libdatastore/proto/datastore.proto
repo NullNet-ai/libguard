@@ -118,9 +118,9 @@ message DeleteRequest {
     Params params = 1;
     DeleteQuery query = 2;
 }
- message DeleteQuery{
+message DeleteQuery{
     string is_permanent = 1;
- }
+}
 
 message CreateRequest {
     CreateParams params = 1;
