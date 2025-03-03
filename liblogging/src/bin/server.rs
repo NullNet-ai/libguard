@@ -1,18 +1,23 @@
 // Sample program to test the logging library
 
-use nullnet_liblogging::{DatastoreCredentials, Logger, LoggerConfig};
+use nullnet_liblogging::{DatastoreConfig, Logger, LoggerConfig};
 
 #[tokio::main]
 async fn main() {
     // read first command line argument
     let args: Vec<String> = std::env::args().collect();
-    let default_runner = "sample program".to_string();
+    let default_runner = "sample_server".to_string();
     let runner = args.get(1).unwrap_or(&default_runner);
 
     let logger_config = LoggerConfig::new(
         true,
         false,
-        Some(DatastoreCredentials::new("app_id", "app_secret")),
+        Some(DatastoreConfig::new(
+            "account_id",
+            "account_secret",
+            "0.0.0.0",
+            50051,
+        )),
         vec!["sample"],
     );
 

@@ -6,7 +6,7 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
-pub use crate::datastore::credentials::DatastoreCredentials;
+pub use crate::datastore::credentials::DatastoreConfig;
 use crate::datastore_logger::DatastoreLogger;
 use crate::syslog_logger::SyslogLogger;
 
@@ -94,7 +94,7 @@ impl log::Log for Logger {
 pub struct LoggerConfig {
     console: bool,
     syslog: bool,
-    datastore: Option<DatastoreCredentials>,
+    datastore: Option<DatastoreConfig>,
     allowed_targets: Vec<&'static str>,
 }
 
@@ -113,7 +113,7 @@ impl LoggerConfig {
     pub fn new(
         console: bool,
         syslog: bool,
-        datastore: Option<DatastoreCredentials>,
+        datastore: Option<DatastoreConfig>,
         allowed_targets: Vec<&'static str>,
     ) -> Self {
         Self {

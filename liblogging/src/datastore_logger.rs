@@ -1,16 +1,17 @@
-use crate::datastore::entry::DatastoreEntry;
 use crate::datastore::transmitter::DatastoreTransmitter;
-use crate::DatastoreCredentials;
+use crate::DatastoreConfig;
+use chrono::Utc;
+use libwallguard::Log;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 
 #[derive(Default)]
 pub(crate) struct DatastoreLogger {
-    logger: Option<Sender<DatastoreEntry>>,
+    logger: Option<Sender<Log>>,
 }
 
 impl DatastoreLogger {
-    pub(crate) fn new(datastore_credentials: Option<DatastoreCredentials>) -> Self {
+    pub(crate) fn new(datastore_credentials: Option<DatastoreConfig>) -> Self {
         let Some(credentials) = datastore_credentials else {
             return Self::default();
         };
@@ -18,7 +19,7 @@ impl DatastoreLogger {
         let (sender, receiver) = mpsc::channel(10_000);
 
         tokio::spawn(async move {
-            let transmitter = DatastoreTransmitter::new(credentials);
+            let transmitter = DatastoreTransmitter::new(credentials).await;
             transmitter.transmit(receiver).await;
         });
 
@@ -40,7 +41,14 @@ impl log::Log for DatastoreLogger {
     fn log(&self, record: &log::Record) {
         if let Some(logger) = self.logger.as_ref() {
             if self.enabled(record.metadata()) {
-                let e = DatastoreEntry::new(record);
+                let timestamp = Utc::now().to_rfc3339();
+                let level = record.level().to_string();
+                let message = record.args().to_string();
+                let e = Log {
+                    timestamp,
+                    level,
+                    message,
+                };
                 // send log entry to transmitter
                 let _ = logger.try_send(e);
             }

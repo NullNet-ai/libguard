@@ -1,114 +1,61 @@
-use crate::datastore::credentials::DatastoreCredentials;
-use crate::datastore::entry::DatastoreEntry;
+use crate::datastore::credentials::DatastoreConfig;
 use crate::datastore::token::TokenWrapper;
-use nullnet_libdatastore::{
-    BatchCreateBody, BatchCreateRequest, CreateBody, CreateParams, CreateRequest, DatastoreClient,
-    DatastoreConfig, LoginBody, LoginData, LoginRequest, Query, ResponseData,
-};
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use libwallguard::{Authentication, CommonResponse, Log, Logs, WallGuardGrpcInterface};
 
-#[derive(Debug)]
-pub(crate) struct DatastoreWrapper {
-    inner: DatastoreClient,
-    datastore_credentials: DatastoreCredentials,
+pub(crate) struct ServerWrapper {
+    inner: WallGuardGrpcInterface,
+    datastore_config: DatastoreConfig,
     token: Option<TokenWrapper>,
 }
 
-impl DatastoreWrapper {
-    pub(crate) fn new(datastore_credentials: DatastoreCredentials) -> Self {
-        let config = DatastoreConfig::from_env();
-        let inner = DatastoreClient::new(config);
+impl ServerWrapper {
+    pub(crate) async fn new(datastore_config: DatastoreConfig) -> Self {
+        let inner = WallGuardGrpcInterface::new(
+            &datastore_config.server_addr,
+            datastore_config.server_port,
+        )
+        .await;
 
         Self {
             inner,
-            datastore_credentials,
+            datastore_config,
             token: None,
         }
     }
 
     #[allow(clippy::missing_errors_doc)]
-    async fn login(&self) -> Result<String, Error> {
-        let request = LoginRequest {
-            body: Some(LoginBody {
-                data: Some(LoginData {
-                    account_id: self.datastore_credentials.app_id.clone(),
-                    account_secret: self.datastore_credentials.app_secret.clone(),
-                }),
-            }),
-        };
-
-        let response = self.inner.login(request).await?;
-
-        Ok(response.token)
+    async fn login(&mut self) -> Result<String, String> {
+        self.inner
+            .login(
+                self.datastore_config.app_id.clone(),
+                self.datastore_config.app_secret.clone(),
+            )
+            .await
     }
 
-    async fn get_and_set_token_safe(&mut self) -> Result<String, Error> {
+    async fn get_and_set_token_safe(&mut self) -> Result<String, String> {
         let is_expired = self.token.as_ref().is_none_or(TokenWrapper::is_expired);
 
         if is_expired {
             let new_token_string = self.login().await?;
-            let new_token = TokenWrapper::from_jwt(new_token_string).handle_err(location!())?;
+            let new_token = TokenWrapper::from_jwt(new_token_string)?;
             self.token = Some(new_token);
         }
 
         Ok(self.token.as_ref().unwrap().jwt.clone())
     }
 
-    pub(crate) async fn logs_insert_single(
-        &mut self,
-        log: DatastoreEntry,
-    ) -> Result<ResponseData, Error> {
-        let record = serde_json::to_string(&log).handle_err(location!())?;
-
-        let request = CreateRequest {
-            params: Some(CreateParams {
-                table: String::from("wallguard_logs"),
-            }),
-            query: Some(Query {
-                pluck: String::from("id"),
-                durability: String::from("soft"),
-            }),
-            body: Some(CreateBody {
-                record,
-                entity_prefix: String::from("LO"),
-            }),
-        };
-
+    pub(crate) async fn logs_insert(&mut self, logs: Vec<Log>) -> Result<CommonResponse, String> {
         // println!("Attempt to send 1 log entry to the datastore");
 
         let token = self.get_and_set_token_safe().await?;
 
-        self.inner.create(request, &token).await
-    }
-
-    pub(crate) async fn logs_insert_batch(
-        &mut self,
-        logs: Vec<DatastoreEntry>,
-    ) -> Result<ResponseData, Error> {
-        let records = serde_json::to_string(&logs).handle_err(location!())?;
-
-        let request = BatchCreateRequest {
-            params: Some(CreateParams {
-                table: String::from("wallguard_logs"),
-            }),
-            query: Some(Query {
-                pluck: String::new(),
-                durability: String::from("soft"),
-            }),
-            body: Some(BatchCreateBody {
-                records,
-                entity_prefix: String::from("LO"),
-            }),
-        };
-
-        // println!(
-        //     "Attempt to send {} log entries to the datastore",
-        //     logs.len()
-        // );
-
-        let token = self.get_and_set_token_safe().await?;
-
-        self.inner.batch_create(request, &token).await
+        self.inner
+            .handle_logs(Logs {
+                auth: Some(Authentication { token }),
+                logs,
+            })
+            .await
     }
 }
 

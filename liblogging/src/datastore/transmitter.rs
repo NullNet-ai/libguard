@@ -1,42 +1,39 @@
-use crate::datastore::credentials::DatastoreCredentials;
-use crate::datastore::entry::DatastoreEntry;
-use crate::datastore::wrapper::DatastoreWrapper;
+use crate::datastore::credentials::DatastoreConfig;
+use crate::datastore::wrapper::ServerWrapper;
+use libwallguard::Log;
 use tokio::sync::mpsc::Receiver;
 
 pub(crate) struct DatastoreTransmitter {
-    datastore: DatastoreWrapper,
-    unsent_entries: Vec<DatastoreEntry>,
+    server: ServerWrapper,
+    unsent_entries: Vec<Log>,
 }
 
 impl DatastoreTransmitter {
-    pub(crate) fn new(datastore_credentials: DatastoreCredentials) -> Self {
-        let datastore = DatastoreWrapper::new(datastore_credentials);
+    pub(crate) async fn new(datastore_credentials: DatastoreConfig) -> Self {
+        let datastore = ServerWrapper::new(datastore_credentials).await;
         Self {
-            datastore,
+            server: datastore,
             unsent_entries: Vec::new(),
         }
     }
 
-    pub(crate) async fn transmit(mut self, mut receiver: Receiver<DatastoreEntry>) {
+    pub(crate) async fn transmit(mut self, mut receiver: Receiver<Log>) {
         loop {
             if receiver.recv_many(&mut self.unsent_entries, 10_000).await == 0 {
                 // channel closed
                 return;
             }
 
-            // loop until datastore returns error
+            // loop until server returns error
             loop {
-                let insert_ok = match self.unsent_entries.as_slice() {
+                let insert_ok = if self.unsent_entries.is_empty() {
                     // channel closed
-                    [] => return,
-                    // received single log entry
-                    [e] => self.datastore.logs_insert_single(e.clone()).await.is_ok(),
-                    // received multiple log entries, or buffer accumulated multiple entries due to errors
-                    _ => self
-                        .datastore
-                        .logs_insert_batch(self.unsent_entries.clone())
+                    return;
+                } else {
+                    self.server
+                        .logs_insert(self.unsent_entries.clone())
                         .await
-                        .is_ok(),
+                        .is_ok()
                 };
 
                 if insert_ok {

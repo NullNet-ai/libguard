@@ -6,12 +6,11 @@ repository = "https://github.com/NullNet-ai/libguard"
 license = "MIT"
 description = "Logging library for NullNet"
 readme = "README.md"
-default-run = "sample"
 
 [dependencies]
 nullnet-libtoken = { path = "../server_libraries/libtoken" }
 nullnet-liberror = { version = "0.1.0", path = "../liberror" }
-nullnet-libdatastore = { path = "../server_libraries/libdatastore" }
+nullnet-wallguard-server = { path = "../../wallguard-server" }
 log = "0.4.26"
 syslog = "7.0.0"
 chrono = "0.4.39"
