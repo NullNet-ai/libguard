@@ -24,7 +24,7 @@ impl DatastoreTransmitter {
                 return;
             }
 
-            // loop until server returns error
+            // loop if server returns error
             loop {
                 let insert_ok = if self.unsent_entries.is_empty() {
                     // channel closed

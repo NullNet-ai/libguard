@@ -58,5 +58,3 @@ impl ServerWrapper {
             .await
     }
 }
-
-// TODO test logs serialization
