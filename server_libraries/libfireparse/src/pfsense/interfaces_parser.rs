@@ -1,7 +1,7 @@
 use nullnet_libconfmon::InterfaceSnapshot;
 use roxmltree::Document;
 
-use crate::models::NetworkInterface;
+use crate::models::{IpAddress, NetworkInterface};
 
 /// A parser for extracting network interfaces from a pfSense XML configuration.
 pub struct PfSenseInterfacesParser {}
@@ -37,28 +37,46 @@ impl PfSenseInterfacesParser {
                     .unwrap_or("none")
                     .to_string();
 
-                let mut address = interface
-                    .children()
-                    .find(|c| c.has_tag_name("ipaddr"))
-                    .and_then(|c| c.text())
-                    .unwrap_or("none")
-                    .to_string();
-
+                let mut addresses = vec![];
                 if let Some(data) = os_interfaces.iter().find(|iface| iface.name == device) {
-                    // !!!!!!!!!!!!!!!!! @TODO !!!!!!!!!!!!!!!!!!!!!!!!
-                    // !!!Save all addresses, not only the first one!!!
-                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                    #[allow(clippy::single_match)]
-                    match data.ip_addresses.first() {
-                        Some(addr) => address = addr.to_string(),
-                        None => {}
-                    };
+                    addresses = data
+                        .ip_addresses
+                        .iter()
+                        .map(|addr| IpAddress {
+                            address: addr.to_string(),
+                            version: if addr.is_ipv4() { 4 } else { 5 },
+                        })
+                        .collect();
+                }
+
+                if addresses.is_empty() {
+                    if let Some(address_v4) = interface
+                        .children()
+                        .find(|c| c.has_tag_name("ipaddr"))
+                        .and_then(|c| c.text())
+                    {
+                        addresses.push(IpAddress {
+                            address: String::from(address_v4),
+                            version: 4,
+                        });
+                    }
+
+                    if let Some(address_v6) = interface
+                        .children()
+                        .find(|c| c.has_tag_name("ipaddrv6"))
+                        .and_then(|c| c.text())
+                    {
+                        addresses.push(IpAddress {
+                            address: String::from(address_v6),
+                            version: 6,
+                        });
+                    }
                 }
 
                 interfaces.push(NetworkInterface {
                     name,
                     device,
-                    address,
+                    addresses,
                 });
             }
         }
@@ -92,10 +110,16 @@ mod tests {
         assert_eq!(interfaces.len(), 2);
         assert_eq!(interfaces[0].name, "wan");
         assert_eq!(interfaces[0].device, "igb0");
-        assert_eq!(interfaces[0].address, "192.168.1.1");
+        assert_eq!(interfaces[0].addresses.len(), 1);
+        assert_eq!(interfaces[0].addresses[0].address, "192.168.1.1");
+        assert_eq!(interfaces[0].addresses[0].version, 4);
+
         assert_eq!(interfaces[1].name, "lan");
         assert_eq!(interfaces[1].device, "igb1");
-        assert_eq!(interfaces[1].address, "192.168.1.2");
+
+        assert_eq!(interfaces[1].addresses.len(), 1);
+        assert_eq!(interfaces[1].addresses[0].address, "192.168.1.2");
+        assert_eq!(interfaces[1].addresses[0].version, 4);
     }
 
     #[test]
@@ -111,7 +135,7 @@ mod tests {
         assert_eq!(interfaces.len(), 1);
         assert_eq!(interfaces[0].name, "wan");
         assert_eq!(interfaces[0].device, "none");
-        assert_eq!(interfaces[0].address, "none");
+        assert_eq!(interfaces[0].addresses.len(), 0);
     }
 
     #[test]
@@ -145,7 +169,7 @@ mod tests {
             is_broadcast: true,
             mac_address: None,
             interface_index: None,
-            ip_addresses: vec!["8.8.8.8".parse().unwrap()],
+            ip_addresses: vec!["8.8.8.8".parse().unwrap(), "8.8.4.4".parse().unwrap()],
             subnet_mask: None,
             gateway: None,
         };
@@ -155,6 +179,10 @@ mod tests {
         assert_eq!(interfaces.len(), 1);
         assert_eq!(interfaces[0].name, "wan");
         assert_eq!(interfaces[0].device, "igb0");
-        assert_eq!(interfaces[0].address, "8.8.8.8");
+        assert_eq!(interfaces[0].addresses.len(), 2);
+        assert_eq!(interfaces[0].addresses[0].address, "8.8.8.8");
+        assert_eq!(interfaces[0].addresses[0].version, 4);
+        assert_eq!(interfaces[0].addresses[1].address, "8.8.4.4");
+        assert_eq!(interfaces[0].addresses[1].version, 4);
     }
 }

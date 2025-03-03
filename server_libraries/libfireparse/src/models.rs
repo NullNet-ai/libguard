@@ -31,7 +31,13 @@ pub struct Rule {
 pub struct NetworkInterface {
     pub name: String,
     pub device: String,
+    pub addresses: Vec<IpAddress>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct IpAddress {
     pub address: String,
+    pub version: i32,
 }
 
 pub struct Configuration {

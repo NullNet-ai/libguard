@@ -2,7 +2,7 @@ mod models;
 mod pfsense;
 mod utils;
 
-pub use models::{Alias, Configuration, Rule};
+pub use models::*;
 pub use nullnet_libconfmon::{FileData, Platform, Snapshot};
 use pfsense::PfSenseParser;
 
