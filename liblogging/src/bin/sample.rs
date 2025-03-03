@@ -6,7 +6,7 @@ use nullnet_liblogging::{DatastoreConfig, Logger, LoggerConfig};
 async fn main() {
     // read first command line argument
     let args: Vec<String> = std::env::args().collect();
-    let default_runner = "sample_server".to_string();
+    let default_runner = "sample_program".to_string();
     let runner = args.get(1).unwrap_or(&default_runner);
 
     let logger_config = LoggerConfig::new(

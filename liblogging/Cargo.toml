@@ -6,6 +6,7 @@ repository = "https://github.com/NullNet-ai/libguard"
 license = "MIT"
 description = "Logging library for NullNet"
 readme = "README.md"
+default-run = "sample"
 
 [dependencies]
 nullnet-libtoken = { path = "../server_libraries/libtoken" }
