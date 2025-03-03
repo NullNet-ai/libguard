@@ -9,7 +9,7 @@ description = "Nullnet datastore driver"
 readme = "README.md"
 
 [dependencies]
-nullnet-liberror = { version = "0.1.0", path = "../../liberror" }
+nullnet-liberror = "0.1.1"
 prost = "0.13.4"
 tonic = { version = "0.12.3", features = ["tls", "tls-roots"] }
 

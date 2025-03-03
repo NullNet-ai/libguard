@@ -2,8 +2,8 @@
 
 All releases with the relative changes are documented in this file.
 
-## [0.2.0] - UNRELEASED
-- Added PostgreSQL logger
+## [0.2.0] - 2025-03-03
+- Added Datastore logger
 - Made console logging optional
 
 ## [0.1.2] - 2025-02-19
