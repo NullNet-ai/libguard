@@ -57,7 +57,7 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
     {
         Ok(Ok(cap)) => cap,
         Ok(Err(err)) | Err(err) => {
-            eprintln!(
+            log::warn!(
                 "Failed to initialize capture on {device_name}: {err}. Aborting monitoring..."
             );
             return;
@@ -65,7 +65,7 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
     };
 
     if let Err(err) = cap.filter(bpf_program, true) {
-        eprintln!("PCAP filter error on {device_name}: {err}. Aborting monitoring...");
+        log::error!("PCAP filter error on {device_name}: {err}. Aborting monitoring...");
         return;
     }
 
@@ -75,7 +75,7 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
         match res {
             Ok(savefile) => Some(savefile),
             Err(err) => {
-                eprintln!("Failed to create savefile '{file_name}': {err}");
+                log::error!("Failed to create savefile '{file_name}': {err}");
                 None
             }
         }
@@ -112,6 +112,6 @@ fn bpf_program(addr: &str) -> String {
         .to_string();
 
     let bpf_program = format!("host not {ip_addr}");
-    println!("BPF Program: {bpf_program}");
+    log::info!("BPF Program: {bpf_program}");
     bpf_program
 }

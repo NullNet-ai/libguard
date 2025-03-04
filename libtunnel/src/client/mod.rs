@@ -20,7 +20,7 @@ impl Client {
     }
 
     async fn run_control_connectinon(config: Config) -> Result<(), Error> {
-        println!("Requesting control connection from the server");
+        log::info!("Requesting control connection from the server");
 
         let mut server_stream = TcpStream::connect(&config.server_addr)
             .await
@@ -29,21 +29,21 @@ impl Client {
         let hash = str_hash(&config.id);
         Self::request_open_control_connection(&mut server_stream, hash).await?;
 
-        println!("Control connection established");
+        log::info!("Control connection established");
 
         loop {
             match Self::await_for_forwarding_request(&mut server_stream).await {
                 Err(err) => {
-                    println!("Error happened when wating for 'ForwardConnectionRequest' message. {err:?}");
+                    log::error!("Error happened when waiting for 'ForwardConnectionRequest' message. {err:?}");
                     Err(err)?;
                 }
                 _ => {
                     let config = config.clone();
                     tokio::spawn(async move {
-                        println!("Received ForwardConnectionRequest message");
+                        log::info!("Received ForwardConnectionRequest message");
                         match Self::run_data_connection(config).await {
-                            Ok(_) => println!("Data connection terminated"),
-                            Err(err) => println!("Data connection error: {err:?}"),
+                            Ok(_) => log::info!("Data connection terminated"),
+                            Err(err) => log::error!("Data connection error: {err:?}"),
                         }
                     });
                 }
@@ -52,7 +52,7 @@ impl Client {
     }
 
     async fn run_data_connection(config: Config) -> Result<(), Error> {
-        println!("Requesting data connection from the server");
+        log::info!("Requesting data connection from the server");
 
         let mut server_stream = TcpStream::connect(&config.server_addr)
             .await

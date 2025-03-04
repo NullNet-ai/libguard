@@ -86,7 +86,7 @@ impl DatastoreConfig {
 /// The value of `DATASTORE_HOST` or the default value if the variable is not set.
 fn read_host_value_from_env(default: String) -> String {
     std::env::var("DATASTORE_HOST").unwrap_or_else(|err| {
-        eprintln!("Failed to read 'DATASTORE_HOST' env var: {err}. Using default value ...");
+        log::warn!("Failed to read 'DATASTORE_HOST' env var: {err}. Using default value ...");
         default
     })
 }
@@ -103,13 +103,13 @@ fn read_host_value_from_env(default: String) -> String {
 fn read_port_value_from_env(default: u16) -> u16 {
     match std::env::var("DATASTORE_PORT") {
         Ok(value) => value.parse::<u16>().unwrap_or_else(|err| {
-            eprintln!(
+            log::warn!(
                 "Failed to parse 'DATASTORE_PORT' ({value}) as u16: {err}. Using default value ..."
             );
             default
         }),
         Err(err) => {
-            eprintln!("Failed to read 'DATASTORE_PORT' env var: {err}. Using default value ...");
+            log::warn!("Failed to read 'DATASTORE_PORT' env var: {err}. Using default value ...");
             default
         }
     }
@@ -129,7 +129,7 @@ fn real_tls_value_from_env(default: bool) -> bool {
     match std::env::var("DATASTORE_TLS") {
         Ok(value) => value.to_lowercase() == "true",
         Err(err) => {
-            eprintln!("Failed to read 'DATASTORE_TLS' env var: {err}. Using default value ...");
+            log::warn!("Failed to read 'DATASTORE_TLS' env var: {err}. Using default value ...");
             default
         }
     }

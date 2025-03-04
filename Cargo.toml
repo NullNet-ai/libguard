@@ -15,4 +15,3 @@ members = [
 #authors = ["Author Name <author@name.com>"]
 
 #[workspace.dependencies]
-#nullnet-liblogging = "0.2.0"

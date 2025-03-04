@@ -31,25 +31,25 @@ impl Server {
 
         loop {
             let (mut stream, addr) = listener.accept().await.handle_err(location!())?;
-            println!("Client connected from {}", addr);
+            log::info!("Client connected from {}", addr);
 
             let Ok(message) = protocol::expect_open_message(&mut stream).await else {
-                println!("Unexpected opening message, aborting connection ...");
+                log::error!("Unexpected opening message, aborting connection ...");
                 continue;
             };
 
             match message {
                 Message::ControlConnectionRequest(payload) => {
-                    println!("Control connection request received {:?}", &payload.data);
+                    log::info!("Control connection request received {:?}", &payload.data);
                     self.on_control_connection_established(stream, payload)
                         .await;
                 }
                 Message::DataConnectionRequest(payload) => {
-                    println!("Data connection request received {:?}", &payload.data);
+                    log::info!("Data connection request received {:?}", &payload.data);
                     self.on_data_connection_established(stream, payload).await;
                 }
                 _ => {
-                    println!("Unexpected opening message, aborting connection ...");
+                    log::error!("Unexpected opening message, aborting connection ...");
                     continue;
                 }
             }
@@ -73,12 +73,12 @@ impl Server {
                             .await;
                     }
                     Err(err) => {
-                        println!("Failed to send Acknowledgment message. {}", err.to_str())
+                        log::error!("Failed to send Acknowledgment message. {}", err.to_str())
                     }
                 };
             } else if let Err(err) = protocol::write_message(&mut stream, Message::Rejection).await
             {
-                println!("Failed to send Rejection message. {}", err.to_str());
+                log::error!("Failed to send Rejection message. {}", err.to_str());
             }
         });
     }
@@ -101,16 +101,16 @@ impl Server {
                             .open_data_channel(&control_id, stream)
                             .await
                         {
-                            println!("Failed to open data channel, {}", err.to_str());
+                            log::error!("Failed to open data channel, {}", err.to_str());
                         }
                     }
                     Err(err) => {
-                        println!("Failed to send Acknowledgment message. {}", err.to_str());
+                        log::error!("Failed to send Acknowledgment message. {}", err.to_str());
                     }
                 };
             } else if let Err(err) = protocol::write_message(&mut stream, Message::Rejection).await
             {
-                println!("Failed to send Rejection message. {}", err.to_str());
+                log::error!("Failed to send Rejection message. {}", err.to_str());
             }
         });
     }
