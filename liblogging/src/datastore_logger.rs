@@ -1,7 +1,7 @@
 use crate::datastore::transmitter::DatastoreTransmitter;
 use crate::DatastoreConfig;
 use chrono::Utc;
-use libwallguard::Log;
+use nullnet_libwallguard::Log;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 

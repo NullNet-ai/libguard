@@ -1,6 +1,6 @@
 use crate::datastore::config::DatastoreConfig;
 use crate::datastore::wrapper::ServerWrapper;
-use libwallguard::Log;
+use nullnet_libwallguard::Log;
 use tokio::sync::mpsc::Receiver;
 
 pub(crate) struct DatastoreTransmitter {

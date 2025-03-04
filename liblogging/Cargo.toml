@@ -11,7 +11,7 @@ default-run = "sample"
 [dependencies]
 nullnet-libtoken = "0.1.1"
 nullnet-liberror = "0.1.1"
-nullnet-wallguard-server = "0.2.3"
+nullnet-libwallguard = "0.1.0"
 log = "0.4.26"
 syslog = "7.0.0"
 chrono = "0.4.39"

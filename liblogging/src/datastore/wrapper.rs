@@ -1,6 +1,6 @@
 use crate::datastore::config::DatastoreConfig;
 use crate::datastore::token::TokenWrapper;
-use libwallguard::{Authentication, CommonResponse, Log, Logs, WallGuardGrpcInterface};
+use nullnet_libwallguard::{Authentication, CommonResponse, Log, Logs, WallGuardGrpcInterface};
 
 pub(crate) struct ServerWrapper {
     inner: WallGuardGrpcInterface,
