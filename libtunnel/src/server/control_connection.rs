@@ -23,6 +23,8 @@ impl ControlConnection {
         profile: &ClientProfile,
         heartbeat_interval: Option<Duration>,
     ) -> Self {
+        log::info!("Opening new control connection for clinet {}", profile.id);
+
         let (shutdown_tx, shutdown_rx) = broadcast::channel(1);
         let (visitor_tx, visitor_rx) = mpsc::channel(VISITORS_CHANNEL_SIZE);
 
@@ -44,6 +46,7 @@ impl ControlConnection {
     }
 
     pub async fn open_data_channel(&mut self, mut client_stream: TcpStream) -> Result<(), Error> {
+        log::debug!("Opening data channel, waiting for a visitor ...");
         let visitor = self.visitor_rx.recv().await;
 
         if visitor.is_none() {
@@ -53,7 +56,7 @@ impl ControlConnection {
         let mut visitor_stream = visitor.unwrap();
 
         tokio::spawn(async move {
-            log::info!("Data channel established");
+            log::debug!("Data channel established");
             let _ = copy_bidirectional(&mut client_stream, &mut visitor_stream).await;
         });
         Ok(())
@@ -68,7 +71,7 @@ impl ControlConnection {
     ) {
         tokio::select! {
             _ = shutdown_rx.recv() => {
-                log::info!("Control connection received a shutdown signal");
+                log::debug!("Control connection received a shutdown signal");
             },
             result = Self::run_control_connection(stream, addr, visitor_tx, heartbeat_interval) => {
                 if let Err(error) = result {
@@ -89,15 +92,18 @@ impl ControlConnection {
     ) -> Result<(), Error> {
         let listener = TcpListener::bind(addr).await.handle_err(location!())?;
 
+        let heartbeat_interval = heartbeat_interval.map(|dur| dur.as_secs()).unwrap_or(0);
+
         loop {
             tokio::select! {
                 visitor_result = listener.accept() => {
                     let (visitor, addr) = visitor_result.handle_err(location!())?;
-                    log::info!("Accepted visitor from: {}", addr);
+                    log::debug!("Accepted visitor from: {}", addr);
                     protocol::write_message(&mut stream, Message::ForwardConnectionRequest).await?;
                     visitor_tx.send(visitor).await.handle_err(location!())?;
                 },
-                _ = tokio::time::sleep(heartbeat_interval.unwrap()), if heartbeat_interval.is_some() => {
+                _ = tokio::time::sleep(Duration::from_secs(heartbeat_interval)), if heartbeat_interval > 0 => {
+                    log::debug!("Sending heartbeat");
                     protocol::write_message(&mut stream, Message::Heartbeat).await?;
                 }
             }

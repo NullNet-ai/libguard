@@ -154,7 +154,7 @@ mod tests {
 
         let hash = str_hash(&identifier);
 
-        let msg = Message::DataConnectionRequest((Payload { data: hash.clone() }));
+        let msg = Message::DataConnectionRequest(Payload { data: hash.clone() });
 
         let msg = Message::deserialize(&msg.serialize().unwrap()).unwrap();
 

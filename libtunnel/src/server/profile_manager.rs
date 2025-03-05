@@ -28,15 +28,8 @@ impl ProfileManager {
         Ok(())
     }
 
-    pub fn remove(&mut self, id: &Hash) -> Result<(), Error> {
-        if !self.profiles.contains_key(id) {
-            return Err(format!("Profile with id '{:?}' is not registered", id))
-                .handle_err(location!());
-        }
-
-        let _ = self.profiles.remove(id);
-
-        Ok(())
+    pub fn remove(&mut self, id: &Hash) {
+        self.profiles.remove(id);
     }
 
     pub fn get(&self, hash: &Hash) -> Option<ClientProfile> {

@@ -49,4 +49,12 @@ impl ControlConnectionManager {
     pub fn exists(&self, hash: &Hash) -> bool {
         self.connections.contains_key(hash)
     }
+
+    pub async fn remove(&mut self, hash: &Hash) -> Result<(), Error> {
+        if let Some(connection) = self.connections.remove(hash) {
+            connection.shutdown().await?;
+        }
+
+        Ok(())
+    }
 }

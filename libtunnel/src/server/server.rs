@@ -34,7 +34,7 @@ impl Server {
 
         loop {
             let (mut stream, addr) = listener.accept().await.handle_err(location!())?;
-            log::info!("Client connected from {}", addr);
+            log::debug!("Client connected from {}", addr);
 
             let Ok(message) = protocol::expect_open_message(&mut stream).await else {
                 log::error!("Unexpected opening message, aborting connection ...");
@@ -43,12 +43,10 @@ impl Server {
 
             match message {
                 Message::ControlConnectionRequest(payload) => {
-                    log::info!("Control connection request received {:?}", &payload.data);
                     self.on_control_connection_established(stream, payload)
                         .await;
                 }
                 Message::DataConnectionRequest(payload) => {
-                    log::info!("Data connection request received {:?}", &payload.data);
                     self.on_data_connection_established(stream, payload).await;
                 }
                 _ => {
@@ -98,7 +96,7 @@ impl Server {
                     Ok(_) => {
                         // @TODO: Since open_data_channel would block in an attempt
                         // to receive a visitor stream, we might want ot add timeout
-                        // or imrove the API to not hold the lock on connections_manager
+                        // or improve the API to not hold the lock on connections_manager
                         if let Err(err) = connections_manager
                             .lock()
                             .await
@@ -124,8 +122,11 @@ impl Server {
     }
 
     pub async fn remove_profile(&mut self, id: &str) -> Result<(), Error> {
-        // @TODO: After profile has been removed, we need to shutdown open channels
         let hash = str_hash(id);
-        self.profile_manager.lock().await.remove(&hash)
+
+        let _ = self.profile_manager.lock().await.remove(&hash);
+        let _ = self.connections_manager.lock().await.remove(&hash);
+
+        Ok(())
     }
 }
