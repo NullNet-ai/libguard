@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::{net::SocketAddr, time::Duration};
+use std::net::SocketAddr;
 
 #[derive(Parser, Debug, Clone)]
 struct Args {
@@ -45,7 +45,7 @@ async fn main() {
 
         let profile = libtunnel::ClientProfile {
             id: String::from("test"),
-            visitor_addr: visitor_addr,
+            visitor_addr,
         };
 
         let server_addr = args.server_addr.parse().expect("Wrond server bind addr");

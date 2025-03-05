@@ -101,7 +101,12 @@ impl Client {
     }
 
     async fn run_data_connection(config: Config) -> Result<(), Error> {
-        log::info!("Running data channel {} -> {}", &config.server_addr, &config.local_addr);
+        log::info!(
+            "Running data connection {} -> {}",
+            &config.server_addr,
+            &config.local_addr
+        );
+
         let mut server_stream = TcpStream::connect(&config.server_addr)
             .await
             .handle_err(location!())?;
