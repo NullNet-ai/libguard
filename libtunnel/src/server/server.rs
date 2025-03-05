@@ -2,6 +2,7 @@ use super::control_connection_manager::ControlConnectionManager;
 use super::{profile::ClientProfile, profile_manager::ProfileManager};
 use crate::{protocol, str_hash, Hash, Message, Payload};
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use std::time::Duration;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::Mutex;
@@ -10,10 +11,11 @@ pub struct Server {
     bind_addr: SocketAddr,
     profile_manager: Arc<Mutex<ProfileManager>>,
     connections_manager: Arc<Mutex<ControlConnectionManager>>,
+    heartbeat_interval: Option<Duration>,
 }
 
 impl Server {
-    pub fn new(bind_addr: SocketAddr) -> Self {
+    pub fn new(bind_addr: SocketAddr, heartbeat_interval: Option<Duration>) -> Self {
         let profile_manager = Arc::new(Mutex::new(ProfileManager::new()));
         let connections_manager = Arc::new(Mutex::new(ControlConnectionManager::new()));
 
@@ -21,6 +23,7 @@ impl Server {
             bind_addr,
             profile_manager,
             connections_manager,
+            heartbeat_interval,
         }
     }
 
@@ -59,7 +62,8 @@ impl Server {
     async fn on_control_connection_established(&mut self, mut stream: TcpStream, payload: Payload) {
         let profile_manager = self.profile_manager.clone();
         let connections_manager = self.connections_manager.clone();
-
+        let heartbeat_interval = self.heartbeat_interval.clone();
+        
         tokio::spawn(async move {
             let client_id_hash = payload.data;
 
@@ -69,7 +73,7 @@ impl Server {
                         connections_manager
                             .lock()
                             .await
-                            .open_connection(stream, &profile)
+                            .open_connection(stream, &profile, heartbeat_interval)
                             .await;
                     }
                     Err(err) => {

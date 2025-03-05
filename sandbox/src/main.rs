@@ -1,6 +1,7 @@
 use clap::Parser;
+use nullnet_liblogging::LoggerConfig;
 // use nullnet_liblogging::LoggerConfig;
-use std::net::SocketAddr;
+use std::{net::SocketAddr, time::Duration};
 
 #[derive(Parser, Debug, Clone)]
 struct Args {
@@ -21,6 +22,8 @@ struct Args {
 async fn main() {
     // nullnet_liblogging::Logger::init(LoggerConfig::default());
 
+    nullnet_liblogging::Logger::init(LoggerConfig::new(true, false, None, vec!["sandbox, nullnet"]));
+
     let args = Args::parse();
 
     if args.mode.to_lowercase() == "client" {
@@ -31,9 +34,11 @@ async fn main() {
             id: String::from("test"),
             server_addr,
             local_addr,
+            heartbeat_timeout: Some(Duration::from_secs(5 * 60)),
+            reconnect_timeout: Some(Duration::from_secs(60)),
         };
 
-        let client = libtunnel::Client::new(config);
+        let mut client = libtunnel::Client::new(config);
 
         let _ = client.run().await;
     } else if args.mode.to_lowercase() == "server" {
@@ -47,7 +52,7 @@ async fn main() {
 
         let server_addr = args.server_addr.parse().expect("Wrond server bind addr");
 
-        let mut server = libtunnel::Server::new(server_addr);
+        let mut server = libtunnel::Server::new(server_addr, Some(Duration::from_secs(15)));
 
         server
             .register_profile(profile)

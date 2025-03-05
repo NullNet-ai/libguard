@@ -11,16 +11,10 @@ pub struct Payload {
 #[derive(Serialize, Deserialize)]
 pub enum Message {
     ControlConnectionRequest(Payload),
-
-    ForwardConnectionRequest,
-
     DataConnectionRequest(Payload),
-
+    ForwardConnectionRequest,
     Acknowledgment,
-
     Rejection,
-
-    // NOT IMPLEMENTED
     Heartbeat,
 }
 
@@ -132,13 +126,8 @@ mod tests {
     }
 
     #[test]
-    fn open_and_confirmation_messages_have_the_same_length() {
-        // Message length of ControlConnectionRequest should be equal to DataConnectionRequest
-        // As well as length of Acknowledgment should be equal to Rejection.
-
-        let payload = Payload {
-            data: [1; PAYLOAD_SIZE],
-        };
+    fn some_messages_must_have_the_same_length() {
+        let payload = Payload::default();
 
         let m1 = Message::ControlConnectionRequest(payload.clone())
             .serialize()
@@ -151,7 +140,10 @@ mod tests {
 
         let m1 = Message::Acknowledgment.serialize().unwrap();
         let m2 = Message::Rejection.serialize().unwrap();
+        assert_eq!(m1.len(), m2.len());
 
+        let m1 = Message::Heartbeat.serialize().unwrap();
+        let m2 = Message::ForwardConnectionRequest.serialize().unwrap();
         assert_eq!(m1.len(), m2.len());
     }
 

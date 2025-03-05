@@ -6,7 +6,7 @@ publish = false
 
 [dependencies]
 clap = {version = "4.5.31", features = ["derive"] }
-libtunnel = { version = "0.1.0", path = "../libtunnel" }
+libtunnel = { version = "0.2.0", path = "../libtunnel" }
 nullnet-libdatastore = { path = "../server_libraries/libdatastore" }
 nullnet-liblogging = "0.2.0"
 tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
