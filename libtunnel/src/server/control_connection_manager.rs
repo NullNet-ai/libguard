@@ -1,7 +1,7 @@
 use super::{control_connection::ControlConnection, profile::ClientProfile};
 use crate::{str_hash, Hash};
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 use tokio::net::TcpStream;
 
 pub struct ControlConnectionManager {
@@ -15,15 +15,17 @@ impl ControlConnectionManager {
         }
     }
 
-    pub async fn open_connection(&mut self, stream: TcpStream, profile: &ClientProfile) {
-        let connection = ControlConnection::new(stream, profile);
+    pub async fn open_connection(
+        &mut self,
+        stream: TcpStream,
+        profile: &ClientProfile,
+        heartbeat_interval: Option<Duration>,
+    ) {
+        let connection = ControlConnection::new(stream, profile, heartbeat_interval);
         let hash = str_hash(&profile.id);
 
-        if let Some(_prev) = self.connections.insert(hash, connection) {
-            // ????????????????????????????
-            // ?? _prev.shutdown().await ??
-            // ????????????????????????????
-            todo!("Not implemented");
+        if let Some(prev) = self.connections.insert(hash, connection) {
+            let _ = prev.shutdown().await;
         }
     }
 
@@ -46,5 +48,13 @@ impl ControlConnectionManager {
 
     pub fn exists(&self, hash: &Hash) -> bool {
         self.connections.contains_key(hash)
+    }
+
+    pub async fn remove(&mut self, hash: &Hash) -> Result<(), Error> {
+        if let Some(connection) = self.connections.remove(hash) {
+            connection.shutdown().await?;
+        }
+
+        Ok(())
     }
 }

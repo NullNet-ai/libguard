@@ -1,26 +1,59 @@
 mod config;
+use std::time::Duration;
+
 pub use config::*;
 
 use crate::{protocol, str_hash, Hash, Message, Payload};
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
-use tokio::{io::copy_bidirectional, net::TcpStream};
+use tokio::{io::copy_bidirectional, net::TcpStream, sync::broadcast};
 
 pub struct Client {
     config: Config,
+    shutdown_tx: broadcast::Sender<()>,
+    shutdown_rx: broadcast::Receiver<()>,
 }
 
 impl Client {
     pub fn new(config: Config) -> Self {
-        Self { config }
+        let (shutdown_tx, shutdown_rx) = broadcast::channel(1);
+        Self {
+            config,
+            shutdown_rx,
+            shutdown_tx,
+        }
     }
 
-    pub async fn run(&self) {
-        // @TODO: Implement reconnection in case of an error
-        let _ = Self::run_control_connectinon(self.config.clone()).await;
+    pub async fn shutdown(&mut self) -> Result<(), Error> {
+        self.shutdown_tx
+            .send(())
+            .map_err(|_| "Failed to send shutdown signal")
+            .handle_err(location!())?;
+
+        Ok(())
     }
 
-    async fn run_control_connectinon(config: Config) -> Result<(), Error> {
-        log::info!("Requesting control connection from the server");
+    pub async fn run(&mut self) {
+        loop {
+            tokio::select! {
+                result = Self::run_control_connection(self.config.clone()) => {
+                    if let Err(err) = result {
+                        let timeout = self.config.reconnect_timeout.unwrap_or(Duration::from_secs(10));
+                        log::error!("Control connection error: {}. Reconnecting in {} seconds ...", err.to_str(), timeout.as_secs());
+
+                        tokio::time::sleep(timeout).await;
+                        continue;
+                    }
+                },
+                _ = self.shutdown_rx.recv() => {
+                    log::debug!("Client received shutdown signal");
+                    break;
+                }
+            };
+        }
+    }
+
+    async fn run_control_connection(config: Config) -> Result<(), Error> {
+        log::debug!("Requesting control connection from the server");
 
         let mut server_stream = TcpStream::connect(&config.server_addr)
             .await
@@ -29,30 +62,50 @@ impl Client {
         let hash = str_hash(&config.id);
         Self::request_open_control_connection(&mut server_stream, hash).await?;
 
-        log::info!("Control connection established");
+        log::debug!("Control connection with the server has been successfully established");
 
+        let heartbeat_timeout = config
+            .heartbeat_timeout
+            .map(|dur| dur.as_secs())
+            .unwrap_or(0);
         loop {
-            match Self::await_for_forwarding_request(&mut server_stream).await {
-                Err(err) => {
-                    log::error!("Error happened when waiting for 'ForwardConnectionRequest' message. {err:?}");
-                    Err(err)?;
+            tokio::select! {
+                _ = tokio::time::sleep(Duration::from_secs(heartbeat_timeout)), if heartbeat_timeout > 0 => {
+                    Err("Heartbeat interval has reached").handle_err(location!())?;
                 }
-                _ => {
-                    let config = config.clone();
-                    tokio::spawn(async move {
-                        log::info!("Received ForwardConnectionRequest message");
-                        match Self::run_data_connection(config).await {
-                            Ok(_) => log::info!("Data connection terminated"),
-                            Err(err) => log::error!("Data connection error: {err:?}"),
+                message_result = Self::await_for_control_channel_message(&mut server_stream) => {
+                    match message_result {
+                        Ok(Message::ForwardConnectionRequest) => {
+                            let config = config.clone();
+                            tokio::spawn(async move {
+                                log::debug!("Received ForwardConnectionRequest message");
+                                match Self::run_data_connection(config).await {
+                                    Ok(_) => log::debug!("Data connection terminated"),
+                                    Err(err) => log::error!("Data connection error: {err:?}"),
+                                }
+                            });
                         }
-                    });
+                        Ok(Message::Heartbeat) => {
+                            log::debug!("Received Heartbeat message");
+                        }
+                        Err(err) => {
+                            Err(err)?;
+                        }
+                        Ok(_) => {
+                            Err("Unexpected message").handle_err(location!())?;
+                        }
+                    }
                 }
             };
         }
     }
 
     async fn run_data_connection(config: Config) -> Result<(), Error> {
-        log::info!("Requesting data connection from the server");
+        log::info!(
+            "Running data connection {} -> {}",
+            &config.server_addr,
+            &config.local_addr
+        );
 
         let mut server_stream = TcpStream::connect(&config.server_addr)
             .await
@@ -85,12 +138,12 @@ impl Client {
         protocol::write_with_confirmation(stream, open_message).await
     }
 
-    async fn await_for_forwarding_request(stream: &mut TcpStream) -> Result<(), Error> {
+    async fn await_for_control_channel_message(stream: &mut TcpStream) -> Result<Message, Error> {
         let message_size = Message::len_bytes(&Message::ForwardConnectionRequest);
-        match protocol::expect_message(stream, message_size).await {
-            Ok(Message::ForwardConnectionRequest) => Ok(()),
-            Ok(_) => Err("Unexpected message").handle_err(location!()),
-            Err(err) => Err(err),
+        let message = protocol::expect_message(stream, message_size).await?;
+        match message {
+            Message::ForwardConnectionRequest | Message::Heartbeat => Ok(message),
+            _ => Err("Unexpected message").handle_err(location!()),
         }
     }
 }
