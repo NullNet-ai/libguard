@@ -27,7 +27,7 @@ async fn main() {
         let server_addr = args.server_addr.parse().expect("Wrond server bind addr");
         let local_addr = args.service_addr.parse().expect("Wrong local addr");
 
-        let config = libtunnel::Config {
+        let config = nullnet_libtunnel::Config {
             id: String::from("test"),
             server_addr,
             local_addr,
@@ -37,20 +37,20 @@ async fn main() {
             reconnect_timeout: None,
         };
 
-        let mut client = libtunnel::Client::new(config);
+        let mut client = nullnet_libtunnel::Client::new(config);
 
         let _ = client.run().await;
     } else if args.mode.to_lowercase() == "server" {
         let visitor_addr: SocketAddr = args.visitor_addr.parse().expect("Wrong visitor address");
 
-        let profile = libtunnel::ClientProfile {
+        let profile = nullnet_libtunnel::ClientProfile {
             id: String::from("test"),
             visitor_addr,
         };
 
         let server_addr = args.server_addr.parse().expect("Wrond server bind addr");
 
-        let mut server = libtunnel::Server::new(server_addr, None);
+        let mut server = nullnet_libtunnel::Server::new(server_addr, None);
 
         server
             .register_profile(profile)
