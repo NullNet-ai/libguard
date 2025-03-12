@@ -2,6 +2,10 @@
 name = "nullnet-libtunnel"
 version = "0.1.0"
 edition = "2021"
+repository = "https://github.com/NullNet-ai/libguard"
+license = "MIT"
+description = "Library for tunneling traffic"
+readme = "README.md"
 
 [dependencies]
 bincode = "1.3.3"
