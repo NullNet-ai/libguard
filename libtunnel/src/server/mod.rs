@@ -34,7 +34,7 @@ impl Server {
         }
     }
 
-    pub async fn run(&mut self) -> Result<(), Error> {
+    pub async fn run(&self) -> Result<(), Error> {
         let listener = TcpListener::bind(self.bind_addr)
             .await
             .handle_err(location!())?;
@@ -64,7 +64,7 @@ impl Server {
         }
     }
 
-    async fn on_control_connection_established(&mut self, mut stream: TcpStream, payload: Payload) {
+    async fn on_control_connection_established(&self, mut stream: TcpStream, payload: Payload) {
         let profile_manager = self.profile_manager.clone();
         let connections_manager = self.connections_manager.clone();
         let heartbeat_interval = self.heartbeat_interval;
@@ -92,7 +92,7 @@ impl Server {
         });
     }
 
-    async fn on_data_connection_established(&mut self, mut stream: TcpStream, payload: Payload) {
+    async fn on_data_connection_established(&self, mut stream: TcpStream, payload: Payload) {
         let connections_manager = self.connections_manager.clone();
 
         tokio::spawn(async move {
@@ -124,11 +124,11 @@ impl Server {
         });
     }
 
-    pub async fn register_profile(&mut self, profile: ClientProfile) -> Result<(), Error> {
+    pub async fn register_profile(&self, profile: ClientProfile) -> Result<(), Error> {
         self.profile_manager.lock().await.register(profile)
     }
 
-    pub async fn remove_profile(&mut self, id: &str) -> Result<(), Error> {
+    pub async fn remove_profile(&self, id: &str) -> Result<(), Error> {
         let hash = str_hash(id);
 
         self.profile_manager.lock().await.remove(&hash);

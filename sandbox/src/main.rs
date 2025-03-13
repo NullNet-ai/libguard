@@ -50,7 +50,7 @@ async fn main() {
 
         let server_addr = args.server_addr.parse().expect("Wrond server bind addr");
 
-        let mut server = nullnet_libtunnel::Server::new(server_addr, None);
+        let server = nullnet_libtunnel::Server::new(server_addr, None);
 
         server
             .register_profile(profile)
