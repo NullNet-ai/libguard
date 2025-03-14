@@ -46,4 +46,5 @@ pub struct Configuration {
     pub interfaces: Vec<NetworkInterface>,
     pub raw_content: String,
     pub hostname: String,
+    pub gui_protocol: String,
 }
