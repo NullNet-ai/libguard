@@ -71,7 +71,7 @@ impl DatastoreConfig {
 
         let channel: Channel = endpoint.connect().await.handle_err(location!())?;
 
-        Ok(StoreServiceClient::new(channel))
+        Ok(StoreServiceClient::new(channel).max_decoding_message_size(50 * 1024 * 1024))
     }
 }
 
