@@ -119,16 +119,16 @@ async fn run_control_session(
 
     tokio::select! {
         _ = shutdown_rx => {
-            log::debug!("Session Runner: Shutdown signal received");
+            log::debug!("Session: Shutdown signal received");
         },
         _ = manage_incoming_visitors(addr, control_stream, visitor_stream_tx) => {
-            log::debug!("Session Runner: Stopped accepting new connections");
+            log::debug!("Session: Stopped accepting new connections");
         }
         _ = manage_channel_lifecycle(channels.clone(), channel_complete_rx) => {
-            log::debug!("Session Runner: Stopped managing channels lifecycle");
+            log::debug!("Session: Stopped managing channels lifecycle");
         }
         _ = manage_channel_creation(visitor_stream_rx, client_stream_rx, channels.clone(), channel_complete_tx) => {
-            log::debug!("Session Runner: Stopped managing channels creation");
+            log::debug!("Session: Stopped managing channels creation");
         }
     }
 
@@ -157,7 +157,7 @@ async fn manage_incoming_visitors(
     let listener = TcpListener::bind(addr).await.handle_err(location!())?;
     loop {
         let (visitor, addr) = listener.accept().await.handle_err(location!())?;
-        log::debug!("Session Runner: Accepted a visitor from {}", addr);
+        log::debug!("Session: Accepted a visitor from {}", addr);
         protocol::write_message(&mut control_stream, Message::ForwardConnectionRequest).await?;
         visitor_stream_tx
             .send(visitor)

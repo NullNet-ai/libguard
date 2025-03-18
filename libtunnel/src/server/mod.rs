@@ -156,7 +156,7 @@ async fn main_loop<T: Profile + Send + Sync + 'static>(
         };
 
         match message {
-            Message::ControlConnectionRequest(payload) => {
+            Message::OpenSessionRequest(payload) => {
                 if let Some(profile) = profiles.read().await.get(payload.data.as_slice()) {
                     match protocol::write_message(&mut stream, Message::Acknowledgment).await {
                         Ok(_) => {
@@ -177,7 +177,7 @@ async fn main_loop<T: Profile + Send + Sync + 'static>(
                     log::error!("Server: Failed to send Rejection message. {}", err.to_str());
                 }
             }
-            Message::DataConnectionRequest(payload) => {
+            Message::OpenChannelRequest(payload) => {
                 if manager.session_exists(&payload.data).await {
                     match protocol::write_message(&mut stream, Message::Acknowledgment).await {
                         Ok(_) => {

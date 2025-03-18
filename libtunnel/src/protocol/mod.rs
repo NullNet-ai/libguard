@@ -44,9 +44,9 @@ pub async fn expect_message(stream: &mut TcpStream, expected_len: usize) -> Resu
 }
 
 pub async fn expect_open_message(stream: &mut TcpStream) -> Result<Message, Error> {
-    // We can get length either from DataConnectionRequest or from ControlConnectionRequest
+    // We can get length either from DataConnectionRequest or from OpenSessionRequest
     // Messages lengths are expected to be the same
-    let len_bytes = Message::len_bytes(&Message::DataConnectionRequest(Payload::default()));
+    let len_bytes = Message::len_bytes(&Message::OpenChannelRequest(Payload::default()));
 
     let message = expect_message(stream, len_bytes).await?;
 
