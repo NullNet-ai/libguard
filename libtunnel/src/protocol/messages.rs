@@ -10,12 +10,11 @@ pub struct Payload {
 
 #[derive(Serialize, Deserialize)]
 pub enum Message {
-    ControlConnectionRequest(Payload),
-    DataConnectionRequest(Payload),
+    OpenSessionRequest(Payload),
+    OpenChannelRequest(Payload),
     ForwardConnectionRequest,
     Acknowledgment,
     Rejection,
-    Heartbeat,
 }
 
 impl Message {
@@ -42,7 +41,7 @@ mod tests {
 
     #[test]
     fn test_message_serialization() {
-        let msg = Message::Heartbeat;
+        let msg = Message::ForwardConnectionRequest;
         let serialized = msg.serialize().expect("Failed to serialize message");
         assert!(
             !serialized.is_empty(),
@@ -52,7 +51,7 @@ mod tests {
 
     #[test]
     fn test_message_deserialization() {
-        let msg = Message::Heartbeat;
+        let msg = Message::ForwardConnectionRequest;
         let serialized = msg.serialize().expect("Failed to serialize message");
         let deserialized =
             Message::deserialize(&serialized).expect("Failed to deserialize message");
@@ -69,7 +68,7 @@ mod tests {
         let payload = Payload {
             data: [1; PAYLOAD_SIZE],
         };
-        let msg = Message::ControlConnectionRequest(payload);
+        let msg = Message::OpenSessionRequest(payload);
         let serialized = msg.serialize().expect("Failed to serialize message");
         assert!(
             !serialized.is_empty(),
@@ -80,7 +79,7 @@ mod tests {
             Message::deserialize(&serialized).expect("Failed to deserialize message");
 
         match deserialized {
-            Message::ControlConnectionRequest(p) => {
+            Message::OpenSessionRequest(p) => {
                 assert_eq!(p.data, [1; PAYLOAD_SIZE], "Payload data mismatch")
             }
             _ => panic!("Deserialized message does not match original"),
@@ -99,23 +98,23 @@ mod tests {
 
     #[test]
     fn test_message_length() {
-        let msg = Message::Heartbeat;
+        let msg = Message::ForwardConnectionRequest;
         let length = msg.len_bytes();
         assert!(length > 0, "Message length should be greater than 0");
     }
 
     #[test]
     fn messages_are_distinguishable() {
-        let s1 = Message::Heartbeat.serialize().unwrap();
+        let s1 = Message::ForwardConnectionRequest.serialize().unwrap();
         let s2 = Message::Acknowledgment.serialize().unwrap();
 
         let payload = Payload {
             data: [1; PAYLOAD_SIZE],
         };
-        let s3 = Message::ControlConnectionRequest(payload.clone())
+        let s3 = Message::OpenSessionRequest(payload.clone())
             .serialize()
             .unwrap();
-        let s4 = Message::DataConnectionRequest(payload.clone())
+        let s4 = Message::OpenChannelRequest(payload.clone())
             .serialize()
             .unwrap();
 
@@ -129,10 +128,10 @@ mod tests {
     fn some_messages_must_have_the_same_length() {
         let payload = Payload::default();
 
-        let m1 = Message::ControlConnectionRequest(payload.clone())
+        let m1 = Message::OpenSessionRequest(payload.clone())
             .serialize()
             .unwrap();
-        let m2 = Message::DataConnectionRequest(payload.clone())
+        let m2 = Message::OpenChannelRequest(payload.clone())
             .serialize()
             .unwrap();
 
@@ -140,10 +139,6 @@ mod tests {
 
         let m1 = Message::Acknowledgment.serialize().unwrap();
         let m2 = Message::Rejection.serialize().unwrap();
-        assert_eq!(m1.len(), m2.len());
-
-        let m1 = Message::Heartbeat.serialize().unwrap();
-        let m2 = Message::ForwardConnectionRequest.serialize().unwrap();
         assert_eq!(m1.len(), m2.len());
     }
 
@@ -154,12 +149,12 @@ mod tests {
 
         let hash = str_hash(&identifier);
 
-        let msg = Message::DataConnectionRequest(Payload { data: hash.clone() });
+        let msg = Message::OpenChannelRequest(Payload { data: hash.clone() });
 
         let msg = Message::deserialize(&msg.serialize().unwrap()).unwrap();
 
         match msg {
-            Message::DataConnectionRequest(payload) => assert_eq!(payload.data, hash),
+            Message::OpenChannelRequest(payload) => assert_eq!(payload.data, hash),
             _ => panic!(),
         }
     }

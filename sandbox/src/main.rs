@@ -1,4 +1,5 @@
 use clap::Parser;
+use nullnet_libtunnel::{Profile, ServerConfig};
 use std::net::SocketAddr;
 
 #[derive(Parser, Debug, Clone)]
@@ -9,11 +10,20 @@ struct Args {
     #[arg(long, default_value = "127.0.0.1:9000")]
     pub server_addr: String,
 
-    #[arg(long, default_value = "127.0.0.1:8080")]
-    pub visitor_addr: String,
-
     #[arg(long, default_value = "127.0.0.1:5000")]
     pub service_addr: String,
+}
+
+struct ClientProfile {}
+
+impl Profile for ClientProfile {
+    fn get_unique_id(&self) -> String {
+        String::from("test")
+    }
+
+    fn get_visitor_addr(&self) -> SocketAddr {
+        "0.0.0.0:8080".parse().unwrap()
+    }
 }
 
 #[tokio::main]
@@ -27,37 +37,31 @@ async fn main() {
         let server_addr = args.server_addr.parse().expect("Wrond server bind addr");
         let local_addr = args.service_addr.parse().expect("Wrong local addr");
 
-        let config = nullnet_libtunnel::Config {
+        let config = nullnet_libtunnel::ClientConfig {
             id: String::from("test"),
             server_addr,
             local_addr,
-            // heartbeat_timeout: Some(Duration::from_secs(5 * 60)),
-            // reconnect_timeout: Some(Duration::from_secs(60)),
-            heartbeat_timeout: None,
             reconnect_timeout: None,
         };
 
-        let mut client = nullnet_libtunnel::Client::new(config);
+        let client = nullnet_libtunnel::Client::new(config);
 
-        let _ = client.run().await;
+        let _ = tokio::signal::ctrl_c().await;
+
+        client.shutdown().await;
     } else if args.mode.to_lowercase() == "server" {
-        let visitor_addr: SocketAddr = args.visitor_addr.parse().expect("Wrong visitor address");
-
-        let profile = nullnet_libtunnel::ClientProfile {
-            id: String::from("test"),
-            visitor_addr,
-        };
-
-        let server_addr = args.server_addr.parse().expect("Wrond server bind addr");
-
-        let server = nullnet_libtunnel::Server::new(server_addr, None);
+        let profile = ClientProfile {};
+        let config = ServerConfig::default();
+        let server = nullnet_libtunnel::Server::new(config);
 
         server
-            .register_profile(profile)
+            .insert_profile(profile)
             .await
             .expect("Failed to register client profile");
 
-        let _ = server.run().await;
+        let _ = tokio::signal::ctrl_c().await;
+
+        server.shutdown().await;
     } else {
         panic!("Unsupported mode: {}", args.mode);
     }
