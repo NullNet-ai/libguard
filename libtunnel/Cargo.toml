@@ -13,3 +13,4 @@ nullnet-liberror = "0.1.1"
 serde = {version = "1.0.218", features = ["derive"] }
 sha2 = "0.10.8"
 tokio = { version = "1.43.0", features = ["full"] }
+uuid = { version  = "1.16.0", features = ["v4"]}

@@ -1,139 +1,206 @@
-mod control_connection;
-mod control_connection_manager;
+mod config;
 mod profile;
-mod profile_manager;
+mod session;
 
-pub use profile::*;
-
-use crate::{protocol, str_hash, Hash, Message, Payload};
-use control_connection_manager::ControlConnectionManager;
+use crate::{protocol, str_hash, Hash, Message};
+pub use config::Config as ServerConfig;
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
-use profile_manager::ProfileManager;
-use std::time::Duration;
-use std::{net::SocketAddr, sync::Arc};
-use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::Mutex;
+pub use profile::Profile;
+pub use session::Session;
+use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use tokio::{
+    net::TcpListener,
+    sync::{oneshot, RwLock},
+    task::JoinHandle,
+};
 
-pub struct Server {
-    bind_addr: SocketAddr,
-    profile_manager: Arc<Mutex<ProfileManager>>,
-    connections_manager: Arc<Mutex<ControlConnectionManager>>,
-    heartbeat_interval: Option<Duration>,
+/// `Server` manages the lifecycle of active profiles and their associated sessions.
+/// It handles requests for profile registration, session management, and server shutdown.
+#[derive(Debug)]
+pub struct Server<T: Profile + Send + Sync + 'static> {
+    /// A manager responsible for handling the active sessions in the server.
+    sessions_manager: Arc<session::Manager>,
+    /// A thread-safe collection of active profiles, indexed by their unique hash.
+    active_profiles: Arc<RwLock<HashMap<Hash, T>>>,
+    /// The handle for the server's background task that runs the main server loop.
+    handle: JoinHandle<()>,
+    /// A sender used to initiate the shutdown of the server.
+    shutdown_tx: oneshot::Sender<()>,
 }
 
-impl Server {
-    pub fn new(bind_addr: SocketAddr, heartbeat_interval: Option<Duration>) -> Self {
-        let profile_manager = Arc::new(Mutex::new(ProfileManager::new()));
-        let connections_manager = Arc::new(Mutex::new(ControlConnectionManager::new()));
+impl<T: Profile + Send + Sync + 'static> Server<T> {
+    /// Creates a new instance of the server with the provided configuration.
+    ///
+    /// # Parameters
+    /// - `config`: The server configuration containing the address to bind to.
+    ///
+    /// # Returns
+    /// A new `Server` instance.
+    pub fn new(config: ServerConfig) -> Self {
+        let sessions_manager = Arc::new(session::Manager::new());
+        let active_profiles = Arc::new(RwLock::new(HashMap::new()));
+
+        let (shutdown_tx, shutdown_rx) = oneshot::channel();
+
+        let addr = config.addr;
+        let manager = sessions_manager.clone();
+        let profiles = active_profiles.clone();
+
+        let handle = tokio::spawn(async move {
+            tokio::select! {
+                _ = shutdown_rx => {
+                    log::debug!("Server: Received shutdown signal");
+                },
+                _ = main_loop(addr, manager, profiles) => {
+                    log::debug!("Server: Main loop completed");
+                }
+            }
+        });
 
         Self {
-            bind_addr,
-            profile_manager,
-            connections_manager,
-            heartbeat_interval,
+            sessions_manager,
+            active_profiles,
+            shutdown_tx,
+            handle,
         }
     }
 
-    pub async fn run(&self) -> Result<(), Error> {
-        let listener = TcpListener::bind(self.bind_addr)
-            .await
-            .handle_err(location!())?;
+    /// Inserts a new profile into the active profiles map.
+    ///
+    /// # Parameters
+    /// - `profile`: The profile to be registered.
+    ///
+    /// # Returns
+    /// - `Ok(())`: If the profile is successfully registered.
+    /// - `Err(Error)`: If the profile is already registered.
+    pub async fn insert_profile(&self, profile: T) -> Result<(), Error> {
+        let hash = str_hash(&profile.get_unique_id());
 
-        loop {
-            let (mut stream, addr) = listener.accept().await.handle_err(location!())?;
-            log::debug!("Client connected from {}", addr);
+        let mut lock = self.active_profiles.write().await;
 
-            let Ok(message) = protocol::expect_open_message(&mut stream).await else {
-                log::error!("Unexpected opening message, aborting connection ...");
-                continue;
-            };
-
-            match message {
-                Message::ControlConnectionRequest(payload) => {
-                    self.on_control_connection_established(stream, payload)
-                        .await;
-                }
-                Message::DataConnectionRequest(payload) => {
-                    self.on_data_connection_established(stream, payload).await;
-                }
-                _ => {
-                    log::error!("Unexpected opening message, aborting connection ...");
-                    continue;
-                }
-            }
+        if lock.contains_key(&hash) {
+            return Err(format!(
+                "Server: Cannot register profile because it is already registered."
+            ))
+            .handle_err(location!());
         }
+
+        lock.insert(hash, profile);
+
+        Ok(())
     }
 
-    async fn on_control_connection_established(&self, mut stream: TcpStream, payload: Payload) {
-        let profile_manager = self.profile_manager.clone();
-        let connections_manager = self.connections_manager.clone();
-        let heartbeat_interval = self.heartbeat_interval;
-
-        tokio::spawn(async move {
-            let client_id_hash = payload.data;
-
-            if let Some(profile) = profile_manager.lock().await.get(&client_id_hash) {
-                match protocol::write_message(&mut stream, Message::Acknowledgment).await {
-                    Ok(_) => {
-                        connections_manager
-                            .lock()
-                            .await
-                            .open_connection(stream, &profile, heartbeat_interval)
-                            .await;
-                    }
-                    Err(err) => {
-                        log::error!("Failed to send Acknowledgment message. {}", err.to_str())
-                    }
-                };
-            } else if let Err(err) = protocol::write_message(&mut stream, Message::Rejection).await
-            {
-                log::error!("Failed to send Rejection message. {}", err.to_str());
-            }
-        });
-    }
-
-    async fn on_data_connection_established(&self, mut stream: TcpStream, payload: Payload) {
-        let connections_manager = self.connections_manager.clone();
-
-        tokio::spawn(async move {
-            let control_id: Hash = payload.data;
-
-            if connections_manager.lock().await.exists(&control_id) {
-                match protocol::write_message(&mut stream, Message::Acknowledgment).await {
-                    Ok(_) => {
-                        // @TODO: Since open_data_channel would block in an attempt
-                        // to receive a visitor stream, we might want ot add timeout
-                        // or improve the API to not hold the lock on connections_manager
-                        if let Err(err) = connections_manager
-                            .lock()
-                            .await
-                            .open_data_channel(&control_id, stream)
-                            .await
-                        {
-                            log::error!("Failed to open data channel, {}", err.to_str());
-                        }
-                    }
-                    Err(err) => {
-                        log::error!("Failed to send Acknowledgment message. {}", err.to_str());
-                    }
-                };
-            } else if let Err(err) = protocol::write_message(&mut stream, Message::Rejection).await
-            {
-                log::error!("Failed to send Rejection message. {}", err.to_str());
-            }
-        });
-    }
-
-    pub async fn register_profile(&self, profile: ClientProfile) -> Result<(), Error> {
-        self.profile_manager.lock().await.register(profile)
-    }
-
+    /// Removes a profile from the active profiles map and terminates the associated session.
+    ///
+    /// # Parameters
+    /// - `id`: The unique ID of the profile to be removed.
+    ///
+    /// # Returns
+    /// - `Ok(())`: If the profile is successfully removed.
     pub async fn remove_profile(&self, id: &str) -> Result<(), Error> {
         let hash = str_hash(id);
 
-        self.profile_manager.lock().await.remove(&hash);
-        self.connections_manager.lock().await.remove(&hash).await?;
+        if let Some(profile) = self.active_profiles.write().await.remove(&hash) {
+            let _ = self.sessions_manager.terminate_session(&profile).await;
+        }
 
         Ok(())
+    }
+
+    /// Checks if a profile is currently active.
+    ///
+    /// # Parameters
+    /// - `id`: The unique ID of the profile to check.
+    ///
+    /// # Returns
+    /// - `Some(true)`: If the profile exists and is active.
+    /// - `Some(false)`: If the profile exists but is inactive.
+    /// - `None`: If no profile exists for the given ID.
+    pub async fn is_profile_active(&self, id: &str) -> Option<bool> {
+        let hash = str_hash(id);
+        self.sessions_manager.is_session_active(&hash).await
+    }
+
+    /// Shuts down the server and terminates all active sessions.
+    ///
+    /// This function sends a shutdown signal, terminates all sessions, and waits for the
+    /// server background task to complete.
+    pub async fn shutdown(self) {
+        self.sessions_manager.terminate_all().await;
+        if let Ok(_) = self.shutdown_tx.send(()) {
+            let _ = self.handle.await;
+        } else {
+            self.handle.abort();
+        }
+    }
+}
+
+/// The main loop of the server, responsible for accepting client connections and handling requests.
+///
+/// It listens for incoming connections, processes control and data connection requests, and
+/// interacts with the profile and session managers accordingly.
+async fn main_loop<T: Profile + Send + Sync + 'static>(
+    addr: SocketAddr,
+    manager: Arc<session::Manager>,
+    profiles: Arc<RwLock<HashMap<Hash, T>>>,
+) -> Result<(), Error> {
+    let listener = TcpListener::bind(addr).await.handle_err(location!())?;
+
+    loop {
+        let (mut stream, addr) = listener.accept().await.handle_err(location!())?;
+        log::debug!("Server: Client connected from {}", addr);
+
+        let Ok(message) = protocol::expect_open_message(&mut stream).await else {
+            log::error!("Server:  Unexpected opening message, aborting connection ...");
+            continue;
+        };
+
+        match message {
+            Message::ControlConnectionRequest(payload) => {
+                if let Some(profile) = profiles.read().await.get(payload.data.as_slice()) {
+                    match protocol::write_message(&mut stream, Message::Acknowledgment).await {
+                        Ok(_) => {
+                            if let Err(err) = manager.spawn_session(stream, profile).await {
+                                log::error!("Server: failed to request data channel. {:?}", err);
+                            }
+                        }
+                        Err(err) => {
+                            log::error!(
+                                "Server: Failed to send Acknowledgment message. {}",
+                                err.to_str()
+                            )
+                        }
+                    };
+                } else if let Err(err) =
+                    protocol::write_message(&mut stream, Message::Rejection).await
+                {
+                    log::error!("Server: Failed to send Rejection message. {}", err.to_str());
+                }
+            }
+            Message::DataConnectionRequest(payload) => {
+                if manager.session_exists(&payload.data).await {
+                    match protocol::write_message(&mut stream, Message::Acknowledgment).await {
+                        Ok(_) => {
+                            if let Err(err) = manager.request_channel(&payload.data, stream).await {
+                                log::error!("Server: failed to request data channel. {:?}", err);
+                            }
+                        }
+                        Err(err) => {
+                            log::error!(
+                                "Server: Failed to send Acknowledgment message. {}",
+                                err.to_str()
+                            );
+                        }
+                    };
+                } else if let Err(err) =
+                    protocol::write_message(&mut stream, Message::Rejection).await
+                {
+                    log::error!("Server: Failed to send Rejection message. {}", err.to_str());
+                }
+            }
+            _ => {
+                log::error!("Server: Unexpected opening message, aborting connection ...");
+            }
+        }
     }
 }
