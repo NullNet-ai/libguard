@@ -1,7 +1,10 @@
-use super::session::Session;
+use super::r#impl::Session;
 use crate::{server::profile::Profile, str_hash, Hash};
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{hash_map, HashMap},
+    sync::Arc,
+};
 use tokio::{net::TcpStream, sync::RwLock};
 
 /// `Manager` is responsible for handling active sessions, ensuring session lifecycle management,
@@ -40,18 +43,17 @@ impl Manager {
         T: Profile,
     {
         let id_hash = str_hash(&profile.get_unique_id());
-        let mut lock = self.sessions.write().await;
 
-        if lock.contains_key(&id_hash) {
+        if let hash_map::Entry::Vacant(entry) = self.sessions.write().await.entry(id_hash) {
+            let addr = profile.get_visitor_addr();
+            let session = Session::new(addr, stream);
+            entry.insert(session);
+        } else {
             return Err(format!(
                 "Session creation failed: A session with the same ID already exists. Hash [{:?}]",
                 &id_hash,
             ))
             .handle_err(location!());
-        } else {
-            let addr = profile.get_visitor_addr();
-            let session = Session::new(addr, stream);
-            lock.insert(id_hash, session);
         }
 
         Ok(())

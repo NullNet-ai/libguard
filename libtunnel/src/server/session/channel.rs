@@ -51,7 +51,7 @@ impl Channel {
     /// Initiates the shutdown process for this channel.
     /// Attempts to send a shutdown signal; if sending fails, the task is forcefully aborted.
     pub async fn shutdown(self) {
-        if let Ok(_) = self.shutdown_tx.send(()) {
+        if self.shutdown_tx.send(()).is_ok() {
             let _ = self.handle.await;
         } else {
             log::error!(

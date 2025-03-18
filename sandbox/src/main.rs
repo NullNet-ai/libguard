@@ -44,7 +44,7 @@ async fn main() {
             reconnect_timeout: None,
         };
 
-        let mut client = nullnet_libtunnel::Client::new(config);
+        let client = nullnet_libtunnel::Client::new(config);
 
         let _ = tokio::signal::ctrl_c().await;
 

@@ -79,10 +79,8 @@ impl<T: Profile + Send + Sync + 'static> Server<T> {
         let mut lock = self.active_profiles.write().await;
 
         if lock.contains_key(&hash) {
-            return Err(format!(
-                "Server: Cannot register profile because it is already registered."
-            ))
-            .handle_err(location!());
+            return Err("Server: Cannot register profile because it is already registered.")
+                .handle_err(location!());
         }
 
         lock.insert(hash, profile);
@@ -127,7 +125,7 @@ impl<T: Profile + Send + Sync + 'static> Server<T> {
     /// server background task to complete.
     pub async fn shutdown(self) {
         self.sessions_manager.terminate_all().await;
-        if let Ok(_) = self.shutdown_tx.send(()) {
+        if self.shutdown_tx.send(()).is_ok() {
             let _ = self.handle.await;
         } else {
             self.handle.abort();

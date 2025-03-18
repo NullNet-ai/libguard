@@ -1,6 +1,6 @@
 mod channel;
+mod r#impl;
 mod manager;
-mod session;
 
 pub use manager::Manager;
-pub use session::Session;
+pub use r#impl::Session;

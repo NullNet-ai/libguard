@@ -37,7 +37,7 @@ impl Client {
     /// # Returns
     /// A future that resolves once the client has successfully shut down.
     pub async fn shutdown(self) {
-        if let Ok(_) = self.shutdown_tx.send(()) {
+        if self.shutdown_tx.send(()).is_ok() {
             let _ = self.handle.await;
         } else {
             self.handle.abort();

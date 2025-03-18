@@ -86,7 +86,7 @@ impl Session {
     ///
     /// If the shutdown signal fails to send, the session is forcefully aborted.
     pub async fn shutdown(self) {
-        if let Ok(_) = self.shutdown_tx.send(()) {
+        if self.shutdown_tx.send(()).is_ok() {
             let _ = self.handle.await;
         } else {
             log::error!(
@@ -213,7 +213,12 @@ async fn manage_channel_creation(
             channel_complete_tx.clone(),
         );
 
-        if let Some(_) = channels.write().await.insert(channel.get_id(), channel) {
+        if channels
+            .write()
+            .await
+            .insert(channel.get_id(), channel)
+            .is_some()
+        {
             panic!("Channel id collision detected, refine the ID generation mechanism");
         }
     }
