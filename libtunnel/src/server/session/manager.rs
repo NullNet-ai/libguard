@@ -152,4 +152,18 @@ impl Manager {
             None => None,
         }
     }
+
+    /// Determines whether a session exists for a given hash.
+    ///
+    /// # Parameters
+    /// - `hash`: The unique identifier of the session.
+    ///
+    /// # Returns
+    /// - `true`: If a session exists for the given hash.
+    /// - `false`: If no session exists.
+    ///
+    /// This function is a shorthand for `session_exists`, providing a quick way to check session presence.
+    pub async fn has_session(&self, hash: &Hash) -> bool {
+        self.sessions.read().await.contains_key(hash)
+    }
 }

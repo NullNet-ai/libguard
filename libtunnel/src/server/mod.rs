@@ -119,6 +119,19 @@ impl<T: Profile + Send + Sync + 'static> Server<T> {
         self.sessions_manager.is_session_active(&hash).await
     }
 
+    /// Checks if a profile is currently online by verifying whether there are active sessions.
+    ///
+    /// # Parameters
+    /// - `id`: The unique ID of the profile to check.
+    ///
+    /// # Returns
+    /// - `true`: If there is an active session associated with the profile ID.
+    /// - `false`: Otherwise.
+    pub async fn is_profile_online(&self, id: &str) -> bool {
+        let hash = str_hash(id);
+        self.sessions_manager.has_session(&hash).await
+    }
+
     /// Shuts down the server and terminates all active sessions.
     ///
     /// This function sends a shutdown signal, terminates all sessions, and waits for the
