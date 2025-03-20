@@ -2,5 +2,8 @@
 
 All releases with the relative changes are documented in this file.
 
+## [0.2.0] - 2025-03-20
+- Added method `IpInfoHandler::get_ip_to_lookup` to determine which address of the pair isn't from a private or reserved IP range
+
 ## [0.1.0] - 2025-02-18
 - Initial release of the library
