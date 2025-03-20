@@ -17,3 +17,4 @@ tokio = { version = "1.43.0", features = ["macros", "rt", "rt-multi-thread"] }
 chrono = "0.4.39"
 flate2 = "1.0.35"
 log = "0.4.25"
+once_cell = "1.21.1"
