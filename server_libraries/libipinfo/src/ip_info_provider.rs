@@ -31,21 +31,21 @@ impl IpInfoProvider {
     ///
     /// * `location_url` - The URL of the location MMDB file.
     ///   The string "`{api_key}`" will be replaced with the API key, if any.
-    /// * `mmdb_url` - The URL of the ASN MMDB file.
+    /// * `asn_url` - The URL of the ASN MMDB file.
     ///   The string "`{api_key}`" will be replaced with the API key, if any.
     /// * `api_key` - The API key to use.
     /// * `refresh_days` - The number of days to wait before refreshing the MMDB files.
     #[must_use]
     pub fn new_mmdb_provider(
         location_url: &str,
-        mmdb_url: &str,
+        asn_url: &str,
         api_key: &str,
         refresh_days: u64,
     ) -> Self {
         Self {
             inner: IpInfoProviderInner::Mmdb(MmdbConfig::new(
                 location_url,
-                mmdb_url,
+                asn_url,
                 api_key,
                 refresh_days,
             )),

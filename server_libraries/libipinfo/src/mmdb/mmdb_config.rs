@@ -26,7 +26,7 @@ pub(crate) struct MmdbConfig {
 impl MmdbConfig {
     pub(crate) fn new(location_url: &str, asn_url: &str, api_key: &str, refresh_days: u64) -> Self {
         let location_url = location_url.replace("{api_key}", api_key);
-        let mmdb_url = asn_url.replace("{api_key}", api_key);
+        let asn_url = asn_url.replace("{api_key}", api_key);
 
         let location_reader = Arc::new(RwLock::new(MmdbReader::default()));
         let location_reader_2 = location_reader.clone();
@@ -37,7 +37,7 @@ impl MmdbConfig {
         let asn_reader = Arc::new(RwLock::new(MmdbReader::default()));
         let asn_reader_2 = asn_reader.clone();
         tokio::spawn(async move {
-            refresh_mmdb_data(asn_reader_2, &mmdb_url, refresh_days).await;
+            refresh_mmdb_data(asn_reader_2, &asn_url, refresh_days).await;
         });
 
         Self {
