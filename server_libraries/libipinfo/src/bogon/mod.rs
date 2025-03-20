@@ -32,6 +32,7 @@ static BOGONS: Lazy<Vec<&'static Bogon>> = Lazy::new(|| {
         &NETWORK_INTERCONNECT,
         &TEST_NET_2,
         &TEST_NET_3,
+        &MULTICAST,
         &FUTURE_USE,
         &NODE_SCOPE_UNSPECIFIED,
         &NODE_SCOPE_LOOPBACK,
@@ -99,6 +100,11 @@ static TEST_NET_2: Lazy<Bogon> = Lazy::new(|| Bogon {
 static TEST_NET_3: Lazy<Bogon> = Lazy::new(|| Bogon {
     range: IpCollection::new("203.0.113.0-203.0.113.255").unwrap(),
     description: "TEST-NET-3",
+});
+
+static MULTICAST: Lazy<Bogon> = Lazy::new(|| Bogon {
+    range: IpCollection::new("224.0.0.0-239.255.255.255").unwrap(),
+    description: "multicast",
 });
 
 static FUTURE_USE: Lazy<Bogon> = Lazy::new(|| Bogon {
@@ -266,6 +272,14 @@ mod tests {
         assert_eq!(
             is_bogon(IpAddr::from_str("203.0.113.128").unwrap()),
             Some("TEST-NET-3")
+        );
+    }
+
+    #[test]
+    fn test_is_bogon_multicast() {
+        assert_eq!(
+            is_bogon(IpAddr::from_str("224.12.13.255").unwrap()),
+            Some("multicast")
         );
     }
 
