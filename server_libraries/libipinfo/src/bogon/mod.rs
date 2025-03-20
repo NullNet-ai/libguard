@@ -44,6 +44,7 @@ static BOGONS: Lazy<Vec<&'static Bogon>> = Lazy::new(|| {
         &ULA,
         &LINK_LOCAL_UNICAST,
         &SITE_LOCAL_UNICAST,
+        &MULTICAST_V6,
     ]
 });
 
@@ -165,6 +166,11 @@ static LINK_LOCAL_UNICAST: Lazy<Bogon> = Lazy::new(|| Bogon {
 static SITE_LOCAL_UNICAST: Lazy<Bogon> = Lazy::new(|| Bogon {
     range: IpCollection::new("fec0::-feff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").unwrap(),
     description: "site-local unicast",
+});
+
+static MULTICAST_V6: Lazy<Bogon> = Lazy::new(|| Bogon {
+    range: IpCollection::new("ff00::-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff").unwrap(),
+    description: "multicast v6",
 });
 
 #[cfg(test)]
@@ -369,6 +375,14 @@ mod tests {
         assert_eq!(
             is_bogon(IpAddr::from_str("feea::1").unwrap()),
             Some("site-local unicast")
+        );
+    }
+
+    #[test]
+    fn test_is_bogon_multicast_v6() {
+        assert_eq!(
+            is_bogon(IpAddr::from_str("ff02::1").unwrap()),
+            Some("multicast v6")
         );
     }
 }
