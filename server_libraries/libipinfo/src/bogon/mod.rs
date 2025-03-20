@@ -18,6 +18,34 @@ struct Bogon {
     description: &'static str,
 }
 
+// all bogons
+
+static BOGONS: Lazy<Vec<&'static Bogon>> = Lazy::new(|| {
+    vec![
+        &THIS_NETWORK,
+        &PRIVATE_USE,
+        &CARRIER_GRADE,
+        &LOOPBACK,
+        &LINK_LOCAL,
+        &IETF_PROTOCOL,
+        &TEST_NET_1,
+        &NETWORK_INTERCONNECT,
+        &TEST_NET_2,
+        &TEST_NET_3,
+        &FUTURE_USE,
+        &NODE_SCOPE_UNSPECIFIED,
+        &NODE_SCOPE_LOOPBACK,
+        &IPV4_MAPPED,
+        &IPV4_COMPATIBLE,
+        &REMOTELY_TRIGGERED,
+        &ORCHID,
+        &DOCUMENTATION_PREFIX,
+        &ULA,
+        &LINK_LOCAL_UNICAST,
+        &SITE_LOCAL_UNICAST,
+    ]
+});
+
 // IPv4 bogons
 
 static THIS_NETWORK: Lazy<Bogon> = Lazy::new(|| Bogon {
@@ -133,34 +161,6 @@ static SITE_LOCAL_UNICAST: Lazy<Bogon> = Lazy::new(|| Bogon {
     description: "site-local unicast",
 });
 
-// all bogons
-
-static BOGONS: Lazy<Vec<&'static Bogon>> = Lazy::new(|| {
-    vec![
-        &THIS_NETWORK,
-        &PRIVATE_USE,
-        &CARRIER_GRADE,
-        &LOOPBACK,
-        &LINK_LOCAL,
-        &IETF_PROTOCOL,
-        &TEST_NET_1,
-        &NETWORK_INTERCONNECT,
-        &TEST_NET_2,
-        &TEST_NET_3,
-        &FUTURE_USE,
-        &NODE_SCOPE_UNSPECIFIED,
-        &NODE_SCOPE_LOOPBACK,
-        &IPV4_MAPPED,
-        &IPV4_COMPATIBLE,
-        &REMOTELY_TRIGGERED,
-        &ORCHID,
-        &DOCUMENTATION_PREFIX,
-        &ULA,
-        &LINK_LOCAL_UNICAST,
-        &SITE_LOCAL_UNICAST,
-    ]
-});
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -168,11 +168,17 @@ mod tests {
 
     #[test]
     fn test_is_bogon_no() {
+        // loop {
+        //     std::thread::sleep(std::time::Duration::from_secs(1));
+        //     let instant = std::time::Instant::now();
         assert_eq!(is_bogon(IpAddr::from_str("8.8.8.8").unwrap()), None);
         assert_eq!(
             is_bogon(IpAddr::from_str("2001:4860:4860::8888").unwrap()),
             None
         );
+        //     let elapsed = instant.elapsed();
+        //     println!("test_is_bogon_no: {elapsed:?}");
+        // }
     }
 
     #[test]
