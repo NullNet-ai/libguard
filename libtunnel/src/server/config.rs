@@ -18,7 +18,7 @@ impl Default for Config {
         let default_port = 9000;
         Self {
             addr: SocketAddr::V4(SocketAddrV4::new(default_ip, default_port)),
-            idle_channels_timeout: Duration::from_secs(10),
+            idle_channels_timeout: Duration::from_secs(5 * 60),
         }
     }
 }
