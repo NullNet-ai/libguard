@@ -1,7 +1,7 @@
 use super::channel::{Channel, ChannelId};
 use crate::{protocol, Message};
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{mpsc, oneshot, RwLock},
@@ -31,11 +31,16 @@ impl Session {
     ///
     /// * `addr` - The socket address for visitor connections.
     /// * `control_stream` - The TCP stream used for communication with the control entity.
+    /// * `channel_idle_timeout`: The timeout duration for idle channels before shutdown.
     ///
     /// # Returns
     ///
     /// A new `Session` instance that manages the channels.
-    pub fn new(addr: SocketAddr, control_stream: TcpStream) -> Self {
+    pub fn new(
+        addr: SocketAddr,
+        control_stream: TcpStream,
+        channel_idle_timeout: Duration,
+    ) -> Self {
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
         let (client_stream_tx, client_stream_rx) = mpsc::channel::<TcpStream>(64);
 
@@ -47,6 +52,7 @@ impl Session {
             shutdown_rx,
             channels.clone(),
             client_stream_rx,
+            channel_idle_timeout,
         ));
 
         Self {
@@ -107,12 +113,14 @@ impl Session {
 /// * `shutdown_rx` - A `oneshot::Receiver` that listens for shutdown signals.
 /// * `channels` - A shared, thread-safe map storing active channels.
 /// * `client_stream_rx` - A receiver for handling incoming client connections.
+/// * `channel_idle_timeout`: The timeout duration for idle channels before shutdown.
 async fn run_control_session(
     addr: SocketAddr,
     control_stream: TcpStream,
     shutdown_rx: oneshot::Receiver<()>,
     channels: Arc<RwLock<HashMap<ChannelId, Channel>>>,
     client_stream_rx: mpsc::Receiver<TcpStream>,
+    channel_idle_timeout: Duration,
 ) {
     let (channel_complete_tx, channel_complete_rx) = mpsc::channel(64);
     let (visitor_stream_tx, visitor_stream_rx) = mpsc::channel::<TcpStream>(64);
@@ -127,7 +135,7 @@ async fn run_control_session(
         _ = manage_channel_lifecycle(channels.clone(), channel_complete_rx) => {
             log::debug!("Session: Stopped managing channels lifecycle");
         }
-        _ = manage_channel_creation(visitor_stream_rx, client_stream_rx, channels.clone(), channel_complete_tx) => {
+        _ = manage_channel_creation(visitor_stream_rx, client_stream_rx, channels.clone(), channel_complete_tx, channel_idle_timeout) => {
             log::debug!("Session: Stopped managing channels creation");
         }
     }
@@ -193,12 +201,13 @@ async fn manage_channel_lifecycle(
 /// * `client_stream_rx` - A receiver for incoming client connections.
 /// * `channels` - A shared, thread-safe map storing active channels.
 /// * `channel_complete_tx` - A sender for notifying completed channels.
+/// * `channel_idle_timeout`: The timeout duration for idle channels before shutdown.
 async fn manage_channel_creation(
     mut visitor_stream_rx: mpsc::Receiver<TcpStream>,
     mut client_stream_rx: mpsc::Receiver<TcpStream>,
-
     channels: Arc<RwLock<HashMap<ChannelId, Channel>>>,
     channel_complete_tx: mpsc::Sender<ChannelId>,
+    channel_idle_timeout: Duration,
 ) {
     loop {
         let (visitor, client) = tokio::join!(visitor_stream_rx.recv(), client_stream_rx.recv(),);
@@ -211,6 +220,7 @@ async fn manage_channel_creation(
             visitor.unwrap(),
             client.unwrap(),
             channel_complete_tx.clone(),
+            channel_idle_timeout,
         );
 
         if channels

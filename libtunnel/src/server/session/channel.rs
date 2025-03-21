@@ -1,5 +1,7 @@
+use std::time::Duration;
+
+use crate::common::copy_bidirectional_with_timeout;
 use tokio::{
-    io::copy_bidirectional,
     net::TcpStream,
     sync::{mpsc, oneshot},
     task::JoinHandle,
@@ -19,27 +21,39 @@ pub struct Channel {
 }
 
 impl Channel {
-    /// Creates a new `Channel` instance and spawns a background task to manage data transfer.
+    /// Creates a new `Channel` and spawns a background task to manage data transfer.
+    /// This task handles bidirectional data transfer between two TCP streams with a timeout.
     ///
     /// # Arguments
-    ///
-    /// * `s1` - The first `TcpStream` participating in bidirectional data transfer.
-    /// * `s2` - The second `TcpStream` participating in bidirectional data transfer.
-    /// * `complete_tx` - An `mpsc::Sender` used to notify when the data transfer completes.
+    /// - `s1`: The first `TcpStream` for data transfer.
+    /// - `s2`: The second `TcpStream` for data transfer.
+    /// - `complete_tx`: A sender to notify when the data transfer completes.
+    /// - `idle_timeout`: The timeout duration for idle connections before shutdown.
     ///
     /// # Returns
-    ///
     /// A `Channel` struct containing the unique identifier, task handle, and shutdown sender.
-    /// # Notes
     ///
-    /// * If a shutdown signal is received first, the task logs the event and stops without sending a completion notification.
-    /// * If data transfer completes first, the task logs the event and notifies via `complete_tx`.
-    pub fn new(s1: TcpStream, s2: TcpStream, complete_tx: mpsc::Sender<ChannelId>) -> Self {
+    /// # Notes
+    /// - If a shutdown signal is received, the task stops without notifying completion.
+    /// - If data transfer completes, the task notifies via `complete_tx`.
+    pub fn new(
+        s1: TcpStream,
+        s2: TcpStream,
+        complete_tx: mpsc::Sender<ChannelId>,
+        idle_timeout: Duration,
+    ) -> Self {
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
         let id = Uuid::new_v4();
 
-        let handle = tokio::spawn(launch_data_channel(id, s1, s2, shutdown_rx, complete_tx));
+        let handle = tokio::spawn(launch_data_channel(
+            id,
+            s1,
+            s2,
+            idle_timeout,
+            shutdown_rx,
+            complete_tx,
+        ));
 
         Self {
             id,
@@ -72,26 +86,24 @@ impl Channel {
     }
 }
 
-/// Handles bidirectional data transfer between two TCP streams.
-/// This function runs inside a spawned task and listens for either a shutdown signal or
-/// completion of the data transfer.
+/// Handles bidirectional data transfer between two TCP streams with a shutdown signal.
+/// This function runs inside a spawned task, where it waits for either a shutdown signal
+/// or completion of the data transfer operation. Upon completion, the function either shuts
+/// down gracefully or notifies that the data transfer is complete.
 ///
 /// # Arguments
 ///
-/// * `id` - Unique identifier for the channel.
-/// * `s1` - The first `TcpStream` participating in the transfer.
-/// * `s2` - The second `TcpStream` participating in the transfer.
-/// * `shutdown_rx` - A `oneshot::Receiver` to listen for shutdown signals.
-/// * `complete_tx` - An `mpsc::Sender` to notify when the transfer is complete.
-///
-/// # Behavior
-///
-/// * If a shutdown signal is received first, the task logs the event and stops.
-/// * If data transfer completes first, the task logs the event and notifies via `complete_tx`.
+/// * `id` - A unique identifier for the channel to identify the data transfer task.
+/// * `s1` - The first `TcpStream` participating in the bidirectional transfer.
+/// * `s2` - The second `TcpStream` participating in the bidirectional transfer.
+/// * `idle_timeout` - A `Duration` that specifies the timeout period for idle connections before shutting down.
+/// * `shutdown_rx` - A `oneshot::Receiver<()>` to listen for a shutdown signal that will cancel the data transfer.
+/// * `complete_tx` - An `mpsc::Sender<ChannelId>` used to notify the caller that the data transfer has completed.
 async fn launch_data_channel(
     id: ChannelId,
-    mut s1: TcpStream,
-    mut s2: TcpStream,
+    s1: TcpStream,
+    s2: TcpStream,
+    idle_timeout: Duration,
     shutdown_rx: oneshot::Receiver<()>,
     complete_tx: mpsc::Sender<ChannelId>,
 ) {
@@ -99,7 +111,7 @@ async fn launch_data_channel(
         _ = shutdown_rx => {
             log::debug!("Channel {}: Shutdown signal received, aborting...", id);
         },
-        _ = copy_bidirectional(&mut s1, &mut s2) => {
+        _ = copy_bidirectional_with_timeout(s1, s2, idle_timeout) => {
             log::debug!("Channel {}: Data transfer completed, closing...", id);
 
             if let Err(err) = complete_tx.send(id).await {

@@ -7,7 +7,7 @@ pub use config::Config as ServerConfig;
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
 pub use profile::Profile;
 pub use session::Session;
-use std::{collections::HashMap, net::SocketAddr, sync::Arc};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::TcpListener,
     sync::{oneshot, RwLock},
@@ -42,7 +42,6 @@ impl<T: Profile + Send + Sync + 'static> Server<T> {
 
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
-        let addr = config.addr;
         let manager = sessions_manager.clone();
         let profiles = active_profiles.clone();
 
@@ -51,7 +50,7 @@ impl<T: Profile + Send + Sync + 'static> Server<T> {
                 _ = shutdown_rx => {
                     log::debug!("Server: Received shutdown signal");
                 },
-                _ = main_loop(addr, manager, profiles) => {
+                _ = main_loop(config.addr, manager, profiles, config.idle_channels_timeout) => {
                     log::debug!("Server: Main loop completed");
                 }
             }
@@ -154,6 +153,7 @@ async fn main_loop<T: Profile + Send + Sync + 'static>(
     addr: SocketAddr,
     manager: Arc<session::Manager>,
     profiles: Arc<RwLock<HashMap<Hash, T>>>,
+    idle_channels_timeout: Duration,
 ) -> Result<(), Error> {
     let listener = TcpListener::bind(addr).await.handle_err(location!())?;
 
@@ -171,7 +171,10 @@ async fn main_loop<T: Profile + Send + Sync + 'static>(
                 if let Some(profile) = profiles.read().await.get(payload.data.as_slice()) {
                     match protocol::write_message(&mut stream, Message::Acknowledgment).await {
                         Ok(_) => {
-                            if let Err(err) = manager.spawn_session(stream, profile).await {
+                            if let Err(err) = manager
+                                .spawn_session(stream, profile, idle_channels_timeout)
+                                .await
+                            {
                                 log::error!("Server: failed to request data channel. {:?}", err);
                             }
                         }
