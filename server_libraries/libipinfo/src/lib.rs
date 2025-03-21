@@ -1,14 +1,17 @@
 #![doc = include_str!("../README.md")]
 
 pub use crate::api::api_fields::ApiFields;
+use crate::bogon::is_bogon;
 pub use crate::ip_info::IpInfo;
 pub use crate::ip_info_provider::IpInfoProvider;
 use crate::mmdb::mmdb_config::MmdbConfig;
 use crate::web_client::new_web_client;
 use nullnet_liberror::Error;
 use reqwest::Client;
+use std::net::IpAddr;
 
 mod api;
+mod bogon;
 mod ip_info;
 mod ip_info_provider;
 mod mmdb;
@@ -54,5 +57,19 @@ impl IpInfoHandler {
             }
         }
         self.fallback.lookup_ip(ip)
+    }
+
+    /// Returns the IP address to use for the lookup.
+    ///
+    /// In other words, this method determines which address of the pair isn't from a private or reserved IP range.
+    #[must_use]
+    pub fn get_ip_to_lookup(source: IpAddr, dest: IpAddr) -> Option<IpAddr> {
+        if is_bogon(source).is_none() {
+            Some(source)
+        } else if is_bogon(dest).is_none() {
+            Some(dest)
+        } else {
+            None
+        }
     }
 }
