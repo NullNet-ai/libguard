@@ -58,18 +58,18 @@ impl IpInfoHandler {
         }
         self.fallback.lookup_ip(ip)
     }
+}
 
-    /// Returns the IP address to use for the lookup.
-    ///
-    /// In other words, this method determines which address of the pair isn't from a private or reserved IP range.
-    #[must_use]
-    pub fn get_ip_to_lookup(source: IpAddr, dest: IpAddr) -> Option<IpAddr> {
-        if is_bogon(source).is_none() {
-            Some(source)
-        } else if is_bogon(dest).is_none() {
-            Some(dest)
-        } else {
-            None
-        }
+/// Returns the IP address to use for the lookup.
+///
+/// In other words, this method determines which address of the pair isn't from a private or reserved IP range.
+#[must_use]
+pub fn get_ip_to_lookup(source: IpAddr, dest: IpAddr) -> Option<IpAddr> {
+    if is_bogon(source).is_none() {
+        Some(source)
+    } else if is_bogon(dest).is_none() {
+        Some(dest)
+    } else {
+        None
     }
 }
