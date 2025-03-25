@@ -48,6 +48,7 @@ impl Token {
     }
 
     /// Checks if the token has expired.
+    #[must_use]
     pub fn is_expired(&self) -> bool {
         // consider the token expired if duration_since fails
         let Ok(duration) = SystemTime::now().duration_since(UNIX_EPOCH) else {
