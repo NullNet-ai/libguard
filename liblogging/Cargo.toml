@@ -9,7 +9,7 @@ readme = "README.md"
 default-run = "sample"
 
 [dependencies]
-nullnet-libtoken = "0.1.1"
+nullnet-libtoken = { path = "../server_libraries/libtoken" }
 nullnet-liberror = "0.1.1"
 nullnet-libwallguard = "0.1.0"
 log = "0.4.26"

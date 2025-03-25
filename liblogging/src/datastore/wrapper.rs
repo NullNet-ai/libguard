@@ -1,11 +1,11 @@
+use nullnet_libtoken::Token;
 use crate::datastore::config::DatastoreConfig;
-use crate::datastore::token::TokenWrapper;
 use nullnet_libwallguard::{Authentication, CommonResponse, Log, Logs, WallGuardGrpcInterface};
 
 pub(crate) struct ServerWrapper {
     inner: WallGuardGrpcInterface,
     datastore_config: DatastoreConfig,
-    token: Option<TokenWrapper>,
+    token: Option<Token>,
 }
 
 impl ServerWrapper {
@@ -34,11 +34,11 @@ impl ServerWrapper {
     }
 
     async fn get_and_set_token_safe(&mut self) -> Result<String, String> {
-        let is_expired = self.token.as_ref().is_none_or(TokenWrapper::is_expired);
+        let is_expired = self.token.as_ref().is_none_or(Token::is_expired);
 
         if is_expired {
             let new_token_string = self.login().await?;
-            let new_token = TokenWrapper::from_jwt(new_token_string)?;
+            let new_token = Token::from_jwt(new_token_string.as_str())?;
             self.token = Some(new_token);
         }
 

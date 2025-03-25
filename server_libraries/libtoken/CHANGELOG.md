@@ -2,6 +2,10 @@
 
 All releases with the relative changes are documented in this file.
 
+## [0.2.0] - 2025-03-25
+- Add field `jwt` to the `Token` struct
+- Add method `Token::is_expired`
+
 ## [0.1.1] - 2025-03-03
 - Add the ability to also parse user tokens in addition to device tokens
 
