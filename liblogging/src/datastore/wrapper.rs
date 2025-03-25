@@ -1,5 +1,5 @@
-use nullnet_libtoken::Token;
 use crate::datastore::config::DatastoreConfig;
+use nullnet_libtoken::Token;
 use nullnet_libwallguard::{Authentication, CommonResponse, Log, Logs, WallGuardGrpcInterface};
 
 pub(crate) struct ServerWrapper {
