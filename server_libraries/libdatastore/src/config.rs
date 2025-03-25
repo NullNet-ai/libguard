@@ -1,5 +1,5 @@
 use crate::store_service_client::StoreServiceClient;
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use tonic::transport::{Channel, ClientTlsConfig};
 
 /// Configuration structure for the datastore.

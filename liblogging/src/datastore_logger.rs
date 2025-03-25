@@ -1,5 +1,5 @@
-use crate::datastore::transmitter::DatastoreTransmitter;
 use crate::DatastoreConfig;
+use crate::datastore::transmitter::DatastoreTransmitter;
 use chrono::Utc;
 use nullnet_libwallguard::Log;
 use tokio::sync::mpsc;

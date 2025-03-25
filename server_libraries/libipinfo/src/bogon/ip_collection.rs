@@ -235,22 +235,36 @@ mod tests {
     fn test_ip_collection_contains_ipv6() {
         let collection =
             IpCollection::new( "2001:db8:1234:0000:0000:0000:0000:0000-2001:db8:1234:ffff:ffff:ffff:ffff:ffff,daa::aad,caa::aac").unwrap();
-        assert!(collection
-            .contains(&IpAddr::from_str("2001:db8:1234:0000:0000:0000:0000:0000").unwrap()));
-        assert!(collection
-            .contains(&IpAddr::from_str("2001:db8:1234:ffff:ffff:ffff:ffff:ffff").unwrap()));
-        assert!(collection
-            .contains(&IpAddr::from_str("2001:db8:1234:ffff:ffff:ffff:ffff:eeee").unwrap()));
-        assert!(collection
-            .contains(&IpAddr::from_str("2001:db8:1234:aaaa:ffff:ffff:ffff:eeee").unwrap()));
+        assert!(
+            collection
+                .contains(&IpAddr::from_str("2001:db8:1234:0000:0000:0000:0000:0000").unwrap())
+        );
+        assert!(
+            collection
+                .contains(&IpAddr::from_str("2001:db8:1234:ffff:ffff:ffff:ffff:ffff").unwrap())
+        );
+        assert!(
+            collection
+                .contains(&IpAddr::from_str("2001:db8:1234:ffff:ffff:ffff:ffff:eeee").unwrap())
+        );
+        assert!(
+            collection
+                .contains(&IpAddr::from_str("2001:db8:1234:aaaa:ffff:ffff:ffff:eeee").unwrap())
+        );
         assert!(collection.contains(&IpAddr::from_str("daa::aad").unwrap()));
         assert!(collection.contains(&IpAddr::from_str("caa::aac").unwrap()));
-        assert!(!collection
-            .contains(&IpAddr::from_str("2000:db8:1234:0000:0000:0000:0000:0000").unwrap()));
-        assert!(!collection
-            .contains(&IpAddr::from_str("2001:db8:1235:ffff:ffff:ffff:ffff:ffff").unwrap()));
-        assert!(!collection
-            .contains(&IpAddr::from_str("2001:eb8:1234:ffff:ffff:ffff:ffff:eeee").unwrap()));
+        assert!(
+            !collection
+                .contains(&IpAddr::from_str("2000:db8:1234:0000:0000:0000:0000:0000").unwrap())
+        );
+        assert!(
+            !collection
+                .contains(&IpAddr::from_str("2001:db8:1235:ffff:ffff:ffff:ffff:ffff").unwrap())
+        );
+        assert!(
+            !collection
+                .contains(&IpAddr::from_str("2001:eb8:1234:ffff:ffff:ffff:ffff:eeee").unwrap())
+        );
         assert!(!collection.contains(&IpAddr::from_str("da::aad").unwrap()));
         assert!(!collection.contains(&IpAddr::from_str("caa::aab").unwrap()));
 

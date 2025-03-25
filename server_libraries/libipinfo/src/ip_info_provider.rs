@@ -1,7 +1,7 @@
+use crate::IpInfo;
 use crate::api::api_config::ApiConfig;
 use crate::api::api_fields::ApiFields;
 use crate::mmdb::mmdb_config::MmdbConfig;
-use crate::IpInfo;
 use nullnet_liberror::Error;
 use reqwest::Client;
 

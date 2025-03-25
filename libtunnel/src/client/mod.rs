@@ -1,9 +1,9 @@
 mod config;
 mod proto;
 
-use crate::{str_hash, Message};
+use crate::{Message, str_hash};
 pub use config::*;
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use proto::{await_channel_request, request_open_channel, request_open_session};
 use std::time::Duration;
 use tokio::{io::copy_bidirectional, net::TcpStream, sync::oneshot, task::JoinHandle};

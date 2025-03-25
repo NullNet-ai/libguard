@@ -1,6 +1,6 @@
-use crate::api::api_fields::ApiFields;
 use crate::IpInfo;
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use crate::api::api_fields::ApiFields;
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use reqwest::Client;
 use serde_json::Value;
 
@@ -50,10 +50,10 @@ impl ApiConfig {
 
 #[cfg(test)]
 mod tests {
+    use crate::IpInfo;
     use crate::api::api_config::ApiConfig;
     use crate::api::api_fields::ApiFields;
     use crate::web_client::new_web_client;
-    use crate::IpInfo;
 
     #[tokio::test]
     async fn test_lookup_from_api() {

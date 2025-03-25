@@ -1,5 +1,5 @@
-use crate::{protocol, Hash, Message, Payload};
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use crate::{Hash, Message, Payload, protocol};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use tokio::net::TcpStream;
 
 /// Sends an open session request to the server over the given TCP stream.

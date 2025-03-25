@@ -1,6 +1,6 @@
 use super::serde_ext::*;
-use bincode::{deserialize, serialize, Error};
-use get_if_addrs::{get_if_addrs, IfAddr};
+use bincode::{Error, deserialize, serialize};
+use get_if_addrs::{IfAddr, get_if_addrs};
 use pnet::datalink;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
