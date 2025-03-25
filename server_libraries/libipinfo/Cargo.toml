@@ -1,7 +1,7 @@
 [package]
 name = "nullnet-libipinfo"
 version = "0.2.0"
-edition = "2021"
+edition = "2024"
 repository = "https://github.com/NullNet-ai/libguard"
 license = "MIT"
 description = "IP information library for NullNet"

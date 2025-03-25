@@ -1,7 +1,7 @@
 [package]
 name = "nullnet-liblogging"
 version = "0.2.0"
-edition = "2021"
+edition = "2024"
 repository = "https://github.com/NullNet-ai/libguard"
 license = "MIT"
 description = "Logging library for NullNet"
@@ -9,7 +9,7 @@ readme = "README.md"
 default-run = "sample"
 
 [dependencies]
-nullnet-libtoken = { path = "../server_libraries/libtoken" }
+nullnet-libtoken = "0.2.0"
 nullnet-liberror = "0.1.1"
 nullnet-libwallguard = "0.1.0"
 log = "0.4.26"
