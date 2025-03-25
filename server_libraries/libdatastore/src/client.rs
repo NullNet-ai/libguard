@@ -3,7 +3,7 @@ use crate::datastore::store_service_client::StoreServiceClient;
 use crate::datastore::*;
 use crate::utils::{authorize_request, validate_response_and_convert_to_reponse_data};
 use crate::{DatastoreConfig, ResponseData};
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use tonic::transport::Channel;
 
 /// A client for interacting with the datastore service.

@@ -2,8 +2,11 @@ mod models;
 
 use base64::Engine as _;
 use serde::Deserialize;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub use models::{Account, Device, Organization};
+
+const EXPIRATION_MARGIN: u64 = 60 * 5;
 
 /// Represents a decoded JWT payload containing account information and metadata.
 /// Includes issue and expiration times for the token.
@@ -12,6 +15,8 @@ pub struct Token {
     pub account: Account,
     pub iat: u64,
     pub exp: u64,
+    #[serde(skip)]
+    pub jwt: String,
 }
 
 impl Token {
@@ -35,8 +40,20 @@ impl Token {
             .decode(parts[1])
             .map_err(|e| e.to_string())?;
 
-        let token: Token = serde_json::from_slice(&decoded_payload).map_err(|e| e.to_string())?;
+        let mut token: Token =
+            serde_json::from_slice(&decoded_payload).map_err(|e| e.to_string())?;
+        token.jwt = jwt.to_string();
 
         Ok(token)
+    }
+
+    /// Checks if the token has expired.
+    #[must_use]
+    pub fn is_expired(&self) -> bool {
+        // consider the token expired if duration_since fails
+        let Ok(duration) = SystemTime::now().duration_since(UNIX_EPOCH) else {
+            return true;
+        };
+        self.exp <= (duration.as_secs() - EXPIRATION_MARGIN)
     }
 }

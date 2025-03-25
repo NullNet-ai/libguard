@@ -1,7 +1,7 @@
 use crate::mmdb::mmdb_reader::MmdbReader;
 use crate::web_client::new_web_client;
 use maxminddb::Reader;
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use reqwest::Client;
 use std::fmt::Write;
 use std::io::Read;
