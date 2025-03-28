@@ -8,10 +8,17 @@ pub struct Payload {
     pub(crate) data: [u8; PAYLOAD_SIZE],
 }
 
+impl From<[u8; PAYLOAD_SIZE]> for Payload {
+    fn from(value: [u8; PAYLOAD_SIZE]) -> Self {
+        Self { data: value }
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum Message {
     OpenSessionRequest(Payload),
     OpenChannelRequest(Payload),
+    Authenticate(Payload),
     ForwardConnectionRequest,
     Acknowledgment,
     Rejection,
