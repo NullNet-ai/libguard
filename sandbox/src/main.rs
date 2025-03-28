@@ -24,6 +24,10 @@ impl Profile for ClientProfile {
     fn get_visitor_addr(&self) -> SocketAddr {
         "0.0.0.0:8080".parse().unwrap()
     }
+
+    fn get_visitor_token(&self) -> Option<String> {
+        None
+    }
 }
 
 #[tokio::main]
