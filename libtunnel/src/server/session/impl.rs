@@ -1,10 +1,10 @@
 use super::channel::{Channel, ChannelId};
-use crate::{expect_message, protocol, str_hash, write_message, Message, Payload};
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use crate::{Message, Payload, expect_message, protocol, str_hash, write_message};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::{TcpListener, TcpStream},
-    sync::{mpsc, oneshot, Mutex, RwLock},
+    sync::{Mutex, RwLock, mpsc, oneshot},
     task::JoinHandle,
 };
 
