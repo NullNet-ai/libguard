@@ -7,4 +7,6 @@ pub trait Profile {
     fn get_unique_id(&self) -> String;
 
     fn get_visitor_addr(&self) -> SocketAddr;
+
+    fn get_visitor_token(&self) -> Option<String>;
 }

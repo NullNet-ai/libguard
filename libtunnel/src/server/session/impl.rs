@@ -1,10 +1,10 @@
 use super::channel::{Channel, ChannelId};
-use crate::{protocol, Message};
+use crate::{expect_message, protocol, str_hash, write_message, Message, Payload};
 use nullnet_liberror::{location, Error, ErrorHandler, Location};
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::{TcpListener, TcpStream},
-    sync::{mpsc, oneshot, RwLock},
+    sync::{mpsc, oneshot, Mutex, RwLock},
     task::JoinHandle,
 };
 
@@ -31,6 +31,7 @@ impl Session {
     ///
     /// * `addr` - The socket address for visitor connections.
     /// * `control_stream` - The TCP stream used for communication with the control entity.
+    /// * `visitors_token` - Optinal token that will be used to authenticate incoming visitors.
     /// * `channel_idle_timeout`: The timeout duration for idle channels before shutdown.
     ///
     /// # Returns
@@ -39,6 +40,7 @@ impl Session {
     pub fn new(
         addr: SocketAddr,
         control_stream: TcpStream,
+        visitors_token: Option<String>,
         channel_idle_timeout: Duration,
     ) -> Self {
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
@@ -53,6 +55,7 @@ impl Session {
             channels.clone(),
             client_stream_rx,
             channel_idle_timeout,
+            visitors_token,
         ));
 
         Self {
@@ -114,6 +117,7 @@ impl Session {
 /// * `channels` - A shared, thread-safe map storing active channels.
 /// * `client_stream_rx` - A receiver for handling incoming client connections.
 /// * `channel_idle_timeout`: The timeout duration for idle channels before shutdown.
+/// * `visitors_token` - Optinal token that will be used to authenticate incoming visitors.
 async fn run_control_session(
     addr: SocketAddr,
     control_stream: TcpStream,
@@ -121,6 +125,7 @@ async fn run_control_session(
     channels: Arc<RwLock<HashMap<ChannelId, Channel>>>,
     client_stream_rx: mpsc::Receiver<TcpStream>,
     channel_idle_timeout: Duration,
+    visitors_token: Option<String>,
 ) {
     let (channel_complete_tx, channel_complete_rx) = mpsc::channel(64);
     let (visitor_stream_tx, visitor_stream_rx) = mpsc::channel::<TcpStream>(64);
@@ -129,7 +134,7 @@ async fn run_control_session(
         _ = shutdown_rx => {
             log::debug!("Session: Shutdown signal received");
         },
-        _ = manage_incoming_visitors(addr, control_stream, visitor_stream_tx) => {
+        _ = manage_incoming_visitors(addr, control_stream, visitor_stream_tx, visitors_token) => {
             log::debug!("Session: Stopped accepting new connections");
         }
         _ = manage_channel_lifecycle(channels.clone(), channel_complete_rx) => {
@@ -153,24 +158,73 @@ async fn run_control_session(
 /// * `addr` - The socket address where the listener is bound.
 /// * `control_stream` - The TCP stream for sending control messages.
 /// * `visitor_stream_tx` - A sender for forwarding accepted visitor streams.
+/// * `visitors_token` - Optinal token that will be used to authenticate incoming visitors.
 ///
 /// # Returns
 ///
 /// Returns `Ok(())` on success, or an `Error` if binding or accepting connections fails.
 async fn manage_incoming_visitors(
-    addr: SocketAddr,
-    mut control_stream: TcpStream,
+    bind_addr: SocketAddr,
+    control_stream: TcpStream,
     visitor_stream_tx: mpsc::Sender<TcpStream>,
+    visitors_token: Option<String>,
 ) -> Result<(), Error> {
-    let listener = TcpListener::bind(addr).await.handle_err(location!())?;
+    let sender = Arc::new(Mutex::new(visitor_stream_tx));
+    let control_stream = Arc::new(Mutex::new(control_stream));
+
+    let listener = TcpListener::bind(bind_addr).await.handle_err(location!())?;
+
     loop {
-        let (visitor, addr) = listener.accept().await.handle_err(location!())?;
+        let (mut visitor, addr) = listener.accept().await.handle_err(location!())?;
         log::debug!("Session: Accepted a visitor from {}", addr);
-        protocol::write_message(&mut control_stream, Message::ForwardConnectionRequest).await?;
-        visitor_stream_tx
-            .send(visitor)
-            .await
-            .handle_err(location!())?;
+
+        let sender = sender.clone();
+        let control_stream = control_stream.clone();
+        let token = visitors_token.clone();
+
+        tokio::spawn(async move {
+            if token.is_some() {
+                let payload = Payload {
+                    data: str_hash(&token.unwrap()),
+                };
+
+                match expect_message(
+                    &mut visitor,
+                    Message::Authenticate(Payload::default()).len_bytes(),
+                )
+                .await?
+                {
+                    Message::Authenticate(incoming) => {
+                        if incoming.data == payload.data {
+                            let _ = write_message(&mut visitor, Message::Acknowledgment).await;
+                        } else {
+                            let _ = write_message(&mut visitor, Message::Rejection).await;
+                            log::warn!("Unauthorized visitor to {} from {}", bind_addr, addr);
+                            return Ok::<(), Error>(());
+                        }
+                    }
+                    _ => {
+                        let _ = write_message(&mut visitor, Message::Rejection).await;
+                        log::warn!("Unauthorized visitor to {} from {}", bind_addr, addr);
+                        return Ok::<(), Error>(());
+                    }
+                }
+            }
+
+            {
+                let mut stream = control_stream.lock().await;
+                protocol::write_message(&mut stream, Message::ForwardConnectionRequest).await?;
+            }
+
+            sender
+                .lock()
+                .await
+                .send(visitor)
+                .await
+                .handle_err(location!())?;
+
+            Ok::<(), Error>(())
+        });
     }
 }
 

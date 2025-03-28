@@ -33,6 +33,7 @@ impl Manager {
     /// - `stream`: The TCP stream representing the connection.
     /// - `profile`: The profile associated with the session.
     /// - `channel_idle_timeout`: The timeout duration for idle channels before shutdown.
+    /// - `visitors_token` - Optinal token that will be used to authenticate incoming visitors.
     ///
     /// # Returns
     /// - `Ok(())`: If the session is successfully created.
@@ -53,7 +54,8 @@ impl Manager {
 
         if let hash_map::Entry::Vacant(entry) = self.sessions.write().await.entry(id_hash) {
             let addr = profile.get_visitor_addr();
-            let session = Session::new(addr, stream, channel_idle_timeout);
+            let token = profile.get_visitor_token();
+            let session = Session::new(addr, stream, token, channel_idle_timeout);
             entry.insert(session);
         } else {
             return Err(format!(

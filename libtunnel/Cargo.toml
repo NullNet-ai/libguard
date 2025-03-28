@@ -1,6 +1,6 @@
 [package]
 name = "nullnet-libtunnel"
-version = "0.2.1"
+version = "0.3.0"
 edition = "2021"
 repository = "https://github.com/NullNet-ai/libguard"
 license = "MIT"
