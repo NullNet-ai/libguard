@@ -1,6 +1,6 @@
 // sample program to demonstrate how to use the traffic_monitor library
 
-use nullnet_traffic_monitor::{monitor_devices, MonitorConfig};
+use nullnet_traffic_monitor::{MonitorConfig, monitor_devices};
 
 fn main() {
     let monitor_config = MonitorConfig {

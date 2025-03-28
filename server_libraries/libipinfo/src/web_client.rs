@@ -1,4 +1,4 @@
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use reqwest::{Client, ClientBuilder};
 
 pub(crate) fn new_web_client() -> Result<Client, Error> {

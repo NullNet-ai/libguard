@@ -1,3 +1,4 @@
+use crate::IpInfo;
 /// Challenges:
 /// 1) different providers have different database formats
 /// 2) certain providers split IPv4 and IPv6 data into separate databases, others combine them
@@ -13,9 +14,8 @@
 /// 5) databases that are gzip compressed
 use crate::mmdb::mmdb_reader::MmdbReader;
 use crate::mmdb::refresh_mmdb_data::refresh_mmdb_data;
-use crate::IpInfo;
 use maxminddb::geoip2::{Asn, City};
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use std::sync::{Arc, RwLock};
 
 pub(crate) struct MmdbConfig {

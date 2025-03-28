@@ -1,6 +1,6 @@
 use crate::{
-    utils::{self, find_in_snapshot},
     Configuration, FireparseError,
+    utils::{self, find_in_snapshot},
 };
 use aliases_parser::AliasesParser;
 use hostname_parser::PfSenseHostnameParser;

@@ -1,7 +1,7 @@
 use crate::{Response, ResponseData};
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use std::str::FromStr;
-use tonic::{metadata::MetadataValue, Request};
+use tonic::{Request, metadata::MetadataValue};
 
 /// Adds an authorization token to the request metadata.
 ///

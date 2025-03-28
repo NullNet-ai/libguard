@@ -1,9 +1,9 @@
 mod hash;
 mod messages;
 
-pub use hash::{str_hash, Hash};
-pub use messages::{Message, Payload, PAYLOAD_SIZE};
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+pub use hash::{Hash, str_hash};
+pub use messages::{Message, PAYLOAD_SIZE, Payload};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 

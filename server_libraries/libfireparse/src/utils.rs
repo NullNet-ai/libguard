@@ -1,4 +1,4 @@
-use base64::{engine::general_purpose, Engine as _};
+use base64::{Engine as _, engine::general_purpose};
 use nullnet_libconfmon::{FileData, Snapshot};
 
 /// Encodes binary data into a Base64-encoded string.

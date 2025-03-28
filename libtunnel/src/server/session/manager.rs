@@ -1,8 +1,8 @@
 use super::r#impl::Session;
-use crate::{server::profile::Profile, str_hash, Hash};
-use nullnet_liberror::{location, Error, ErrorHandler, Location};
+use crate::{Hash, server::profile::Profile, str_hash};
+use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use std::{
-    collections::{hash_map, HashMap},
+    collections::{HashMap, hash_map},
     sync::Arc,
     time::Duration,
 };
