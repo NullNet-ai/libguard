@@ -7,6 +7,7 @@ impl PfSenseWebGuiParser {
         document
             .descendants()
             .find(|e| e.has_tag_name("pfsense"))
+            .and_then(|e| e.children().find(|ce| ce.has_tag_name("system")))
             .and_then(|e| e.children().find(|ce| ce.has_tag_name("webgui")))
             .and_then(|wn| wn.children().find(|ch| ch.has_tag_name("protocol")))
             .and_then(|pn| pn.text())
@@ -23,16 +24,18 @@ mod tests {
     #[test]
     fn test_parse_gui_protocol() {
         let xml = r#"<pfsense>
-            <webgui>
-                <protocol>https</protocol>
-                <loginautocomplete/>
-                <ssl-certref>665b4a5edc246</ssl-certref>
-                <dashboardcolumns>2</dashboardcolumns>
-                <max_procs>2</max_procs>
-                <roaming>enabled</roaming>
-                <webguicss>pfSense.css</webguicss>
-                <logincss>1e3f75;</logincss>
-            </webgui>
+            <system>
+                <webgui>
+                    <protocol>https</protocol>
+                    <loginautocomplete/>
+                    <ssl-certref>665b4a5edc246</ssl-certref>
+                    <dashboardcolumns>2</dashboardcolumns>
+                    <max_procs>2</max_procs>
+                    <roaming>enabled</roaming>
+                    <webguicss>pfSense.css</webguicss>
+                    <logincss>1e3f75;</logincss>
+                </webgui>
+            </system>
         </pfsense>"#;
 
         let doc = Document::parse(xml).expect("Failed to parse XML");
