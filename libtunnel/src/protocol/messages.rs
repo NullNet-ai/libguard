@@ -20,6 +20,7 @@ pub enum Message {
     OpenChannelRequest(Payload),
     Authenticate(Payload),
     ForwardConnectionRequest,
+    Heartbeat,
     Acknowledgment,
     Rejection,
 }
@@ -146,6 +147,10 @@ mod tests {
 
         let m1 = Message::Acknowledgment.serialize().unwrap();
         let m2 = Message::Rejection.serialize().unwrap();
+        assert_eq!(m1.len(), m2.len());
+
+        let m1 = Message::ForwardConnectionRequest.serialize().unwrap();
+        let m2 = Message::Heartbeat.serialize().unwrap();
         assert_eq!(m1.len(), m2.len());
     }
 

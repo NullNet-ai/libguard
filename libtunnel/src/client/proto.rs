@@ -36,22 +36,23 @@ pub(super) async fn request_open_channel(stream: &mut TcpStream, hash: Hash) -> 
     protocol::write_with_confirmation(stream, open_message).await
 }
 
-/// Waits for a channel request message from the server.
+/// Waits for a channel request message or a heartbeat from the server.
 ///
-/// This function waits for an incoming message of type `Message::ForwardConnectionRequest`.
-/// If the received message matches the expected type, it is returned; otherwise, an error is raised.
+/// This function waits for an incoming message of type `Message::ForwardConnectionRequest`
+/// or `Message::Heartbeat`. If the received message matches one of the expected types, it is returned;
+/// otherwise, an error is raised.
 ///
 /// # Parameters
 /// - `stream`: A mutable reference to the `TcpStream` used to receive messages from the server.
 ///
 /// # Returns
-/// - `Ok(Message::ForwardConnectionRequest)`: If the expected message is received.
+/// - `Ok(Message::ForwardConnectionRequest | Message::Heartbeat)`: If an expected message is received.
 /// - `Err(Error)`: If an unexpected message is received or if there is an error in receiving the message.
 pub(super) async fn await_channel_request(stream: &mut TcpStream) -> Result<Message, Error> {
     let message_size = Message::len_bytes(&Message::ForwardConnectionRequest);
     let message = protocol::expect_message(stream, message_size).await?;
     match message {
-        Message::ForwardConnectionRequest => Ok(message),
+        Message::ForwardConnectionRequest | Message::Heartbeat => Ok(message),
         _ => Err("Unexpected message").handle_err(location!()),
     }
 }

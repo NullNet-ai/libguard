@@ -6,7 +6,10 @@ use std::{
     sync::Arc,
     time::Duration,
 };
-use tokio::{net::TcpStream, sync::RwLock};
+use tokio::{
+    net::TcpStream,
+    sync::{RwLock, mpsc},
+};
 
 /// `Manager` is responsible for handling active sessions, ensuring session lifecycle management,
 /// and providing mechanisms to spawn, terminate, and interact with sessions.
@@ -14,6 +17,8 @@ use tokio::{net::TcpStream, sync::RwLock};
 pub struct Manager {
     /// A thread-safe collection of active sessions, identified by a unique hash.
     sessions: Arc<RwLock<HashMap<Hash, Session>>>,
+    /// A channel sender used to notify when a session has completed.
+    notify_session_complete: mpsc::Sender<Hash>,
 }
 
 impl Manager {
@@ -22,8 +27,14 @@ impl Manager {
     /// # Returns
     /// A new `Manager` instance.
     pub fn new() -> Self {
+        let (tx, rx) = mpsc::channel(128);
+        let sessions = Arc::new(RwLock::new(HashMap::new()));
+
+        tokio::spawn(manage_session_lifetime(sessions.clone(), rx));
+
         Self {
-            sessions: Arc::new(RwLock::new(HashMap::new())),
+            sessions,
+            notify_session_complete: tx,
         }
     }
 
@@ -55,7 +66,14 @@ impl Manager {
         if let hash_map::Entry::Vacant(entry) = self.sessions.write().await.entry(id_hash) {
             let addr = profile.get_visitor_addr();
             let token = profile.get_visitor_token();
-            let session = Session::new(addr, stream, token, channel_idle_timeout);
+            let session = Session::new(
+                addr,
+                stream,
+                token,
+                channel_idle_timeout,
+                self.notify_session_complete.clone(),
+                id_hash,
+            );
             entry.insert(session);
         } else {
             return Err(format!(
@@ -174,5 +192,20 @@ impl Manager {
     /// This function is a shorthand for `session_exists`, providing a quick way to check session presence.
     pub async fn has_session(&self, hash: &Hash) -> bool {
         self.sessions.read().await.contains_key(hash)
+    }
+}
+
+/// Continuously monitors session completion notifications and removes completed sessions.
+///
+/// # Parameters
+/// - `sessions`: A thread-safe collection of active sessions, stored in an `Arc<RwLock<HashMap<Hash, Session>>>`.  
+///   This allows concurrent read access while ensuring safe write operations.
+/// - `receiver`: An `mpsc::Receiver<Hash>` that receives session hashes of completed sessions.
+async fn manage_session_lifetime(
+    sessions: Arc<RwLock<HashMap<Hash, Session>>>,
+    mut receiver: mpsc::Receiver<Hash>,
+) {
+    while let Some(session_hash) = receiver.recv().await {
+        sessions.write().await.remove(&session_hash);
     }
 }

@@ -1,11 +1,12 @@
 use super::channel::{Channel, ChannelId};
-use crate::{Message, Payload, expect_message, protocol, str_hash, write_message};
+use crate::{Hash, Message, Payload, expect_message, protocol, str_hash, write_message};
 use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 use tokio::{
     net::{TcpListener, TcpStream},
     sync::{Mutex, RwLock, mpsc, oneshot},
     task::JoinHandle,
+    time::timeout,
 };
 
 /// Manages the lifecycle of channels connecting visitors to clients.
@@ -33,6 +34,8 @@ impl Session {
     /// * `control_stream` - The TCP stream used for communication with the control entity.
     /// * `visitors_token` - Optinal token that will be used to authenticate incoming visitors.
     /// * `channel_idle_timeout`: The timeout duration for idle channels before shutdown.
+    /// * `notify_complete`:  A channel used to notify when a session has completed.
+    /// * `session_id`:  Session ID hash.
     ///
     /// # Returns
     ///
@@ -42,6 +45,8 @@ impl Session {
         control_stream: TcpStream,
         visitors_token: Option<String>,
         channel_idle_timeout: Duration,
+        notify_complete: mpsc::Sender<Hash>,
+        session_id: Hash,
     ) -> Self {
         let (shutdown_tx, shutdown_rx) = oneshot::channel();
         let (client_stream_tx, client_stream_rx) = mpsc::channel::<TcpStream>(64);
@@ -56,6 +61,8 @@ impl Session {
             client_stream_rx,
             channel_idle_timeout,
             visitors_token,
+            notify_complete,
+            session_id,
         ));
 
         Self {
@@ -118,6 +125,9 @@ impl Session {
 /// * `client_stream_rx` - A receiver for handling incoming client connections.
 /// * `channel_idle_timeout`: The timeout duration for idle channels before shutdown.
 /// * `visitors_token` - Optinal token that will be used to authenticate incoming visitors.
+/// * `notify_complete`:  A channel used to notify when a session has completed.
+/// * `session_id`:  Session ID hash.
+#[allow(clippy::too_many_arguments)]
 async fn run_control_session(
     addr: SocketAddr,
     control_stream: TcpStream,
@@ -126,6 +136,8 @@ async fn run_control_session(
     client_stream_rx: mpsc::Receiver<TcpStream>,
     channel_idle_timeout: Duration,
     visitors_token: Option<String>,
+    notify_complete: mpsc::Sender<Hash>,
+    session_id: Hash,
 ) {
     let (channel_complete_tx, channel_complete_rx) = mpsc::channel(64);
     let (visitor_stream_tx, visitor_stream_rx) = mpsc::channel::<TcpStream>(64);
@@ -148,6 +160,9 @@ async fn run_control_session(
     for (_, channel) in channels.write().await.drain() {
         channel.shutdown().await;
     }
+
+    let _ = notify_complete.send(session_id).await;
+    log::debug!("Session: completed");
 }
 
 /// Accepts incoming visitor connections and forwards connection requests
@@ -175,13 +190,22 @@ async fn manage_incoming_visitors(
     let listener = TcpListener::bind(bind_addr).await.handle_err(location!())?;
 
     loop {
-        let (mut visitor, addr) = listener.accept().await.handle_err(location!())?;
-        log::debug!("Session: Accepted a visitor from {}", addr);
+        {
+            let mut stream = control_stream.lock().await;
+            protocol::write_message(&mut stream, Message::Heartbeat).await?;
+        }
+
+        let result = timeout(Duration::from_secs(5), listener.accept()).await;
+
+        if result.is_err() {
+            continue;
+        }
+
+        let (mut visitor, addr) = result.unwrap().handle_err(location!())?;
 
         let sender = sender.clone();
         let control_stream = control_stream.clone();
         let token = visitors_token.clone();
-
         tokio::spawn(async move {
             if token.is_some() {
                 let payload = Payload {

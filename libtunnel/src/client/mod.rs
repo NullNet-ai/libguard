@@ -89,6 +89,7 @@ async fn launch_session(config: ClientConfig) -> Result<(), Error> {
                     }
                 });
             }
+            Ok(Message::Heartbeat) => tokio::task::yield_now().await,
             Err(err) => {
                 Err(err)?;
             }
