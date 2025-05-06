@@ -10,7 +10,7 @@ mod datastore;
 
 #[rustfmt::skip]
 #[allow(clippy::pedantic)]
-mod store;
+pub mod store;
 
 pub use client::DatastoreClient;
 pub use config::DatastoreConfig;
@@ -18,8 +18,3 @@ pub use datastore::*;
 pub use response_data::ResponseData;
 
 pub use experimental::ExperimentalDatastoreClient;
-pub use store::{
-    Connections, CreateConnectionsRequest, CreateConnectionsResponse, CreateParams, CreateQuery,
-    DeleteConnectionsRequest, DeleteConnectionsResponse, GetConnectionsRequest,
-    GetConnectionsResponse, UpdateConnectionsRequest, UpdateConnectionsResponse,
-};

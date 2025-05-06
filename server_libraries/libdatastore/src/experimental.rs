@@ -1,11 +1,6 @@
 use crate::{
     DatastoreConfig,
-    store::{
-        CreateConnectionsRequest, CreateConnectionsResponse, DeleteConnectionsRequest,
-        DeleteConnectionsResponse, GetConnectionsRequest, GetConnectionsResponse,
-        UpdateConnectionsRequest, UpdateConnectionsResponse,
-        store_service_client::StoreServiceClient,
-    },
+    store::{self, store_service_client::StoreServiceClient},
 };
 use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use tonic::transport::Channel;
@@ -24,8 +19,8 @@ impl ExperimentalDatastoreClient {
 
     pub async fn create_connections(
         &mut self,
-        request: CreateConnectionsRequest,
-    ) -> Result<CreateConnectionsResponse, Error> {
+        request: store::CreateConnectionsRequest,
+    ) -> Result<store::CreateConnectionsResponse, Error> {
         let response = self
             .client
             .create_connections(request)
@@ -37,8 +32,8 @@ impl ExperimentalDatastoreClient {
 
     pub async fn get_connections(
         &mut self,
-        request: GetConnectionsRequest,
-    ) -> Result<GetConnectionsResponse, Error> {
+        request: store::GetConnectionsRequest,
+    ) -> Result<store::GetConnectionsResponse, Error> {
         let response = self
             .client
             .get_connections(request)
@@ -50,8 +45,8 @@ impl ExperimentalDatastoreClient {
 
     pub async fn update_connections(
         &mut self,
-        request: UpdateConnectionsRequest,
-    ) -> Result<UpdateConnectionsResponse, Error> {
+        request: store::UpdateConnectionsRequest,
+    ) -> Result<store::UpdateConnectionsResponse, Error> {
         let response = self
             .client
             .update_connections(request)
@@ -63,8 +58,8 @@ impl ExperimentalDatastoreClient {
 
     pub async fn delete_connections(
         &mut self,
-        request: DeleteConnectionsRequest,
-    ) -> Result<DeleteConnectionsResponse, Error> {
+        request: store::DeleteConnectionsRequest,
+    ) -> Result<store::DeleteConnectionsResponse, Error> {
         let response = self
             .client
             .delete_connections(request)
