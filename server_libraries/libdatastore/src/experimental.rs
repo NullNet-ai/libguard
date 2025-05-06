@@ -5,6 +5,7 @@ use crate::{
 use nullnet_liberror::{Error, ErrorHandler, Location, location};
 use tonic::transport::Channel;
 
+#[derive(Debug, Clone)]
 pub struct ExperimentalDatastoreClient {
     client: StoreServiceClient<Channel>,
 }
