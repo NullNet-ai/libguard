@@ -19,7 +19,7 @@ pub use response_data::ResponseData;
 
 pub use experimental::ExperimentalDatastoreClient;
 pub use store::{
-    CreateConnectionsRequest, CreateConnectionsResponse, DeleteConnectionsRequest,
-    DeleteConnectionsResponse, GetConnectionsRequest, GetConnectionsResponse,
-    UpdateConnectionsRequest, UpdateConnectionsResponse,
+    Connections, CreateConnectionsRequest, CreateConnectionsResponse, CreateParams, CreateQuery,
+    DeleteConnectionsRequest, DeleteConnectionsResponse, GetConnectionsRequest,
+    GetConnectionsResponse, UpdateConnectionsRequest, UpdateConnectionsResponse,
 };
