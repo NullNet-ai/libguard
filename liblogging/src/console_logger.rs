@@ -30,7 +30,7 @@ impl Log for ConsoleLogger {
                     eprintln!("{message}");
                 }
                 _ => println!("{message}"),
-            };
+            }
         }
     }
 

@@ -1,27 +1,20 @@
-#[derive(Debug)]
-/// Datastore configuration
+use crate::datastore::auth::GrpcInterface;
+
 pub struct DatastoreConfig {
-    pub(crate) app_id: String,
-    pub(crate) app_secret: String,
-    pub(crate) server_addr: String,
-    pub(crate) server_port: u16,
+    pub(crate) id: String,
+    pub(crate) secret: String,
+    pub(crate) grpc: GrpcInterface,
 }
 
 impl DatastoreConfig {
-    /// Creates a new `DatastoreConfig`
+    /// Creates a new `DatastoreConfig` instance.
     ///
     /// # Arguments
     ///
-    /// * `id` - Application or Account ID
-    /// * `secret` - Application or Account Secret
-    /// * `server_addr` - Server address (use `0.0.0.0` if running from the server itself)
-    /// * `server_port` - Server port
-    pub fn new<S: Into<String>>(id: S, secret: S, server_addr: S, server_port: u16) -> Self {
-        Self {
-            app_id: id.into(),
-            app_secret: secret.into(),
-            server_addr: server_addr.into(),
-            server_port,
-        }
+    /// * `id` - The app or account ID to use for login.
+    /// * `secret` - The app or account secret to use for login.
+    /// * `grpc` - The gRPC interface of the server to use for communication.
+    pub fn new(id: String, secret: String, grpc: GrpcInterface) -> Self {
+        Self { id, secret, grpc }
     }
 }
