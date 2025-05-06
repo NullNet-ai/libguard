@@ -6,7 +6,7 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
-use crate::datastore::auth::GrpcInterface;
+use crate::datastore::config::DatastoreConfig;
 use crate::datastore_logger::DatastoreLogger;
 use crate::syslog_logger::SyslogLogger;
 
@@ -93,7 +93,7 @@ impl log::Log for Logger {
 pub struct LoggerConfig {
     console: bool,
     syslog: bool,
-    datastore: Option<GrpcInterface>,
+    datastore: Option<DatastoreConfig>,
     allowed_targets: Vec<&'static str>,
 }
 
@@ -103,7 +103,7 @@ impl LoggerConfig {
     /// # Arguments
     /// * `console` - Whether to log to console
     /// * `syslog` - Whether to log to syslog
-    /// * `datastore` - gRPC server interface to use for datastore logging (use `None` to disable logging to Datastore)
+    /// * `datastore` - Datastore configuration (use `None` to disable logging to Datastore)
     /// * `allowed_targets` - The list of allowed targets.<br>
     ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
     ///   Use this parameter to specify additional targets
@@ -112,7 +112,7 @@ impl LoggerConfig {
     pub fn new(
         console: bool,
         syslog: bool,
-        datastore: Option<GrpcInterface>,
+        datastore: Option<DatastoreConfig>,
         allowed_targets: Vec<&'static str>,
     ) -> Self {
         Self {

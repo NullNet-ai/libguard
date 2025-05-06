@@ -1,4 +1,4 @@
-use crate::datastore::auth::GrpcInterface;
+use crate::datastore::config::DatastoreConfig;
 use crate::datastore::transmitter::DatastoreTransmitter;
 use crate::datastore::wrapper::GenericLog;
 use chrono::Utc;
@@ -11,15 +11,15 @@ pub(crate) struct DatastoreLogger {
 }
 
 impl DatastoreLogger {
-    pub(crate) fn new(grpc: Option<GrpcInterface>) -> Self {
-        let Some(grpc) = grpc else {
+    pub(crate) fn new(datastore_config: Option<DatastoreConfig>) -> Self {
+        let Some(config) = datastore_config else {
             return Self::default();
         };
 
         let (sender, receiver) = mpsc::channel(10_000);
 
         tokio::spawn(async move {
-            let transmitter = DatastoreTransmitter::new(grpc).await;
+            let transmitter = DatastoreTransmitter::new(config).await;
             transmitter.transmit(receiver).await;
         });
 

@@ -1,4 +1,4 @@
-use crate::datastore::auth::GrpcInterface;
+use crate::datastore::config::DatastoreConfig;
 use crate::datastore::wrapper::{GenericLog, ServerWrapper};
 use tokio::sync::mpsc::Receiver;
 
@@ -8,8 +8,8 @@ pub(crate) struct DatastoreTransmitter {
 }
 
 impl DatastoreTransmitter {
-    pub(crate) async fn new(grpc: GrpcInterface) -> Self {
-        let datastore = ServerWrapper::new(grpc).await;
+    pub(crate) async fn new(datastore_config: DatastoreConfig) -> Self {
+        let datastore = ServerWrapper::new(datastore_config).await;
         Self {
             server: datastore,
             unsent_entries: Vec::new(),

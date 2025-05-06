@@ -6,7 +6,7 @@ pub async fn routine(auth_handler: AuthHandler) {
     loop {
         let mut client = auth_handler.client.clone();
         let Ok(mut heartbeat_stream) = client
-            .heartbeat(auth_handler.app_id.clone(), auth_handler.app_secret.clone())
+            .heartbeat(auth_handler.id.clone(), auth_handler.secret.clone())
             .await
         else {
             log::warn!("Failed to send heartbeat to the server. Retrying in 10 seconds...");

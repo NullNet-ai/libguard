@@ -2,26 +2,25 @@ mod grpc_interface;
 mod heartbeat;
 
 pub use crate::datastore::auth::grpc_interface::GrpcInterface;
+use crate::datastore::config::DatastoreConfig;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
 #[derive(Clone)]
 pub struct AuthHandler {
-    app_id: String,
-    app_secret: String,
+    id: String,
+    secret: String,
     token: Arc<RwLock<String>>,
     client: GrpcInterface,
 }
 
 impl AuthHandler {
     #[must_use]
-    pub async fn new(client: GrpcInterface) -> Self {
-        let app_id = std::env::var("APP_ID").unwrap_or_default();
-        let app_secret = std::env::var("APP_SECRET").unwrap_or_default();
+    pub async fn new(datastore_config: DatastoreConfig) -> Self {
         let auth = Self {
-            app_id,
-            app_secret,
-            client: client.clone(),
+            id: datastore_config.id,
+            secret: datastore_config.secret,
+            client: datastore_config.grpc,
             token: Arc::new(RwLock::new(String::new())),
         };
 

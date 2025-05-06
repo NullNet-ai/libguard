@@ -1,4 +1,5 @@
 use crate::datastore::auth::{AuthHandler, GrpcInterface};
+use crate::datastore::config::DatastoreConfig;
 
 pub(crate) struct ServerWrapper {
     inner: GrpcInterface,
@@ -6,9 +7,9 @@ pub(crate) struct ServerWrapper {
 }
 
 impl ServerWrapper {
-    pub(crate) async fn new(grpc: GrpcInterface) -> Self {
-        let inner = grpc.clone();
-        let auth = AuthHandler::new(grpc).await;
+    pub(crate) async fn new(datastore_config: DatastoreConfig) -> Self {
+        let inner = datastore_config.grpc.clone();
+        let auth = AuthHandler::new(datastore_config).await;
 
         Self { inner, auth }
     }
