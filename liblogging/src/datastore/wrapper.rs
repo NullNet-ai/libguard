@@ -1,60 +1,48 @@
-use crate::datastore::config::DatastoreConfig;
-use nullnet_libtoken::Token;
-use nullnet_libwallguard::{Authentication, CommonResponse, Log, Logs, WallGuardGrpcInterface};
+use crate::datastore::auth::{AuthHandler, GrpcInterface};
 
 pub(crate) struct ServerWrapper {
-    inner: WallGuardGrpcInterface,
-    datastore_config: DatastoreConfig,
-    token: Option<Token>,
+    inner: GrpcInterface,
+    auth: AuthHandler,
 }
 
 impl ServerWrapper {
-    pub(crate) async fn new(datastore_config: DatastoreConfig) -> Self {
-        let inner = WallGuardGrpcInterface::new(
-            &datastore_config.server_addr,
-            datastore_config.server_port,
-        )
-        .await;
+    pub(crate) async fn new(datastore_config: GrpcInterface) -> Self {
+        let inner = datastore_config.clone();
+        let auth = AuthHandler::new(datastore_config).await;
 
-        Self {
-            inner,
-            datastore_config,
-            token: None,
+        Self { inner, auth }
+    }
+
+    pub(crate) async fn logs_insert(&mut self, logs: Vec<GenericLog>) -> Result<(), String> {
+        let token = self.auth.get_token().await;
+
+        self.inner.handle_logs(token, logs).await
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct GenericLog {
+    pub(crate) timestamp: String,
+    pub(crate) level: String,
+    pub(crate) message: String,
+}
+
+impl From<GenericLog> for nullnet_libappguard::Log {
+    fn from(val: GenericLog) -> nullnet_libappguard::Log {
+        nullnet_libappguard::Log {
+            timestamp: val.timestamp,
+            level: val.level,
+            message: val.message,
         }
     }
+}
 
-    #[allow(clippy::missing_errors_doc)]
-    async fn login(&mut self) -> Result<String, String> {
-        self.inner
-            .login(
-                self.datastore_config.app_id.clone(),
-                self.datastore_config.app_secret.clone(),
-            )
-            .await
-    }
-
-    async fn get_and_set_token_safe(&mut self) -> Result<String, String> {
-        let is_expired = self.token.as_ref().is_none_or(Token::is_expired);
-
-        if is_expired {
-            let new_token_string = self.login().await?;
-            let new_token = Token::from_jwt(new_token_string.as_str())?;
-            self.token = Some(new_token);
+impl From<GenericLog> for nullnet_libwallguard::Log {
+    fn from(val: GenericLog) -> nullnet_libwallguard::Log {
+        nullnet_libwallguard::Log {
+            timestamp: val.timestamp,
+            level: val.level,
+            message: val.message,
         }
-
-        Ok(self.token.as_ref().unwrap().jwt.clone())
-    }
-
-    pub(crate) async fn logs_insert(&mut self, logs: Vec<Log>) -> Result<CommonResponse, String> {
-        // println!("Attempt to send 1 log entry to the datastore");
-
-        let token = self.get_and_set_token_safe().await?;
-
-        self.inner
-            .handle_logs(Logs {
-                auth: Some(Authentication { token }),
-                logs,
-            })
-            .await
     }
 }

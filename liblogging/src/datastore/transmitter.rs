@@ -1,15 +1,14 @@
-use crate::datastore::config::DatastoreConfig;
-use crate::datastore::wrapper::ServerWrapper;
-use nullnet_libwallguard::Log;
+use crate::datastore::auth::GrpcInterface;
+use crate::datastore::wrapper::{GenericLog, ServerWrapper};
 use tokio::sync::mpsc::Receiver;
 
 pub(crate) struct DatastoreTransmitter {
     server: ServerWrapper,
-    unsent_entries: Vec<Log>,
+    unsent_entries: Vec<GenericLog>,
 }
 
 impl DatastoreTransmitter {
-    pub(crate) async fn new(datastore_config: DatastoreConfig) -> Self {
+    pub(crate) async fn new(datastore_config: GrpcInterface) -> Self {
         let datastore = ServerWrapper::new(datastore_config).await;
         Self {
             server: datastore,
@@ -17,7 +16,7 @@ impl DatastoreTransmitter {
         }
     }
 
-    pub(crate) async fn transmit(mut self, mut receiver: Receiver<Log>) {
+    pub(crate) async fn transmit(mut self, mut receiver: Receiver<GenericLog>) {
         loop {
             if receiver.recv_many(&mut self.unsent_entries, 10_000).await == 0 {
                 // channel closed

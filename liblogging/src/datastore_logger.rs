@@ -1,17 +1,17 @@
-use crate::DatastoreConfig;
+use crate::datastore::auth::GrpcInterface;
 use crate::datastore::transmitter::DatastoreTransmitter;
+use crate::datastore::wrapper::GenericLog;
 use chrono::Utc;
-use nullnet_libwallguard::Log;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
 
 #[derive(Default)]
 pub(crate) struct DatastoreLogger {
-    logger: Option<Sender<Log>>,
+    logger: Option<Sender<GenericLog>>,
 }
 
 impl DatastoreLogger {
-    pub(crate) fn new(datastore_config: Option<DatastoreConfig>) -> Self {
+    pub(crate) fn new(datastore_config: Option<GrpcInterface>) -> Self {
         let Some(config) = datastore_config else {
             return Self::default();
         };
@@ -44,7 +44,7 @@ impl log::Log for DatastoreLogger {
                 let timestamp = Utc::now().to_rfc3339();
                 let level = record.level().to_string();
                 let message = record.args().to_string();
-                let e = Log {
+                let e = GenericLog {
                     timestamp,
                     level,
                     message,

@@ -4,7 +4,6 @@ members = [
     "liberror",
     "liblogging",
     "sandbox",
-    "client_libraries/authentication",
     "client_libraries/libconfmon",
     "client_libraries/traffic_monitor",
     "server_libraries/libdatastore",

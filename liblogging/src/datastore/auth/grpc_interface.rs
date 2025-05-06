@@ -1,4 +1,5 @@
-use crate::heartbeat::GenericHeartbeatResponse;
+use crate::datastore::auth::heartbeat::GenericHeartbeatResponse;
+use crate::datastore::wrapper::GenericLog;
 use futures_util::StreamExt;
 use nullnet_libappguard::AppGuardGrpcInterface;
 use nullnet_libwallguard::WallGuardGrpcInterface;
@@ -19,11 +20,34 @@ impl GrpcInterface {
             GrpcInterface::AppGuard(client) => client
                 .heartbeat(app_id, app_secret)
                 .await
-                .map(|s| GenericHeartbeatResponseStreaming::AppGuard(s)),
+                .map(GenericHeartbeatResponseStreaming::AppGuard),
             GrpcInterface::WallGuard(client) => client
                 .heartbeat(app_id, app_secret, String::new(), String::new())
                 .await
-                .map(|s| GenericHeartbeatResponseStreaming::WallGuard(s)),
+                .map(GenericHeartbeatResponseStreaming::WallGuard),
+        }
+    }
+
+    pub(crate) async fn handle_logs(
+        &mut self,
+        token: String,
+        logs: Vec<GenericLog>,
+    ) -> Result<(), String> {
+        match self {
+            GrpcInterface::AppGuard(client) => {
+                let logs = nullnet_libappguard::Logs {
+                    token,
+                    logs: logs.into_iter().map(Into::into).collect(),
+                };
+                client.handle_logs(logs).await
+            }
+            GrpcInterface::WallGuard(client) => {
+                let logs = nullnet_libwallguard::Logs {
+                    token,
+                    logs: logs.into_iter().map(Into::into).collect(),
+                };
+                client.handle_logs(logs).await.map(|_| ())
+            }
         }
     }
 }

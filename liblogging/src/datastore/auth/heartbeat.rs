@@ -1,7 +1,6 @@
 use std::time::Duration;
 
-use crate::AuthHandler;
-use nullnet_libappguard::DeviceStatus;
+use crate::datastore::auth::AuthHandler;
 
 pub async fn routine(auth_handler: AuthHandler) {
     loop {
@@ -16,22 +15,10 @@ pub async fn routine(auth_handler: AuthHandler) {
         };
 
         while let Some(Ok(heartbeat_response)) = heartbeat_stream.next().await {
-            handle_hb_response(&heartbeat_response);
             let mut t = auth_handler.token.write().await;
             *t = heartbeat_response.token();
             drop(t);
         }
-    }
-}
-
-fn handle_hb_response(response: &GenericHeartbeatResponse) {
-    match DeviceStatus::try_from(response.status()) {
-        Ok(DeviceStatus::Archived | DeviceStatus::Deleted) => {
-            log::warn!("Device has been archived or deleted, aborting execution ...",);
-            std::process::exit(0);
-        }
-        Ok(_) => {}
-        Err(_) => log::error!("Unknown device status value {}", response.status()),
     }
 }
 
@@ -41,13 +28,6 @@ pub(crate) enum GenericHeartbeatResponse {
 }
 
 impl GenericHeartbeatResponse {
-    fn status(&self) -> i32 {
-        match self {
-            GenericHeartbeatResponse::AppGuard(response) => response.status,
-            GenericHeartbeatResponse::WallGuard(response) => response.status,
-        }
-    }
-
     fn token(&self) -> String {
         match self {
             GenericHeartbeatResponse::AppGuard(response) => response.token.clone(),
@@ -56,14 +36,14 @@ impl GenericHeartbeatResponse {
     }
 }
 
-impl Into<GenericHeartbeatResponse> for nullnet_libappguard::HeartbeatResponse {
-    fn into(self) -> GenericHeartbeatResponse {
-        GenericHeartbeatResponse::AppGuard(self)
+impl From<nullnet_libappguard::HeartbeatResponse> for GenericHeartbeatResponse {
+    fn from(val: nullnet_libappguard::HeartbeatResponse) -> Self {
+        GenericHeartbeatResponse::AppGuard(val)
     }
 }
 
-impl Into<GenericHeartbeatResponse> for nullnet_libwallguard::HeartbeatResponse {
-    fn into(self) -> GenericHeartbeatResponse {
-        GenericHeartbeatResponse::WallGuard(self)
+impl From<nullnet_libwallguard::HeartbeatResponse> for GenericHeartbeatResponse {
+    fn from(val: nullnet_libwallguard::HeartbeatResponse) -> Self {
+        GenericHeartbeatResponse::WallGuard(val)
     }
 }

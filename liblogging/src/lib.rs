@@ -6,7 +6,7 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
-pub use crate::datastore::config::DatastoreConfig;
+use crate::datastore::auth::GrpcInterface;
 use crate::datastore_logger::DatastoreLogger;
 use crate::syslog_logger::SyslogLogger;
 
@@ -15,13 +15,12 @@ mod datastore;
 mod datastore_logger;
 mod syslog_logger;
 
-static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
-    once_cell::sync::Lazy::new(|| {
-        vec!["nullnet", "appguard", "wallguard"]
-            .into_iter()
-            .map(str::to_lowercase)
-            .collect()
-    });
+static DEFAULT_ALLOWED_TARGETS: std::sync::LazyLock<Vec<String>> = std::sync::LazyLock::new(|| {
+    vec!["nullnet", "appguard", "wallguard"]
+        .into_iter()
+        .map(str::to_lowercase)
+        .collect()
+});
 
 /// Logger implementation that logs to console, syslog, and Datastore
 pub struct Logger {
@@ -94,7 +93,7 @@ impl log::Log for Logger {
 pub struct LoggerConfig {
     console: bool,
     syslog: bool,
-    datastore: Option<DatastoreConfig>,
+    datastore: Option<GrpcInterface>,
     allowed_targets: Vec<&'static str>,
 }
 
@@ -113,7 +112,7 @@ impl LoggerConfig {
     pub fn new(
         console: bool,
         syslog: bool,
-        datastore: Option<DatastoreConfig>,
+        datastore: Option<GrpcInterface>,
         allowed_targets: Vec<&'static str>,
     ) -> Self {
         Self {

@@ -1,6 +1,6 @@
 // Sample program to test the logging library
 
-use nullnet_liblogging::{DatastoreConfig, Logger, LoggerConfig};
+use nullnet_liblogging::{Logger, LoggerConfig};
 
 #[tokio::main]
 async fn main() {
@@ -9,17 +9,7 @@ async fn main() {
     let default_runner = "sample_program".to_string();
     let runner = args.get(1).unwrap_or(&default_runner);
 
-    let logger_config = LoggerConfig::new(
-        true,
-        false,
-        Some(DatastoreConfig::new(
-            "account_id",
-            "account_secret",
-            "0.0.0.0",
-            50051,
-        )),
-        vec!["sample"],
-    );
+    let logger_config = LoggerConfig::new(true, false, None, vec!["sample"]);
 
     Logger::init(logger_config);
 
