@@ -6,9 +6,9 @@ pub(crate) struct ServerWrapper {
 }
 
 impl ServerWrapper {
-    pub(crate) async fn new(datastore_config: GrpcInterface) -> Self {
-        let inner = datastore_config.clone();
-        let auth = AuthHandler::new(datastore_config).await;
+    pub(crate) async fn new(grpc: GrpcInterface) -> Self {
+        let inner = grpc.clone();
+        let auth = AuthHandler::new(grpc).await;
 
         Self { inner, auth }
     }

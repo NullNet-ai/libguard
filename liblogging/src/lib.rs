@@ -103,7 +103,7 @@ impl LoggerConfig {
     /// # Arguments
     /// * `console` - Whether to log to console
     /// * `syslog` - Whether to log to syslog
-    /// * `datastore` - Datastore logging configuration (use `None` to disable logging to Datastore)
+    /// * `datastore` - gRPC server interface to use for datastore logging (use `None` to disable logging to Datastore)
     /// * `allowed_targets` - The list of allowed targets.<br>
     ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
     ///   Use this parameter to specify additional targets

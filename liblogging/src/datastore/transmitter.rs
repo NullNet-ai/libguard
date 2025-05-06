@@ -8,8 +8,8 @@ pub(crate) struct DatastoreTransmitter {
 }
 
 impl DatastoreTransmitter {
-    pub(crate) async fn new(datastore_config: GrpcInterface) -> Self {
-        let datastore = ServerWrapper::new(datastore_config).await;
+    pub(crate) async fn new(grpc: GrpcInterface) -> Self {
+        let datastore = ServerWrapper::new(grpc).await;
         Self {
             server: datastore,
             unsent_entries: Vec::new(),

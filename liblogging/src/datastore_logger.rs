@@ -11,15 +11,15 @@ pub(crate) struct DatastoreLogger {
 }
 
 impl DatastoreLogger {
-    pub(crate) fn new(datastore_config: Option<GrpcInterface>) -> Self {
-        let Some(config) = datastore_config else {
+    pub(crate) fn new(grpc: Option<GrpcInterface>) -> Self {
+        let Some(grpc) = grpc else {
             return Self::default();
         };
 
         let (sender, receiver) = mpsc::channel(10_000);
 
         tokio::spawn(async move {
-            let transmitter = DatastoreTransmitter::new(config).await;
+            let transmitter = DatastoreTransmitter::new(grpc).await;
             transmitter.transmit(receiver).await;
         });
 
