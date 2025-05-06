@@ -20,7 +20,8 @@ impl DatastoreClient {
     /// * `config` - The configuration settings for connecting to the datastore.
     #[allow(clippy::missing_errors_doc)]
     pub async fn new(config: DatastoreConfig) -> Result<Self, Error> {
-        let client = config.connect().await?;
+        let channel = config.connect().await?;
+        let client = StoreServiceClient::new(channel).max_decoding_message_size(50 * 1024 * 1024);
         Ok(Self { client })
     }
 

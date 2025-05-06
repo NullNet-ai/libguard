@@ -1,0 +1,743 @@
+syntax = "proto3";
+
+// Generated automatically from database schema
+// Do not edit manually
+
+package store;
+
+// Standard timestamp representation
+message Timestamp {
+  int64 seconds = 1; // Seconds since epoch
+  int32 nanos = 2;   // Nanoseconds offset
+}
+
+// Common parameter structure for Create requests
+message CreateParams {
+  string table = 1; // Table name
+}
+
+// Common query structure for Create requests
+message CreateQuery {
+  string pluck = 1; // Field to pluck (e.g., "id")
+  string durability = 2; // Durability level (e.g., "soft")
+}
+
+// Items entity definition
+message Items {
+  int32 tombstone = 1;
+  string status = 2;
+  optional string previous_status = 3;
+  int32 version = 4;
+  optional string created_date = 5;
+  optional string created_time = 6;
+  optional string updated_date = 7;
+  optional string updated_time = 8;
+  optional string organization_id = 9;
+  optional string created_by = 10;
+  optional string updated_by = 11;
+  optional string deleted_by = 12;
+  optional string requested_by = 13;
+  repeated string tags = 14;
+  int32 id = 15;
+  string name = 16;
+  optional string description = 17;
+}
+
+// Packets entity definition
+message Packets {
+  optional int32 tombstone = 1;
+  optional string status = 2;
+  optional string previous_status = 3;
+  optional int32 version = 4;
+  optional string created_date = 5;
+  optional string created_time = 6;
+  optional string updated_date = 7;
+  optional string updated_time = 8;
+  optional string organization_id = 9;
+  optional string created_by = 10;
+  optional string updated_by = 11;
+  optional string deleted_by = 12;
+  optional string requested_by = 13;
+  repeated string tags = 14;
+  string id = 15;
+  string timestamp = 16;
+  optional string hypertable_timestamp = 17;
+  optional string interface_name = 18;
+  optional string device_id = 19;
+  optional string source_mac = 20;
+  optional string destination_mac = 21;
+  optional string ether_type = 22;
+  optional string protocol = 23;
+  optional int32 total_length = 24;
+  optional string source_ip = 25;
+  optional string destination_ip = 26;
+  optional int32 source_port = 27;
+  optional int32 destination_port = 28;
+  optional int32 tcp_header_length = 29;
+  optional int64 tcp_sequence_number = 30;
+  optional int64 tcp_acknowledgment_number = 31;
+  optional int32 tcp_data_offset = 32;
+  optional int32 tcp_flags = 33;
+  optional int32 tcp_window_size = 34;
+  optional int32 tcp_urgent_pointer = 35;
+  optional int32 icmp_type = 36;
+  optional int32 icmp_code = 37;
+}
+
+// Connections entity definition
+message Connections {
+  optional int32 tombstone = 1;
+  optional string status = 2;
+  optional string previous_status = 3;
+  optional int32 version = 4;
+  optional string created_date = 5;
+  optional string created_time = 6;
+  optional string updated_date = 7;
+  optional string updated_time = 8;
+  optional string organization_id = 9;
+  optional string created_by = 10;
+  optional string updated_by = 11;
+  optional string deleted_by = 12;
+  optional string requested_by = 13;
+  repeated string tags = 14;
+  string id = 15;
+  string timestamp = 16;
+  optional string interface_name = 17;
+  optional string hypertable_timestamp = 18;
+  optional int32 total_packet = 19;
+  optional int32 total_bytes = 20;
+  optional string device_id = 21;
+  optional string protocol = 22;
+  optional string source_ip = 23;
+  optional string destination_ip = 24;
+  optional string remote_ip = 25;
+  optional int32 source_port = 26;
+  optional int32 destination_port = 27;
+}
+
+// CrdtMessages entity definition
+message CrdtMessages {
+  optional string database = 1;
+  string dataset = 2;
+  string group_id = 3;
+  string timestamp = 4;
+  string row = 5;
+  string column = 6;
+  string client_id = 7;
+  string value = 8;
+  string operation = 9;
+  optional string hypertable_timestamp = 10;
+}
+
+// CrdtMerkles entity definition
+message CrdtMerkles {
+  string group_id = 1;
+  string timestamp = 2;
+  string merkle = 3;
+}
+
+// SyncEndpoints entity definition
+message SyncEndpoints {
+  string id = 1;
+  string name = 2;
+  string url = 3;
+  string group_id = 4;
+  string username = 5;
+  string password = 6;
+  string status = 7;
+}
+
+// Queues entity definition
+message Queues {
+  string id = 1;
+  string name = 2;
+  int32 size = 3;
+  int32 count = 4;
+}
+
+// QueueItems entity definition
+message QueueItems {
+  string id = 1;
+  int32 order = 2;
+  string queue_id = 3;
+  string value = 4;
+}
+
+// Transactions entity definition
+message Transactions {
+  string id = 1;
+  string timestamp = 2;
+  string status = 3;
+  int64 expiry = 4;
+}
+
+// Create Items request
+message CreateItemsRequest {
+  Items items = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create Items response
+message CreateItemsResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  Items data = 4;
+}
+
+// Get Items request
+message GetItemsRequest {
+  string id = 1;
+}
+
+// Get Items response
+message GetItemsResponse {
+  bool success = 1;
+  string message = 2;
+  Items data = 3;
+}
+
+// Update Items request
+message UpdateItemsRequest {
+  Items items = 1;
+}
+
+// Update Items response
+message UpdateItemsResponse {
+  bool success = 1;
+  string message = 2;
+  Items data = 3;
+}
+
+// Delete Items request
+message DeleteItemsRequest {
+  string id = 1;
+}
+
+// Delete Items response
+message DeleteItemsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Create Packets request
+message CreatePacketsRequest {
+  Packets packets = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create Packets response
+message CreatePacketsResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  Packets data = 4;
+}
+
+// Get Packets request
+message GetPacketsRequest {
+  string id = 1;
+}
+
+// Get Packets response
+message GetPacketsResponse {
+  bool success = 1;
+  string message = 2;
+  Packets data = 3;
+}
+
+// Update Packets request
+message UpdatePacketsRequest {
+  Packets packets = 1;
+}
+
+// Update Packets response
+message UpdatePacketsResponse {
+  bool success = 1;
+  string message = 2;
+  Packets data = 3;
+}
+
+// Delete Packets request
+message DeletePacketsRequest {
+  string id = 1;
+}
+
+// Delete Packets response
+message DeletePacketsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Create Connections request
+message CreateConnectionsRequest {
+  Connections connections = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create Connections response
+message CreateConnectionsResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  Connections data = 4;
+}
+
+// Get Connections request
+message GetConnectionsRequest {
+  string id = 1;
+}
+
+// Get Connections response
+message GetConnectionsResponse {
+  bool success = 1;
+  string message = 2;
+  Connections data = 3;
+}
+
+// Update Connections request
+message UpdateConnectionsRequest {
+  Connections connections = 1;
+}
+
+// Update Connections response
+message UpdateConnectionsResponse {
+  bool success = 1;
+  string message = 2;
+  Connections data = 3;
+}
+
+// Delete Connections request
+message DeleteConnectionsRequest {
+  string id = 1;
+}
+
+// Delete Connections response
+message DeleteConnectionsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Create CrdtMessages request
+message CreateCrdtMessagesRequest {
+  CrdtMessages crdt_messages = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create CrdtMessages response
+message CreateCrdtMessagesResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  CrdtMessages data = 4;
+}
+
+// Get CrdtMessages request
+message GetCrdtMessagesRequest {
+  string id = 1;
+}
+
+// Get CrdtMessages response
+message GetCrdtMessagesResponse {
+  bool success = 1;
+  string message = 2;
+  CrdtMessages data = 3;
+}
+
+// Update CrdtMessages request
+message UpdateCrdtMessagesRequest {
+  CrdtMessages crdt_messages = 1;
+}
+
+// Update CrdtMessages response
+message UpdateCrdtMessagesResponse {
+  bool success = 1;
+  string message = 2;
+  CrdtMessages data = 3;
+}
+
+// Delete CrdtMessages request
+message DeleteCrdtMessagesRequest {
+  string id = 1;
+}
+
+// Delete CrdtMessages response
+message DeleteCrdtMessagesResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Create CrdtMerkles request
+message CreateCrdtMerklesRequest {
+  CrdtMerkles crdt_merkles = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create CrdtMerkles response
+message CreateCrdtMerklesResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  CrdtMerkles data = 4;
+}
+
+// Get CrdtMerkles request
+message GetCrdtMerklesRequest {
+  string id = 1;
+}
+
+// Get CrdtMerkles response
+message GetCrdtMerklesResponse {
+  bool success = 1;
+  string message = 2;
+  CrdtMerkles data = 3;
+}
+
+// Update CrdtMerkles request
+message UpdateCrdtMerklesRequest {
+  CrdtMerkles crdt_merkles = 1;
+}
+
+// Update CrdtMerkles response
+message UpdateCrdtMerklesResponse {
+  bool success = 1;
+  string message = 2;
+  CrdtMerkles data = 3;
+}
+
+// Delete CrdtMerkles request
+message DeleteCrdtMerklesRequest {
+  string id = 1;
+}
+
+// Delete CrdtMerkles response
+message DeleteCrdtMerklesResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Create SyncEndpoints request
+message CreateSyncEndpointsRequest {
+  SyncEndpoints sync_endpoints = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create SyncEndpoints response
+message CreateSyncEndpointsResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  SyncEndpoints data = 4;
+}
+
+// Get SyncEndpoints request
+message GetSyncEndpointsRequest {
+  string id = 1;
+}
+
+// Get SyncEndpoints response
+message GetSyncEndpointsResponse {
+  bool success = 1;
+  string message = 2;
+  SyncEndpoints data = 3;
+}
+
+// Update SyncEndpoints request
+message UpdateSyncEndpointsRequest {
+  SyncEndpoints sync_endpoints = 1;
+}
+
+// Update SyncEndpoints response
+message UpdateSyncEndpointsResponse {
+  bool success = 1;
+  string message = 2;
+  SyncEndpoints data = 3;
+}
+
+// Delete SyncEndpoints request
+message DeleteSyncEndpointsRequest {
+  string id = 1;
+}
+
+// Delete SyncEndpoints response
+message DeleteSyncEndpointsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Create Queues request
+message CreateQueuesRequest {
+  Queues queues = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create Queues response
+message CreateQueuesResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  Queues data = 4;
+}
+
+// Get Queues request
+message GetQueuesRequest {
+  string id = 1;
+}
+
+// Get Queues response
+message GetQueuesResponse {
+  bool success = 1;
+  string message = 2;
+  Queues data = 3;
+}
+
+// Update Queues request
+message UpdateQueuesRequest {
+  Queues queues = 1;
+}
+
+// Update Queues response
+message UpdateQueuesResponse {
+  bool success = 1;
+  string message = 2;
+  Queues data = 3;
+}
+
+// Delete Queues request
+message DeleteQueuesRequest {
+  string id = 1;
+}
+
+// Delete Queues response
+message DeleteQueuesResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Create QueueItems request
+message CreateQueueItemsRequest {
+  QueueItems queue_items = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create QueueItems response
+message CreateQueueItemsResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  QueueItems data = 4;
+}
+
+// Get QueueItems request
+message GetQueueItemsRequest {
+  string id = 1;
+}
+
+// Get QueueItems response
+message GetQueueItemsResponse {
+  bool success = 1;
+  string message = 2;
+  QueueItems data = 3;
+}
+
+// Update QueueItems request
+message UpdateQueueItemsRequest {
+  QueueItems queue_items = 1;
+}
+
+// Update QueueItems response
+message UpdateQueueItemsResponse {
+  bool success = 1;
+  string message = 2;
+  QueueItems data = 3;
+}
+
+// Delete QueueItems request
+message DeleteQueueItemsRequest {
+  string id = 1;
+}
+
+// Delete QueueItems response
+message DeleteQueueItemsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Create Transactions request
+message CreateTransactionsRequest {
+  Transactions transactions = 1;
+  CreateParams params = 2;
+  CreateQuery query = 3;
+  string entity_prefix = 4; // Entity prefix code
+}
+
+// Create Transactions response
+message CreateTransactionsResponse {
+  bool success = 1;
+  int32 count = 2;
+  string message = 3;
+  Transactions data = 4;
+}
+
+// Get Transactions request
+message GetTransactionsRequest {
+  string id = 1;
+}
+
+// Get Transactions response
+message GetTransactionsResponse {
+  bool success = 1;
+  string message = 2;
+  Transactions data = 3;
+}
+
+// Update Transactions request
+message UpdateTransactionsRequest {
+  Transactions transactions = 1;
+}
+
+// Update Transactions response
+message UpdateTransactionsResponse {
+  bool success = 1;
+  string message = 2;
+  Transactions data = 3;
+}
+
+// Delete Transactions request
+message DeleteTransactionsRequest {
+  string id = 1;
+}
+
+// Delete Transactions response
+message DeleteTransactionsResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Store service definition with CRUD operations
+service StoreService {
+  // Create a new Items
+  rpc CreateItems(CreateItemsRequest) returns (CreateItemsResponse);
+
+  // Get a Items by ID
+  rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
+
+  // Update an existing Items
+  rpc UpdateItems(UpdateItemsRequest) returns (UpdateItemsResponse);
+
+  // Delete a Items by ID
+  rpc DeleteItems(DeleteItemsRequest) returns (DeleteItemsResponse);
+
+  // Create a new Packets
+  rpc CreatePackets(CreatePacketsRequest) returns (CreatePacketsResponse);
+
+  // Get a Packets by ID
+  rpc GetPackets(GetPacketsRequest) returns (GetPacketsResponse);
+
+  // Update an existing Packets
+  rpc UpdatePackets(UpdatePacketsRequest) returns (UpdatePacketsResponse);
+
+  // Delete a Packets by ID
+  rpc DeletePackets(DeletePacketsRequest) returns (DeletePacketsResponse);
+
+  // Create a new Connections
+  rpc CreateConnections(CreateConnectionsRequest) returns (CreateConnectionsResponse);
+
+  // Get a Connections by ID
+  rpc GetConnections(GetConnectionsRequest) returns (GetConnectionsResponse);
+
+  // Update an existing Connections
+  rpc UpdateConnections(UpdateConnectionsRequest) returns (UpdateConnectionsResponse);
+
+  // Delete a Connections by ID
+  rpc DeleteConnections(DeleteConnectionsRequest) returns (DeleteConnectionsResponse);
+
+  // Create a new CrdtMessages
+  rpc CreateCrdtMessages(CreateCrdtMessagesRequest) returns (CreateCrdtMessagesResponse);
+
+  // Get a CrdtMessages by ID
+  rpc GetCrdtMessages(GetCrdtMessagesRequest) returns (GetCrdtMessagesResponse);
+
+  // Update an existing CrdtMessages
+  rpc UpdateCrdtMessages(UpdateCrdtMessagesRequest) returns (UpdateCrdtMessagesResponse);
+
+  // Delete a CrdtMessages by ID
+  rpc DeleteCrdtMessages(DeleteCrdtMessagesRequest) returns (DeleteCrdtMessagesResponse);
+
+  // Create a new CrdtMerkles
+  rpc CreateCrdtMerkles(CreateCrdtMerklesRequest) returns (CreateCrdtMerklesResponse);
+
+  // Get a CrdtMerkles by ID
+  rpc GetCrdtMerkles(GetCrdtMerklesRequest) returns (GetCrdtMerklesResponse);
+
+  // Update an existing CrdtMerkles
+  rpc UpdateCrdtMerkles(UpdateCrdtMerklesRequest) returns (UpdateCrdtMerklesResponse);
+
+  // Delete a CrdtMerkles by ID
+  rpc DeleteCrdtMerkles(DeleteCrdtMerklesRequest) returns (DeleteCrdtMerklesResponse);
+
+  // Create a new SyncEndpoints
+  rpc CreateSyncEndpoints(CreateSyncEndpointsRequest) returns (CreateSyncEndpointsResponse);
+
+  // Get a SyncEndpoints by ID
+  rpc GetSyncEndpoints(GetSyncEndpointsRequest) returns (GetSyncEndpointsResponse);
+
+  // Update an existing SyncEndpoints
+  rpc UpdateSyncEndpoints(UpdateSyncEndpointsRequest) returns (UpdateSyncEndpointsResponse);
+
+  // Delete a SyncEndpoints by ID
+  rpc DeleteSyncEndpoints(DeleteSyncEndpointsRequest) returns (DeleteSyncEndpointsResponse);
+
+  // Create a new Queues
+  rpc CreateQueues(CreateQueuesRequest) returns (CreateQueuesResponse);
+
+  // Get a Queues by ID
+  rpc GetQueues(GetQueuesRequest) returns (GetQueuesResponse);
+
+  // Update an existing Queues
+  rpc UpdateQueues(UpdateQueuesRequest) returns (UpdateQueuesResponse);
+
+  // Delete a Queues by ID
+  rpc DeleteQueues(DeleteQueuesRequest) returns (DeleteQueuesResponse);
+
+  // Create a new QueueItems
+  rpc CreateQueueItems(CreateQueueItemsRequest) returns (CreateQueueItemsResponse);
+
+  // Get a QueueItems by ID
+  rpc GetQueueItems(GetQueueItemsRequest) returns (GetQueueItemsResponse);
+
+  // Update an existing QueueItems
+  rpc UpdateQueueItems(UpdateQueueItemsRequest) returns (UpdateQueueItemsResponse);
+
+  // Delete a QueueItems by ID
+  rpc DeleteQueueItems(DeleteQueueItemsRequest) returns (DeleteQueueItemsResponse);
+
+  // Create a new Transactions
+  rpc CreateTransactions(CreateTransactionsRequest) returns (CreateTransactionsResponse);
+
+  // Get a Transactions by ID
+  rpc GetTransactions(GetTransactionsRequest) returns (GetTransactionsResponse);
+
+  // Update an existing Transactions
+  rpc UpdateTransactions(UpdateTransactionsRequest) returns (UpdateTransactionsResponse);
+
+  // Delete a Transactions by ID
+  rpc DeleteTransactions(DeleteTransactionsRequest) returns (DeleteTransactionsResponse);
+
+}
