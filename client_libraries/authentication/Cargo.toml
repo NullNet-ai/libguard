@@ -1,0 +1,11 @@
+[package]
+name = "nullnet-client-authentication"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+nullnet-libappguard = "0.1.4"
+nullnet-libwallguard = "0.1.4"
+tokio = "1.45.0"
+log = "0.4.27"
+futures-util = "0.3.31"
