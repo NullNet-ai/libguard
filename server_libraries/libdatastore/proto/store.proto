@@ -105,7 +105,7 @@ message Connections {
   optional string interface_name = 17;
   optional string hypertable_timestamp = 18;
   optional int32 total_packet = 19;
-  optional int32 total_bytes = 20;
+  optional int32 total_byte = 20;
   optional string device_id = 21;
   optional string protocol = 22;
   optional string source_ip = 23;

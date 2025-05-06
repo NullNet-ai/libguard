@@ -184,7 +184,7 @@ pub struct Connections {
     #[prost(int32, optional, tag = "19")]
     pub total_packet: ::core::option::Option<i32>,
     #[prost(int32, optional, tag = "20")]
-    pub total_bytes: ::core::option::Option<i32>,
+    pub total_byte: ::core::option::Option<i32>,
     #[prost(string, optional, tag = "21")]
     pub device_id: ::core::option::Option<::prost::alloc::string::String>,
     #[prost(string, optional, tag = "22")]
