@@ -13,6 +13,7 @@ service StoreService {
     rpc BatchUpdate(BatchUpdateRequest) returns (Response);
     rpc BatchDelete(BatchDeleteRequest) returns (Response);
     rpc Login(LoginRequest) returns (LoginResponse);
+    rpc Upsert(UpsertRequest) returns (Response);
 }
 
 message GetByIdRequest {
@@ -36,9 +37,19 @@ message GetByFilterBody {
     repeated MultipleSort multiple_sort = 8;
     map<string, string> pluck_object = 9;
     string date_format = 10;
-
 }
 
+message UpsertRequest {
+    UpsertBody body = 1;
+    Params params = 2;
+    Query query = 3;
+}
+
+message UpsertBody {
+    string data = 1;
+    string entity_prefix = 2;
+    repeated string conflict_columns = 3;
+}
 message AdvanceFilter {
     string type = 1;
     string field = 2;

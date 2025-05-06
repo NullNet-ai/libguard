@@ -40,6 +40,24 @@ pub struct GetByFilterBody {
     pub date_format: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpsertRequest {
+    #[prost(message, optional, tag = "1")]
+    pub body: ::core::option::Option<UpsertBody>,
+    #[prost(message, optional, tag = "2")]
+    pub params: ::core::option::Option<Params>,
+    #[prost(message, optional, tag = "3")]
+    pub query: ::core::option::Option<Query>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct UpsertBody {
+    #[prost(string, tag = "1")]
+    pub data: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub entity_prefix: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "3")]
+    pub conflict_columns: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AdvanceFilter {
     #[prost(string, tag = "1")]
     pub r#type: ::prost::alloc::string::String,
@@ -589,6 +607,27 @@ pub mod store_service_client {
                 .insert(GrpcMethod::new("datastore.StoreService", "Login"));
             self.inner.unary(req, path, codec).await
         }
+        pub async fn upsert(
+            &mut self,
+            request: impl tonic::IntoRequest<super::UpsertRequest>,
+        ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/datastore.StoreService/Upsert",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("datastore.StoreService", "Upsert"));
+            self.inner.unary(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -644,6 +683,10 @@ pub mod store_service_server {
             &self,
             request: tonic::Request<super::LoginRequest>,
         ) -> std::result::Result<tonic::Response<super::LoginResponse>, tonic::Status>;
+        async fn upsert(
+            &self,
+            request: tonic::Request<super::UpsertRequest>,
+        ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct StoreServiceServer<T> {
@@ -1155,6 +1198,51 @@ pub mod store_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = LoginSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/datastore.StoreService/Upsert" => {
+                    #[allow(non_camel_case_types)]
+                    struct UpsertSvc<T: StoreService>(pub Arc<T>);
+                    impl<
+                        T: StoreService,
+                    > tonic::server::UnaryService<super::UpsertRequest>
+                    for UpsertSvc<T> {
+                        type Response = super::Response;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::UpsertRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as StoreService>::upsert(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = UpsertSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

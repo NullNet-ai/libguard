@@ -15,13 +15,12 @@ mod datastore;
 mod datastore_logger;
 mod syslog_logger;
 
-static DEFAULT_ALLOWED_TARGETS: once_cell::sync::Lazy<Vec<String>> =
-    once_cell::sync::Lazy::new(|| {
-        vec!["nullnet", "appguard", "wallguard"]
-            .into_iter()
-            .map(str::to_lowercase)
-            .collect()
-    });
+static DEFAULT_ALLOWED_TARGETS: std::sync::LazyLock<Vec<String>> = std::sync::LazyLock::new(|| {
+    vec!["nullnet", "appguard", "wallguard"]
+        .into_iter()
+        .map(str::to_lowercase)
+        .collect()
+});
 
 /// Logger implementation that logs to console, syslog, and Datastore
 pub struct Logger {
@@ -104,7 +103,7 @@ impl LoggerConfig {
     /// # Arguments
     /// * `console` - Whether to log to console
     /// * `syslog` - Whether to log to syslog
-    /// * `datastore` - Datastore logging configuration (use `None` to disable logging to Datastore)
+    /// * `datastore` - Datastore configuration (use `None` to disable logging to Datastore)
     /// * `allowed_targets` - The list of allowed targets.<br>
     ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
     ///   Use this parameter to specify additional targets

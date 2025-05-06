@@ -261,4 +261,26 @@ impl DatastoreClient {
 
         validate_response_and_convert_to_reponse_data(response.get_ref())
     }
+
+    /// Updates (if already present) or creates (if not) a record in the datastore.
+    ///
+    /// # Arguments
+    /// * `request` - The request containing the record to be updated or created (based on a list of conflict columns).
+    /// * `token` - The authorization token to authorize the request.
+    ///
+    /// # Returns
+    /// * `Ok(ResponseData)` - The response data containing the result of the operation.
+    /// * `Err(Error)` - If the operation fails or if an error occurs during the process.
+    #[allow(clippy::missing_errors_doc)]
+    pub async fn upsert(
+        &mut self,
+        request: UpsertRequest,
+        token: &str,
+    ) -> Result<ResponseData, Error> {
+        let request = authorize_request(request, token)?;
+
+        let response = self.client.upsert(request).await.handle_err(location!())?;
+
+        validate_response_and_convert_to_reponse_data(response.get_ref())
+    }
 }
