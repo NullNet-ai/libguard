@@ -1,5 +1,6 @@
 use crate::datastore::config::DatastoreConfig;
-use crate::datastore::wrapper::{GenericLog, ServerWrapper};
+use crate::datastore::generic_log::GenericLog;
+use crate::datastore::wrapper::ServerWrapper;
 use tokio::sync::mpsc::Receiver;
 
 pub(crate) struct DatastoreTransmitter {

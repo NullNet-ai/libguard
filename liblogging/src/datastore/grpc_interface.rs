@@ -1,5 +1,4 @@
-use crate::datastore::auth::heartbeat::GenericHeartbeatResponse;
-use crate::datastore::wrapper::GenericLog;
+use crate::datastore::generic_log::GenericLog;
 use futures_util::StreamExt;
 use nullnet_libappguard::AppGuardGrpcInterface;
 use nullnet_libwallguard::WallGuardGrpcInterface;
@@ -69,5 +68,31 @@ impl GenericHeartbeatResponseStreaming {
                 .await
                 .map(|response| response.map(Into::into).map_err(|e| e.to_string())),
         }
+    }
+}
+
+pub(crate) enum GenericHeartbeatResponse {
+    AppGuard(nullnet_libappguard::HeartbeatResponse),
+    WallGuard(nullnet_libwallguard::HeartbeatResponse),
+}
+
+impl GenericHeartbeatResponse {
+    pub(crate) fn token(&self) -> String {
+        match self {
+            GenericHeartbeatResponse::AppGuard(response) => response.token.clone(),
+            GenericHeartbeatResponse::WallGuard(response) => response.token.clone(),
+        }
+    }
+}
+
+impl From<nullnet_libappguard::HeartbeatResponse> for GenericHeartbeatResponse {
+    fn from(val: nullnet_libappguard::HeartbeatResponse) -> Self {
+        GenericHeartbeatResponse::AppGuard(val)
+    }
+}
+
+impl From<nullnet_libwallguard::HeartbeatResponse> for GenericHeartbeatResponse {
+    fn from(val: nullnet_libwallguard::HeartbeatResponse) -> Self {
+        GenericHeartbeatResponse::WallGuard(val)
     }
 }

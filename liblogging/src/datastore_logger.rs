@@ -1,6 +1,6 @@
 use crate::datastore::config::DatastoreConfig;
+use crate::datastore::generic_log::GenericLog;
 use crate::datastore::transmitter::DatastoreTransmitter;
-use crate::datastore::wrapper::GenericLog;
 use chrono::Utc;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Sender;
