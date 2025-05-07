@@ -2,6 +2,9 @@
 
 All releases with the relative changes are documented in this file.
 
+## [0.3.0] - 2025-05-07
+- Store in datastore both logs from `appguard-server` and `wallguard-server` 
+
 ## [0.2.0] - 2025-03-03
 - Added Datastore logger
 - Made console logging optional
