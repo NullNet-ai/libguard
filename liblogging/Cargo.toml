@@ -15,4 +15,3 @@ log = "0.4.26"
 syslog = "7.0.0"
 chrono = "0.4.39"
 tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
-futures-util = "0.3.31"

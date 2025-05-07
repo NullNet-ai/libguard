@@ -1,22 +1,26 @@
-use crate::datastore::auth::{AuthHandler, GrpcInterface};
 use crate::datastore::config::DatastoreConfig;
 use crate::datastore::generic_log::GenericLog;
+use crate::datastore::grpc_interface::GrpcInterface;
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 pub(crate) struct ServerWrapper {
     inner: GrpcInterface,
-    auth: AuthHandler,
+    token: Arc<RwLock<String>>,
 }
 
 impl ServerWrapper {
     pub(crate) async fn new(datastore_config: DatastoreConfig) -> Self {
         let inner = datastore_config.connect().await;
-        let auth = AuthHandler::new(datastore_config).await;
 
-        Self { inner, auth }
+        Self {
+            inner,
+            token: datastore_config.token,
+        }
     }
 
     pub(crate) async fn logs_insert(&mut self, logs: Vec<GenericLog>) -> Result<(), String> {
-        let token = self.auth.get_token().await;
+        let token = self.token.read().await.clone();
 
         self.inner.handle_logs(token, logs).await
     }

@@ -1,4 +1,3 @@
-pub(crate) mod auth;
 pub(crate) mod config;
 pub(crate) mod generic_log;
 pub(crate) mod grpc_interface;

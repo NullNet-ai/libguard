@@ -1,12 +1,13 @@
-use crate::datastore::auth::GrpcInterface;
+use crate::datastore::grpc_interface::GrpcInterface;
 use nullnet_libappguard::AppGuardGrpcInterface;
 use nullnet_libwallguard::WallGuardGrpcInterface;
+use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::RwLock;
 use tokio::time::sleep;
 
 pub struct DatastoreConfig {
-    pub(crate) id: String,
-    pub(crate) secret: String,
+    pub(crate) token: Arc<RwLock<String>>,
     pub(crate) server_kind: ServerKind,
     pub(crate) addr: String,
     pub(crate) port: u16,
@@ -18,8 +19,7 @@ impl DatastoreConfig {
     ///
     /// # Arguments
     ///
-    /// * `id` - The app or account ID to use for login.
-    /// * `secret` - The app or account secret to use for login.
+    /// * `token` - The token to use for authenticating to datastore.
     /// * `server_kind` - The kind of server to connect to (i.e., `AppGuard` or `WallGuard`).
     /// * `addr` - The IP address of the server (use 0.0.0.0 if running from the server itself).
     /// * `port` - The port of the server.
@@ -27,16 +27,14 @@ impl DatastoreConfig {
     #[allow(clippy::missing_errors_doc)]
     #[must_use]
     pub fn new(
-        id: String,
-        secret: String,
+        token: Arc<RwLock<String>>,
         server_kind: ServerKind,
         addr: String,
         port: u16,
         tls: bool,
     ) -> Self {
         Self {
-            id,
-            secret,
+            token,
             server_kind,
             addr,
             port,
