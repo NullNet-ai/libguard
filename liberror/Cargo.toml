@@ -3,7 +3,7 @@ name = "nullnet-liberror"
 version = "0.1.1"
 edition = "2024"
 repository = "https://github.com/NullNet-ai/libguard"
-license = "MIT"
+license = "AGPL-3.0-only"
 description = "Error handling library for NullNet"
 readme = "README.md"
 

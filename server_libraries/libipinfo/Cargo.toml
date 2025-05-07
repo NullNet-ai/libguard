@@ -3,7 +3,7 @@ name = "nullnet-libipinfo"
 version = "0.2.0"
 edition = "2024"
 repository = "https://github.com/NullNet-ai/libguard"
-license = "MIT"
+license = "AGPL-3.0-only"
 description = "IP information library for NullNet"
 readme = "README.md"
 

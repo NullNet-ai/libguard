@@ -3,7 +3,7 @@ name = "nullnet-libtunnel"
 version = "0.3.2"
 edition = "2024"
 repository = "https://github.com/NullNet-ai/libguard"
-license = "MIT"
+license = "AGPL-3.0-only"
 description = "Library for tunneling traffic"
 
 [dependencies]
