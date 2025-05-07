@@ -16,10 +16,12 @@ pub struct AuthHandler {
 impl AuthHandler {
     #[must_use]
     pub async fn new(datastore_config: DatastoreConfig) -> Self {
+        let client = datastore_config.connect().await;
+
         let auth = Self {
             id: datastore_config.id,
             secret: datastore_config.secret,
-            client: datastore_config.grpc,
+            client,
             token: Arc::new(RwLock::new(String::new())),
         };
 

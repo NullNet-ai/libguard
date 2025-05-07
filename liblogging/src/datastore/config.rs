@@ -1,11 +1,16 @@
 use crate::datastore::auth::GrpcInterface;
 use nullnet_libappguard::AppGuardGrpcInterface;
 use nullnet_libwallguard::WallGuardGrpcInterface;
+use std::time::Duration;
+use tokio::time::sleep;
 
 pub struct DatastoreConfig {
     pub(crate) id: String,
     pub(crate) secret: String,
-    pub(crate) grpc: GrpcInterface,
+    pub(crate) server_kind: ServerKind,
+    pub(crate) addr: String,
+    pub(crate) port: u16,
+    pub(crate) tls: bool,
 }
 
 impl DatastoreConfig {
@@ -20,24 +25,44 @@ impl DatastoreConfig {
     /// * `port` - The port of the server.
     /// * `tls` - Whether to use TLS or not for communication with the server.
     #[allow(clippy::missing_errors_doc)]
-    pub async fn new(
+    #[must_use]
+    pub fn new(
         id: String,
         secret: String,
         server_kind: ServerKind,
         addr: String,
         port: u16,
         tls: bool,
-    ) -> Result<Self, String> {
-        let grpc = match server_kind {
-            ServerKind::AppGuard => {
-                GrpcInterface::AppGuard(AppGuardGrpcInterface::new(&addr, port, tls).await?)
-            }
-            ServerKind::WallGuard => {
-                GrpcInterface::WallGuard(WallGuardGrpcInterface::new(&addr, port).await)
-            }
-        };
+    ) -> Self {
+        Self {
+            id,
+            secret,
+            server_kind,
+            addr,
+            port,
+            tls,
+        }
+    }
 
-        Ok(Self { id, secret, grpc })
+    pub(crate) async fn connect(&self) -> GrpcInterface {
+        // Create a new gRPC client based on the server kind
+        loop {
+            match self.server_kind {
+                ServerKind::AppGuard => {
+                    match AppGuardGrpcInterface::new(&self.addr, self.port, self.tls).await {
+                        Ok(client) => return GrpcInterface::AppGuard(client),
+                        Err(_) => {
+                            sleep(Duration::from_secs(1)).await;
+                        }
+                    }
+                }
+                ServerKind::WallGuard => {
+                    return GrpcInterface::WallGuard(
+                        WallGuardGrpcInterface::new(&self.addr, self.port).await,
+                    );
+                }
+            }
+        }
     }
 }
 
