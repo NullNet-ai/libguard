@@ -9,7 +9,7 @@ async fn main() {
     let default_runner = "sample_program".to_string();
     let runner = args.get(1).unwrap_or(&default_runner);
 
-    let logger_config = LoggerConfig::new(true, false, None, vec!["sample"]);
+    let logger_config = LoggerConfig::new(true, false, vec!["sample"]);
 
     Logger::init(logger_config);
 

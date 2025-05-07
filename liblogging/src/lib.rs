@@ -39,7 +39,6 @@ impl Logger {
         let LoggerConfig {
             console,
             syslog,
-            datastore,
             allowed_targets,
         } = logger_config;
 
@@ -50,12 +49,22 @@ impl Logger {
             log::set_boxed_logger(Box::new(Logger {
                 console: ConsoleLogger::new(console),
                 syslog: SyslogLogger::new(syslog),
-                datastore: DatastoreLogger::new(datastore),
+                datastore: DatastoreLogger::new(None),
                 allowed_targets,
             }))
             .unwrap_or_default();
         }
         log::set_max_level(level_filter);
+    }
+
+    /// Registers a datastore for the logger.
+    ///
+    /// This should be called once the server is started and the datastore is available.
+    ///
+    /// # Arguments
+    /// * `datastore_config` - Datastore configuration
+    pub fn register_datastore(&mut self, datastore_config: DatastoreConfig) {
+        self.datastore = DatastoreLogger::new(Some(datastore_config));
     }
 }
 
@@ -93,7 +102,6 @@ impl log::Log for Logger {
 pub struct LoggerConfig {
     console: bool,
     syslog: bool,
-    datastore: Option<DatastoreConfig>,
     allowed_targets: Vec<&'static str>,
 }
 
@@ -103,22 +111,15 @@ impl LoggerConfig {
     /// # Arguments
     /// * `console` - Whether to log to console
     /// * `syslog` - Whether to log to syslog
-    /// * `datastore` - Datastore configuration (use `None` to disable logging to Datastore)
     /// * `allowed_targets` - The list of allowed targets.<br>
     ///   By default, only logs from `nullnet*`, `appguard*`, and `wallguard*` will be emitted.<br>
     ///   Use this parameter to specify additional targets
     ///   (e.g., specifying "serde" will emit logs for all targets whose name is in the form `serde*`).
     #[must_use]
-    pub fn new(
-        console: bool,
-        syslog: bool,
-        datastore: Option<DatastoreConfig>,
-        allowed_targets: Vec<&'static str>,
-    ) -> Self {
+    pub fn new(console: bool, syslog: bool, allowed_targets: Vec<&'static str>) -> Self {
         Self {
             console,
             syslog,
-            datastore,
             allowed_targets,
         }
     }
