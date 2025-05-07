@@ -1,7 +1,7 @@
 mod heartbeat;
 
-use crate::datastore::config::DatastoreConfig;
-pub use crate::datastore::grpc_interface::GrpcInterface;
+pub use crate::datastore::config::DatastoreConfig;
+pub(crate) use crate::datastore::grpc_interface::GrpcInterface;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

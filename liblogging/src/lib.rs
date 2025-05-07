@@ -6,7 +6,7 @@ use std::str::FromStr;
 use log::LevelFilter;
 
 use crate::console_logger::ConsoleLogger;
-pub use crate::datastore::config::DatastoreConfig;
+pub use crate::datastore::config::{DatastoreConfig, ServerKind};
 use crate::datastore_logger::DatastoreLogger;
 use crate::syslog_logger::SyslogLogger;
 

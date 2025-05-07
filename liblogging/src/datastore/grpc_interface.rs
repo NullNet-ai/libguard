@@ -4,7 +4,7 @@ use nullnet_libappguard::AppGuardGrpcInterface;
 use nullnet_libwallguard::WallGuardGrpcInterface;
 
 #[derive(Clone)]
-pub enum GrpcInterface {
+pub(crate) enum GrpcInterface {
     AppGuard(AppGuardGrpcInterface),
     WallGuard(WallGuardGrpcInterface),
 }
