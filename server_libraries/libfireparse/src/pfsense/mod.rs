@@ -8,6 +8,7 @@ use interfaces_parser::PfSenseInterfacesParser;
 use nullnet_libconfmon::{InterfaceSnapshot, Snapshot};
 use roxmltree::Document;
 use rules_parser::PfSenseRulesParser;
+use ssh_parser::PfSenseSSHParser;
 use webgui_parser::PfSenseWebGuiParser;
 
 mod aliases_parser;
@@ -15,6 +16,7 @@ mod endpoint_parser;
 mod hostname_parser;
 mod interfaces_parser;
 mod rules_parser;
+mod ssh_parser;
 mod webgui_parser;
 
 /// A parser for extracting configuration details from a pfSense XML configuration.
@@ -40,6 +42,7 @@ impl PfSenseParser {
             interfaces: PfSenseInterfacesParser::parse(&xmltree, iterfaces),
             hostname: PfSenseHostnameParser::parse(&xmltree),
             gui_protocol: PfSenseWebGuiParser::parse(&xmltree, "https"),
+            ssh: PfSenseSSHParser::parse(&xmltree),
         })
     }
 

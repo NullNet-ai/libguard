@@ -40,6 +40,13 @@ pub struct IpAddress {
     pub version: i32,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct SSHConfig {
+    pub enabled: bool,
+    pub port: u16,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct Configuration {
     pub rules: Vec<Rule>,
     pub aliases: Vec<Alias>,
@@ -47,4 +54,5 @@ pub struct Configuration {
     pub raw_content: String,
     pub hostname: String,
     pub gui_protocol: String,
+    pub ssh: SSHConfig,
 }
