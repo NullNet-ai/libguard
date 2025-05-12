@@ -75,7 +75,7 @@ where
     let (reader1, writer1) = split(stream1);
     let (reader2, writer2) = split(stream2);
 
-    let _ = tokio::select!(
+    tokio::select!(
         _ = tokio::spawn(copy_direction_with_notify(reader1, writer2, notify.clone())) => {},
         _ = tokio::spawn(copy_direction_with_notify(reader2, writer1, notify.clone())) => {},
     );
