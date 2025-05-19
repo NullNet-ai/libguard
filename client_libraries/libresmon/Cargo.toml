@@ -1,0 +1,12 @@
+[package]
+name = "nullnet-libresmon"
+version = "0.1.0"
+edition = "2024"
+repository = "https://github.com/NullNet-ai/libguard"
+license = "AGPL-3.0-only"
+description = "System resources monitoring library for NullNet"
+#readme = "README.md"
+
+[dependencies]
+sysinfo = { version = "0.35.1", default-features = false, features = ["disk", "system", "component"] }
+async-channel = "2.3.1"
