@@ -5,6 +5,7 @@ members = [
     "liblogging",
     "sandbox",
     "client_libraries/libconfmon",
+    "client_libraries/libresmon",
     "client_libraries/traffic_monitor",
     "server_libraries/libdatastore",
     "server_libraries/libfireparse",
