@@ -31,7 +31,7 @@ pub struct SystemResources {
 
 #[must_use]
 pub fn poll_system_resources(interval_msec: u64) -> Receiver<SystemResources> {
-    let (tx, rx) = async_channel::unbounded();
+    let (tx, rx) = async_channel::bounded(60);
 
     std::thread::spawn(move || {
         let mut sys = System::new_with_specifics(*SYSTEM_REFRESH_KIND);
