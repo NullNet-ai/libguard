@@ -87,8 +87,10 @@ pub fn poll_system_resources(interval_msec: u64) -> Receiver<SystemResources> {
                 temperatures,
             };
 
-            // send resources to caller
-            let _ = tx.send_blocking(resources);
+            // send resources to caller, or exit if channel is closed
+            let Ok(()) = tx.send_blocking(resources) else {
+                return;
+            };
         }
     });
 
