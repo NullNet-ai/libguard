@@ -1,8 +1,7 @@
+use async_channel::{Receiver, Sender};
 use chrono::Utc;
 use pcap::Device;
 use std::net::ToSocketAddrs;
-use std::sync::mpsc;
-use std::sync::mpsc::{Receiver, Sender};
 use std::thread;
 
 /// Configuration for the network traffic monitor
@@ -34,7 +33,7 @@ pub struct PacketInfo {
 /// A receiver channel for receiving captured packets
 #[must_use]
 pub fn monitor_devices(monitor_config: &MonitorConfig) -> Receiver<PacketInfo> {
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = async_channel::unbounded();
 
     let bpf_program = bpf_program(&monitor_config.addr);
     for device in Device::list().into_iter().flatten() {
@@ -93,7 +92,10 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
                 link_type,
                 timestamp: Utc::now().to_rfc3339(),
             };
-            tx.send(packet).unwrap_or_default();
+            // send packet to caller, or exit if channel is closed
+            let Ok(()) = tx.send_blocking(packet) else {
+                return;
+            };
             // Save packet to file
             if let Some(file) = savefile.as_mut() {
                 file.write(&p);

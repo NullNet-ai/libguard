@@ -10,7 +10,7 @@ fn main() {
     let rx = monitor_devices(&monitor_config);
 
     loop {
-        if let Ok(packet) = rx.recv() {
+        if let Ok(packet) = rx.recv_blocking() {
             println!("Received packet on {}", packet.interface);
         }
     }
