@@ -33,7 +33,7 @@ pub struct PacketInfo {
 /// A receiver channel for receiving captured packets
 #[must_use]
 pub fn monitor_devices(monitor_config: &MonitorConfig) -> Receiver<PacketInfo> {
-    let (tx, rx) = async_channel::unbounded();
+    let (tx, rx) = async_channel::bounded(10_000);
 
     let bpf_program = bpf_program(&monitor_config.addr);
     for device in Device::list().into_iter().flatten() {
