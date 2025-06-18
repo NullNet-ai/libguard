@@ -129,9 +129,9 @@ message DeleteRequest {
     Params params = 1;
     DeleteQuery query = 2;
 }
-message DeleteQuery{
+ message DeleteQuery{
     string is_permanent = 1;
-}
+ }
 
 message CreateRequest {
     CreateParams params = 1;
@@ -141,7 +141,6 @@ message CreateRequest {
 
 message CreateBody{
     string record = 1;
-    string entity_prefix = 2;
 }
 
 
@@ -154,7 +153,6 @@ message BatchCreateRequest {
 
 message BatchCreateBody {
     string records = 1;
-    string entity_prefix = 2;
 }
 
 //BATCH UPDATE
@@ -184,6 +182,12 @@ message CreateParams {
 
 message LoginRequest {
     LoginBody body = 1;
+    LoginParams params = 2;
+}
+
+message LoginParams{
+    string is_root= 1;
+    string t=2;
 }
 
 message LoginBody{
@@ -203,6 +207,7 @@ message Query {
 message Params {
     string id = 1;
     string table= 2;
+    string type=3;
 }
 
 message LoginResponse {

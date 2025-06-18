@@ -200,8 +200,6 @@ pub struct CreateRequest {
 pub struct CreateBody {
     #[prost(string, tag = "1")]
     pub record: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub entity_prefix: ::prost::alloc::string::String,
 }
 /// BATCH CREATE
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -217,8 +215,6 @@ pub struct BatchCreateRequest {
 pub struct BatchCreateBody {
     #[prost(string, tag = "1")]
     pub records: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub entity_prefix: ::prost::alloc::string::String,
 }
 /// BATCH UPDATE
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -257,6 +253,15 @@ pub struct CreateParams {
 pub struct LoginRequest {
     #[prost(message, optional, tag = "1")]
     pub body: ::core::option::Option<LoginBody>,
+    #[prost(message, optional, tag = "2")]
+    pub params: ::core::option::Option<LoginParams>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LoginParams {
+    #[prost(string, tag = "1")]
+    pub is_root: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub t: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LoginBody {
@@ -283,6 +288,8 @@ pub struct Params {
     pub id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub table: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub r#type: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LoginResponse {
