@@ -1,67 +1,62 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-/// Represents a device associated with an account.
-/// Contains detailed information about the device, including identifiers, timestamps, and location data.
-#[derive(Debug, Deserialize)]
-pub struct Device {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Account {
+    pub profile: Profile,
+    pub contact: Option<Contact>,
+    pub device: Option<Device>,
+    pub organization: Organization,
     pub id: String,
+    pub account_id: String,
+    pub organization_id: String,
+    pub account_organization_id: String,
+    pub account_status: String,
+    pub role_id: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Profile {
+    pub id: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub email: String,
+    pub account_id: String,
     pub categories: Vec<String>,
     pub code: Option<String>,
-    pub tombstone: u32,
     pub status: String,
-    pub previous_status: Option<String>,
-    pub version: u32,
-    pub created_date: Option<String>,
-    pub created_time: Option<String>,
-    pub updated_date: Option<String>,
-    pub updated_time: Option<String>,
     pub organization_id: String,
-    pub created_by: Option<String>,
-    pub updated_by: Option<String>,
-    pub deleted_by: Option<String>,
-    pub requested_by: Option<String>,
-    pub timestamp: Option<String>,
-    pub tags: Vec<String>,
-    pub first_name: Option<String>,
-    pub middle_name: Option<String>,
-    pub last_name: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Contact {
+    pub id: String,
+    pub first_name: String,
+    pub last_name: String,
+    pub account_id: String,
+    pub code: String,
+    pub categories: Vec<String>,
+    pub status: String,
+    pub organization_id: String,
     pub date_of_birth: Option<String>,
 }
 
-/// Represents an organization associated with an account.
-/// Contains metadata about the organization, including its identifiers and hierarchy.
-#[derive(Debug, Deserialize)]
-pub struct Organization {
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Device {
     pub id: String,
+    pub code: String,
     pub categories: Vec<String>,
-    pub code: Option<String>,
-    pub tombstone: u32,
     pub status: String,
-    pub previous_status: Option<String>,
-    pub version: u32,
-    pub created_date: String,
-    pub created_time: String,
-    pub updated_date: String,
-    pub updated_time: String,
     pub organization_id: String,
-    pub created_by: Option<String>,
-    pub updated_by: Option<String>,
-    pub deleted_by: Option<String>,
-    pub requested_by: Option<String>,
     pub timestamp: Option<String>,
-    pub tags: Vec<String>,
-    pub parent_organization_id: Option<String>,
-    pub name: String,
 }
 
-/// Represents an account containing a device and organization.
-/// Acts as a container for the relationships between devices and organizations.
-#[derive(Debug, Deserialize)]
-pub struct Account {
-    #[serde(alias = "contact")]
-    pub device: Device,
-    pub organization: Organization,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Organization {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub categories: Vec<String>,
+    pub status: String,
     pub organization_id: String,
-    pub account_id: String,
-    pub organization_account_id: Option<String>,
+    pub parent_organization_id: Option<String>,
 }
