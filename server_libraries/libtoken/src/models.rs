@@ -1,9 +1,14 @@
+use crate::utils::empty_object_or_null_is_none;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Account {
+    #[serde(default)]
+    pub is_root_account: bool,
     pub profile: Profile,
+    #[serde(default, deserialize_with = "empty_object_or_null_is_none")]
     pub contact: Option<Contact>,
+    #[serde(default, deserialize_with = "empty_object_or_null_is_none")]
     pub device: Option<Device>,
     pub organization: Organization,
     pub id: String,

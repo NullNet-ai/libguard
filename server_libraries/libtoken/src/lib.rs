@@ -1,4 +1,5 @@
 pub mod models;
+mod utils;
 
 use base64::Engine as _;
 use serde::Deserialize;
@@ -11,7 +12,8 @@ const EXPIRATION_MARGIN: u64 = 60 * 5;
 #[derive(Debug, Deserialize)]
 pub struct Token {
     pub account: models::Account,
-    pub signed_in_account: models::Account,
+    // It is there, but we dont need it
+    // pub signed_in_account: models::Account,
     pub iat: u64,
     pub exp: u64,
     #[serde(skip)]
@@ -153,7 +155,7 @@ mod tests {
     }
 
     #[test]
-    fn test_device_issued_to_root() {
+    fn test_device_issued_to_root_1() {
         let token = concat!(
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50Ijp7InByb2ZpbGUiOnsiaWQiOiIwMUp",
             "NM0dUV0NIUjNDTTJOUDg1QzBRMktOMSIsImZpcnN0X25hbWUiOm51bGwsImxhc3RfbmFtZSI6bnVsbCw",
@@ -189,5 +191,29 @@ mod tests {
         let token = token.unwrap();
         assert!(token.account.device.is_none());
         assert!(token.account.contact.is_none());
+    }
+
+    #[test]
+    fn test_device_issued_to_root_2() {
+        let token = concat!(
+            "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50Ijp7ImlzX3Jvb3RfYWNjb3VudCI6dHJ",
+            "1ZSwicHJvZmlsZSI6eyJpZCI6IjAxSk0zR1RXQ0hSM0NNMk5QODVDMFEyS04xIiwiZmlyc3RfbmFtZSI",
+            "6bnVsbCwibGFzdF9uYW1lIjpudWxsLCJlbWFpbCI6InJvb3QiLCJhY2NvdW50X2lkIjoiMDFKTTNHVFd",
+            "DSFIzQ00yTlA4NUMwUTJLTjEiLCJjYXRlZ29yaWVzIjpbXSwiY29kZSI6bnVsbCwic3RhdHVzIjoiQWN",
+            "0aXZlIiwib3JnYW5pemF0aW9uX2lkIjoiMDFKU040WEEyQzNBN1JITjNNTlpaSkdCUjMifSwib3JnYW5",
+            "pemF0aW9uIjp7ImlkIjoiMDFKU040WEEyQzNBN1JITjNNTlpaSkdCUjMiLCJuYW1lIjoiUm9vdCBQZXJ",
+            "zb25hbCBPcmdhbml6YXRpb24iLCJjb2RlIjoiT1IwMDAwMDAiLCJjYXRlZ29yaWVzIjpbIlJvb3QiLCJ",
+            "QZXJzb25hbCJdLCJzdGF0dXMiOiJBY3RpdmUiLCJvcmdhbml6YXRpb25faWQiOiIwMUpTTjRYQTJDM0E",
+            "3UkhOM01OWlpKR0JSMyIsInBhcmVudF9vcmdhbml6YXRpb25faWQiOm51bGx9LCJpZCI6IjAxSk0zR1R",
+            "XQ0hSM0NNMk5QODVDMFEyS04xIiwiYWNjb3VudF9pZCI6InJvb3QiLCJvcmdhbml6YXRpb25faWQiOiI",
+            "wMUpTTjRYQTJDM0E3UkhOM01OWlpKR0JSMyIsImFjY291bnRfb3JnYW5pemF0aW9uX2lkIjoiMDFKTTN",
+            "HVFdDSFIzQ00yTlA4NUMwUTJLTjEiLCJhY2NvdW50X3N0YXR1cyI6IkFjdGl2ZSIsInJvbGVfaWQiOm5",
+            "1bGwsImNvbnRhY3QiOnt9LCJkZXZpY2UiOnt9fSwicHJldmlvdXNseV9sb2dnZWRfaW4iOiIiLCJpYXQ",
+            "iOjE3NTAyOTkzMzIsImV4cCI6MTc1MDQ3MjEzMn0.6UiIYItNoAptPBLv3S8QC5eWrs2FEkzmo1OPD65",
+            "pfoA"
+        );
+
+        let token = Token::from_jwt(token);
+        assert!(token.is_ok());
     }
 }
