@@ -307,6 +307,6 @@ impl DatastoreClient {
             .await
             .handle_err(location!())?;
 
-        return Ok(response.into_inner());
+        Ok(response.into_inner())
     }
 }
