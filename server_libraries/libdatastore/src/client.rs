@@ -283,4 +283,30 @@ impl DatastoreClient {
 
         validate_response_and_convert_to_reponse_data(response.get_ref())
     }
+
+    /// Registeres a new account
+    ///
+    /// # Arguments
+    /// * `request` - The request containing the account info.
+    /// * `token` - The authorization token to authorize the request.
+    ///
+    /// # Returns
+    /// * `Ok(RegisterResponse)` - The response data containing the result of the operation.
+    /// * `Err(Error)` - If the operation fails or if an error occurs during the process.
+    #[allow(clippy::missing_errors_doc)]
+    pub async fn register(
+        &mut self,
+        request: RegisterRequest,
+        token: &str,
+    ) -> Result<RegisterResponse, Error> {
+        let request = authorize_request(request, token)?;
+
+        let response = self
+            .client
+            .register(request)
+            .await
+            .handle_err(location!())?;
+
+        return Ok(response.into_inner());
+    }
 }
