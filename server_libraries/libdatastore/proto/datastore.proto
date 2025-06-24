@@ -48,7 +48,7 @@ message GetByFilterBody {
     repeated MultipleSort multiple_sort = 8;
     map<string, string> pluck_object = 9;
     string date_format = 10;
-
+    bool is_case_sensitive_sorting = 11;
 }
 
 message AdvanceFilter {
@@ -69,6 +69,7 @@ message Value {
 message MultipleSort {
     string by_field = 1;
     string by_direction = 2;
+    bool is_case_sensitive_sorting= 3;
 }
 
 message Join {

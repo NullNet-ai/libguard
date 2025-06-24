@@ -54,6 +54,8 @@ pub struct GetByFilterBody {
     >,
     #[prost(string, tag = "10")]
     pub date_format: ::prost::alloc::string::String,
+    #[prost(bool, tag = "11")]
+    pub is_case_sensitive_sorting: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AdvanceFilter {
@@ -89,6 +91,8 @@ pub struct MultipleSort {
     pub by_field: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
     pub by_direction: ::prost::alloc::string::String,
+    #[prost(bool, tag = "3")]
+    pub is_case_sensitive_sorting: bool,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Join {
