@@ -294,16 +294,16 @@ impl DatastoreClient {
     /// * `Ok(RegisterResponse)` - The response data containing the result of the operation.
     /// * `Err(Error)` - If the operation fails or if an error occurs during the process.
     #[allow(clippy::missing_errors_doc)]
-    pub async fn register(
+    pub async fn register_device(
         &mut self,
-        request: RegisterRequest,
+        request: RegisterDeviceRequest,
         token: &str,
-    ) -> Result<RegisterResponse, Error> {
+    ) -> Result<Response, Error> {
         let request = authorize_request(request, token)?;
 
         let response = self
             .client
-            .register(request)
+            .register_device(request)
             .await
             .handle_err(location!())?;
 

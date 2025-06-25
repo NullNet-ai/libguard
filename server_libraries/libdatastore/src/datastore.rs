@@ -314,9 +314,31 @@ pub struct Response {
     pub encoding: ::prost::alloc::string::String,
     #[prost(string, tag = "7")]
     pub data: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "8")]
+    pub errors: ::prost::alloc::vec::Vec<ResponseError>,
+    #[prost(message, repeated, tag = "9")]
+    pub metadata: ::prost::alloc::vec::Vec<ResponseMetadata>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RegisterResponse {
+pub struct ResponseError {
+    #[prost(string, tag = "1")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub stack: ::prost::alloc::string::String,
+    #[prost(int32, tag = "3")]
+    pub status_code: i32,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ResponseMetadata {
+    #[prost(string, tag = "1")]
+    pub key: ::prost::alloc::string::String,
+    #[prost(message, optional, tag = "2")]
+    pub value: ::core::option::Option<::prost_types::Any>,
+}
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct MyRequest {}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct RegisterDeviceResponse {
     #[prost(string, tag = "1")]
     pub organization_id: ::prost::alloc::string::String,
     #[prost(string, tag = "2")]
@@ -324,102 +346,39 @@ pub struct RegisterResponse {
     #[prost(string, tag = "3")]
     pub account_id: ::prost::alloc::string::String,
     #[prost(string, tag = "4")]
-    pub email: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub contact_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
     pub device_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "7")]
+    #[prost(string, tag = "5")]
     pub device_code: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RegisterRequest {
+pub struct RegisterDeviceRequest {
     #[prost(message, optional, tag = "1")]
-    pub body: ::core::option::Option<RegisterParams>,
-    #[prost(bool, tag = "2")]
-    pub is_request: bool,
+    pub device: ::core::option::Option<RegisterDeviceParams>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct RegisterParams {
-    /// To be deprecated
+pub struct RegisterDeviceParams {
     #[prost(string, tag = "1")]
-    pub id: ::prost::alloc::string::String,
-    #[prost(string, tag = "2")]
-    pub name: ::prost::alloc::string::String,
-    #[prost(string, tag = "3")]
-    pub contact_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "4")]
-    pub email: ::prost::alloc::string::String,
-    #[prost(string, tag = "5")]
-    pub password: ::prost::alloc::string::String,
-    #[prost(string, tag = "6")]
-    pub parent_organization_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "7")]
-    pub code: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "8")]
-    pub categories: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(string, tag = "9")]
-    pub account_status: ::prost::alloc::string::String,
-    #[prost(enumeration = "AccountType", tag = "10")]
-    pub account_type: i32,
-    #[prost(string, tag = "11")]
-    pub organization_name: ::prost::alloc::string::String,
-    #[prost(string, tag = "12")]
     pub organization_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "13")]
+    #[prost(string, tag = "2")]
     pub account_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "14")]
+    #[prost(string, tag = "3")]
     pub account_secret: ::prost::alloc::string::String,
-    #[prost(bool, tag = "15")]
+    #[prost(bool, tag = "4")]
     pub is_new_user: bool,
-    #[prost(string, tag = "16")]
-    pub first_name: ::prost::alloc::string::String,
-    #[prost(string, tag = "17")]
-    pub last_name: ::prost::alloc::string::String,
-    #[prost(bool, tag = "18")]
+    #[prost(bool, tag = "5")]
     pub is_invited: bool,
-    #[prost(string, tag = "19")]
+    #[prost(string, tag = "6")]
     pub role_id: ::prost::alloc::string::String,
-    #[prost(string, tag = "20")]
+    #[prost(string, tag = "7")]
     pub account_organization_status: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "21")]
+    #[prost(string, repeated, tag = "8")]
     pub account_organization_categories: ::prost::alloc::vec::Vec<
         ::prost::alloc::string::String,
     >,
-    #[prost(string, tag = "22")]
-    pub account_organization_id: ::prost::alloc::string::String,
-    #[prost(string, repeated, tag = "23")]
-    pub contact_categories: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(string, repeated, tag = "24")]
+    #[prost(string, repeated, tag = "9")]
     pub device_categories: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    #[prost(string, tag = "25")]
-    pub responsible_account_organization_id: ::prost::alloc::string::String,
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
-#[repr(i32)]
-pub enum AccountType {
-    Contact = 0,
-    Device = 1,
-}
-impl AccountType {
-    /// String value of the enum field names used in the ProtoBuf definition.
-    ///
-    /// The values are not transformed in any way and thus are considered stable
-    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
-    pub fn as_str_name(&self) -> &'static str {
-        match self {
-            Self::Contact => "CONTACT",
-            Self::Device => "DEVICE",
-        }
-    }
-    /// Creates an enum from field names used in the ProtoBuf definition.
-    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
-        match value {
-            "CONTACT" => Some(Self::Contact),
-            "DEVICE" => Some(Self::Device),
-            _ => None,
-        }
-    }
+    #[prost(string, tag = "10")]
+    pub device_id: ::prost::alloc::string::String,
 }
 /// Generated client implementations.
 pub mod store_service_client {
@@ -743,13 +702,10 @@ pub mod store_service_client {
                 .insert(GrpcMethod::new("datastore.StoreService", "Upsert"));
             self.inner.unary(req, path, codec).await
         }
-        pub async fn register(
+        pub async fn register_device(
             &mut self,
-            request: impl tonic::IntoRequest<super::RegisterRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::RegisterResponse>,
-            tonic::Status,
-        > {
+            request: impl tonic::IntoRequest<super::RegisterDeviceRequest>,
+        ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status> {
             self.inner
                 .ready()
                 .await
@@ -760,11 +716,11 @@ pub mod store_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/datastore.StoreService/Register",
+                "/datastore.StoreService/RegisterDevice",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("datastore.StoreService", "Register"));
+                .insert(GrpcMethod::new("datastore.StoreService", "RegisterDevice"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -826,13 +782,10 @@ pub mod store_service_server {
             &self,
             request: tonic::Request<super::UpsertRequest>,
         ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status>;
-        async fn register(
+        async fn register_device(
             &self,
-            request: tonic::Request<super::RegisterRequest>,
-        ) -> std::result::Result<
-            tonic::Response<super::RegisterResponse>,
-            tonic::Status,
-        >;
+            request: tonic::Request<super::RegisterDeviceRequest>,
+        ) -> std::result::Result<tonic::Response<super::Response>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct StoreServiceServer<T> {
@@ -1404,25 +1357,25 @@ pub mod store_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/datastore.StoreService/Register" => {
+                "/datastore.StoreService/RegisterDevice" => {
                     #[allow(non_camel_case_types)]
-                    struct RegisterSvc<T: StoreService>(pub Arc<T>);
+                    struct RegisterDeviceSvc<T: StoreService>(pub Arc<T>);
                     impl<
                         T: StoreService,
-                    > tonic::server::UnaryService<super::RegisterRequest>
-                    for RegisterSvc<T> {
-                        type Response = super::RegisterResponse;
+                    > tonic::server::UnaryService<super::RegisterDeviceRequest>
+                    for RegisterDeviceSvc<T> {
+                        type Response = super::Response;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::RegisterRequest>,
+                            request: tonic::Request<super::RegisterDeviceRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as StoreService>::register(&inner, request).await
+                                <T as StoreService>::register_device(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -1433,7 +1386,7 @@ pub mod store_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = RegisterSvc(inner);
+                        let method = RegisterDeviceSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

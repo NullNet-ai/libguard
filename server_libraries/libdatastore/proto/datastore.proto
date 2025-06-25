@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/any.proto";
+
 package datastore;
 
 service StoreService {
@@ -14,7 +16,7 @@ service StoreService {
     rpc BatchDelete(BatchDeleteRequest) returns (Response);
     rpc Login(LoginRequest) returns (LoginResponse);
     rpc Upsert(UpsertRequest) returns (Response);
-    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc RegisterDevice(RegisterDeviceRequest) returns (Response);
 }
 message UpsertRequest {
     UpsertBody body = 1;
@@ -224,53 +226,46 @@ message Response {
     int32 count = 5;
     string encoding = 6;
     string data = 7;
+    repeated ResponseError errors = 8;
+    repeated ResponseMetadata metadata = 9;
 }
 
-message RegisterResponse {
+message ResponseError{
+    string message = 1;
+    string stack = 2;
+    int32 status_code = 3;
+}
+
+message ResponseMetadata {
+    string key = 1;
+    google.protobuf.Any value = 2;
+}
+
+message MyRequest {
+}
+
+
+message RegisterDeviceResponse {
     string organization_id = 1;
     string account_organization_id = 2;
     string account_id = 3;
-    string email = 4;
-    string contact_id = 5;
-    string device_id = 6;
-    string device_code = 7;
-}
-enum AccountType {
-    CONTACT = 0;
-    DEVICE = 1;
+    string device_id = 4;
+    string device_code = 5;
 }
 
-message RegisterRequest {
-    RegisterParams body = 1;
-    bool is_request =2;
+message RegisterDeviceRequest {
+    RegisterDeviceParams device = 1;
 }
 
-message RegisterParams {
-    string id = 1; // To be deprecated
-    string name = 2;
-    string contact_id = 3;
-    string email = 4;
-    string password = 5;
-    string parent_organization_id = 6;
-    string code = 7;
-    repeated string categories = 8;
-    string account_status = 9;
-
-    AccountType account_type = 10;
-    string organization_name = 11;
-    string organization_id = 12;
-    string account_id = 13;
-    string account_secret = 14;
-    bool is_new_user = 15;
-    string first_name = 16;
-    string last_name = 17;
-    bool is_invited = 18;
-    string role_id = 19;
-    string account_organization_status = 20;
-    repeated string account_organization_categories = 21;
-    string account_organization_id = 22;
-    repeated string contact_categories = 23;
-    repeated string device_categories = 24;
-
-    string responsible_account_organization_id = 25;
+message RegisterDeviceParams {
+    string organization_id = 1;
+    string account_id = 2;
+    string account_secret = 3;
+    bool is_new_user = 4;
+    bool is_invited = 5;
+    string role_id = 6;
+    string account_organization_status = 7;
+    repeated string account_organization_categories = 8;
+    repeated string device_categories = 9;
+    string device_id = 10;
 }
