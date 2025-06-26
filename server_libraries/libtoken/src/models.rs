@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 pub struct Account {
     #[serde(default)]
     pub is_root_account: bool,
-    pub profile: Profile,
+    #[serde(default, deserialize_with = "empty_object_or_null_is_none")]
+    pub profile: Option<Profile>,
     #[serde(default, deserialize_with = "empty_object_or_null_is_none")]
     pub contact: Option<Contact>,
     #[serde(default, deserialize_with = "empty_object_or_null_is_none")]
