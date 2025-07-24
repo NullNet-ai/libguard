@@ -2,7 +2,7 @@ use crate::{
     Configuration, FireparseError,
     utils::{self, find_in_snapshot},
 };
-use aliases_parser::AliasesParser;
+use aliases_parser::PfSenseAliasesParser;
 use hostname_parser::PfSenseHostnameParser;
 use interfaces_parser::PfSenseInterfacesParser;
 use nullnet_libconfmon::{InterfaceSnapshot, Snapshot};
@@ -37,7 +37,7 @@ impl PfSenseParser {
 
         Ok(Configuration {
             raw_content: document_encoded,
-            aliases: AliasesParser::parse(&xmltree),
+            aliases: PfSenseAliasesParser::parse(&xmltree),
             rules: PfSenseRulesParser::parse(&xmltree),
             interfaces: PfSenseInterfacesParser::parse(&xmltree, iterfaces),
             hostname: PfSenseHostnameParser::parse(&xmltree),
@@ -57,8 +57,7 @@ impl PfSenseParser {
 
         let config_content = std::str::from_utf8(&pfsense_config.content).map_err(|e| {
             FireparseError::ParserError(format!(
-                "PfSenseParser: Failed to parse 'config.xml' blob as UTF-8: {}",
-                e
+                "PfSenseParser: Failed to parse 'config.xml' blob as UTF-8: {e}"
             ))
         })?;
 
@@ -80,6 +79,6 @@ impl PfSenseParser {
             ))?;
 
         InterfaceSnapshot::deserialize_snapshot(&ifaces_data.content)
-            .map_err(|e| FireparseError::ParserError(format!("PfSenseParser: Failed to deserialize network interfaces data from the snapshot. {}", e)))
+            .map_err(|e| FireparseError::ParserError(format!("PfSenseParser: Failed to deserialize network interfaces data from the snapshot. {e}")))
     }
 }

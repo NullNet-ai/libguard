@@ -1,10 +1,13 @@
 mod models;
+mod opnsense;
 mod pfsense;
 mod utils;
 
 pub use models::*;
 pub use nullnet_libconfmon::{FileData, Platform, Snapshot};
 use pfsense::PfSenseParser;
+
+use crate::opnsense::OpnSenseParser;
 
 /// Represents possible errors that can occur while parsing firewall configurations.
 pub enum FireparseError {
@@ -30,11 +33,11 @@ impl Parser {
     ///
     /// # Supported Platforms
     /// - `Platform::PfSense`: Uses `PfSenseParser` to process pfSense configurations.
-    /// - `Platform::OPNsense`: Currently not implemented (`todo!()` placeholder).
+    /// - `Platform::OPNsense`:  Uses `OpnSenseParser` to process OPNsense configurations.
     pub fn parse(platfom: Platform, snapshot: Snapshot) -> Result<Configuration, FireparseError> {
         match platfom {
             Platform::PfSense => PfSenseParser::parse(snapshot),
-            Platform::OPNsense => todo!(),
+            Platform::OPNsense => OpnSenseParser::parse(snapshot),
         }
     }
 }

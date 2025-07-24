@@ -3,9 +3,9 @@ use roxmltree::Document;
 use crate::Alias;
 
 /// A parser for extracting alias definitions from a pfSense XML configuration.
-pub struct AliasesParser {}
+pub struct PfSenseAliasesParser {}
 
-impl AliasesParser {
+impl PfSenseAliasesParser {
     /// Parses a pfSense XML document to extract alias definitions.
     ///
     /// # Arguments
@@ -69,7 +69,7 @@ impl AliasesParser {
 
 #[cfg(test)]
 mod tests {
-    use super::AliasesParser;
+    use super::PfSenseAliasesParser;
     use roxmltree::Document;
 
     #[test]
@@ -96,7 +96,7 @@ mod tests {
         "#;
 
         let doc = Document::parse(xml).expect("Failed to parse XML");
-        let aliases = AliasesParser::parse(&doc);
+        let aliases = PfSenseAliasesParser::parse(&doc);
 
         assert_eq!(aliases.len(), 2);
 
@@ -128,7 +128,7 @@ mod tests {
         "#;
 
         let doc = Document::parse(xml).expect("Failed to parse XML");
-        let aliases = AliasesParser::parse(&doc);
+        let aliases = PfSenseAliasesParser::parse(&doc);
 
         assert_eq!(aliases.len(), 1);
         assert_eq!(aliases[0].name, "Networks");
@@ -154,7 +154,7 @@ mod tests {
         "#;
 
         let doc = Document::parse(xml).expect("Failed to parse XML");
-        let aliases = AliasesParser::parse(&doc);
+        let aliases = PfSenseAliasesParser::parse(&doc);
 
         assert_eq!(aliases.len(), 1);
         assert_eq!(aliases[0].name, "PortRange");
@@ -182,7 +182,7 @@ mod tests {
         "#;
 
         let doc = Document::parse(xml).expect("Failed to parse XML");
-        let aliases = AliasesParser::parse(&doc);
+        let aliases = PfSenseAliasesParser::parse(&doc);
 
         assert_eq!(aliases.len(), 1);
         assert_eq!(aliases[0].name, "pfB_PRI1_v4");
@@ -210,7 +210,7 @@ mod tests {
         "#;
 
         let doc = Document::parse(xml).expect("Failed to parse XML");
-        let aliases = AliasesParser::parse(&doc);
+        let aliases = PfSenseAliasesParser::parse(&doc);
 
         assert_eq!(aliases.len(), 1);
         assert_eq!(aliases[0].name, "MissingFields");
@@ -228,7 +228,7 @@ mod tests {
         "#;
 
         let doc = Document::parse(xml).expect("Failed to parse XML");
-        let aliases = AliasesParser::parse(&doc);
+        let aliases = PfSenseAliasesParser::parse(&doc);
 
         assert_eq!(aliases.len(), 0);
     }
