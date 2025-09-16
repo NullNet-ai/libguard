@@ -11,6 +11,7 @@ mod datastore;
 #[rustfmt::skip]
 #[allow(clippy::pedantic)]
 pub mod store;
+mod builders;
 
 pub use client::DatastoreClient;
 pub use config::DatastoreConfig;
