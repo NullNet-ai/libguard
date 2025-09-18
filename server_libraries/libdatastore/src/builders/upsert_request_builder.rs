@@ -47,7 +47,8 @@ impl UpsertRequestBuilder {
         I: IntoIterator<Item = S>,
         S: Into<String>,
     {
-        self.conflict_columns.extend(columns.into_iter().map(|s| s.into()));
+        self.conflict_columns
+            .extend(columns.into_iter().map(|s| s.into()));
         self
     }
 
