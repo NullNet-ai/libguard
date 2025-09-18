@@ -1,4 +1,4 @@
-use crate::{CreateBody, CreateParams, CreateRequest, Query};
+use crate::datastore::{CreateBody, CreateParams, CreateRequest, Query};
 
 #[derive(Debug, Default)]
 pub struct CreateRequestBuilder {

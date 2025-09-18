@@ -298,7 +298,7 @@ impl DatastoreClient {
         &mut self,
         request: RegisterDeviceRequest,
         token: &str,
-    ) -> Result<Response, Error> {
+    ) -> Result<ResponseData, Error> {
         let request = authorize_request(request, token)?;
 
         let response = self
@@ -307,6 +307,6 @@ impl DatastoreClient {
             .await
             .handle_err(location!())?;
 
-        Ok(response.into_inner())
+        validate_response_and_convert_to_reponse_data(response.get_ref())
     }
 }

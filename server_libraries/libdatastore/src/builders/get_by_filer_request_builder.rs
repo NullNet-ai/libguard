@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use crate::AdvanceFilter;
-use crate::GetByFilterBody;
-use crate::GetByFilterRequest;
-use crate::Join;
-use crate::MultipleSort;
-use crate::Params;
+use crate::datastore::AdvanceFilter;
+use crate::datastore::GetByFilterBody;
+use crate::datastore::GetByFilterRequest;
+use crate::datastore::Join;
+use crate::datastore::MultipleSort;
+use crate::datastore::Params;
 
 #[derive(Debug, Default)]
 pub struct GetByFilterRequestBuilder {

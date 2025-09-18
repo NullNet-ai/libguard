@@ -1,14 +1,14 @@
-use crate::datastore::{DeleteQuery, DeleteRequest, Params};
+use crate::datastore::{AdvanceFilter, BatchDeleteBody, BatchDeleteRequest, Params};
 
 #[derive(Debug, Default)]
-pub struct DeleteRequestBuilder {
+pub struct BatchDeleteRequestBuilder {
     id: Option<String>,
     table: Option<String>,
     is_root: bool,
-    is_permanent: bool,
+    advance_filters: Vec<AdvanceFilter>,
 }
 
-impl DeleteRequestBuilder {
+impl BatchDeleteRequestBuilder {
     pub fn new() -> Self {
         Default::default()
     }
@@ -27,13 +27,19 @@ impl DeleteRequestBuilder {
         self.is_root = value;
         self
     }
-    pub fn permanent(mut self, val: bool) -> Self {
-        self.is_permanent = val;
+
+    pub fn advance_filter(mut self, filter: AdvanceFilter) -> Self {
+        self.advance_filters.push(filter);
         self
     }
 
-    pub fn build(self) -> DeleteRequest {
-        DeleteRequest {
+    pub fn advance_filters(mut self, filters: impl IntoIterator<Item = AdvanceFilter>) -> Self {
+        self.advance_filters.extend(filters);
+        self
+    }
+
+    pub fn build(self) -> BatchDeleteRequest {
+        BatchDeleteRequest {
             params: Some(Params {
                 id: self.id.unwrap_or_default(),
                 table: self.table.unwrap_or_default(),
@@ -43,12 +49,8 @@ impl DeleteRequestBuilder {
                     String::new()
                 },
             }),
-            query: Some(DeleteQuery {
-                is_permanent: if self.is_permanent {
-                    String::from("true")
-                } else {
-                    String::from("false")
-                },
+            body: Some(BatchDeleteBody {
+                advance_filters: self.advance_filters,
             }),
         }
     }

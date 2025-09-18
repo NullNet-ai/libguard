@@ -1,4 +1,4 @@
-use crate::{BatchCreateBody, BatchCreateRequest, CreateParams, Query};
+use crate::datastore::{BatchCreateBody, BatchCreateRequest, CreateParams, Query};
 
 #[derive(Debug, Default)]
 pub struct BatchCreateRequestBuilder {

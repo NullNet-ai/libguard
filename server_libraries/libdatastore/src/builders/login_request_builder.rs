@@ -1,4 +1,4 @@
-use crate::{LoginBody, LoginData, LoginParams, LoginRequest};
+use crate::datastore::{LoginBody, LoginData, LoginParams, LoginRequest};
 
 #[derive(Debug, Default)]
 pub struct LoginRequestBuilder {

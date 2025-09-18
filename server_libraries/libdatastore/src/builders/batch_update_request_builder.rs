@@ -1,4 +1,4 @@
-use crate::{AdvanceFilter, BatchUpdateBody, BatchUpdateRequest, Params};
+use crate::datastore::{AdvanceFilter, BatchUpdateBody, BatchUpdateRequest, Params};
 
 #[derive(Debug, Default)]
 pub struct BatchUpdateRequestBuilder {

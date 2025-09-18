@@ -1,4 +1,4 @@
-use crate::{RegisterDeviceParams, RegisterDeviceRequest};
+use crate::datastore::{RegisterDeviceParams, RegisterDeviceRequest};
 
 #[derive(Debug, Default)]
 pub struct RegisterDeviceRequestBuilder {

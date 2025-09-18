@@ -1,16 +1,17 @@
-use crate::datastore::{Params, Query, UpdateRequest};
+use crate::datastore::{Params, Query, UpsertBody, UpsertRequest};
 
 #[derive(Debug, Default)]
-pub struct UpdateRequestBuilder {
+pub struct UpsertRequestBuilder {
     id: Option<String>,
     table: Option<String>,
     pluck: Option<String>,
     durability: Option<String>,
-    body: Option<String>,
+    data: Option<String>,
+    conflict_columns: Vec<String>,
     is_root: bool,
 }
 
-impl UpdateRequestBuilder {
+impl UpsertRequestBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -31,8 +32,23 @@ impl UpdateRequestBuilder {
         self
     }
 
-    pub fn body(mut self, body: impl Into<String>) -> Self {
-        self.body = Some(body.into());
+    pub fn data(mut self, data: impl Into<String>) -> Self {
+        self.data = Some(data.into());
+        self
+    }
+
+    pub fn conflict_column(mut self, column: impl Into<String>) -> Self {
+        self.conflict_columns.push(column.into());
+        self
+    }
+
+    pub fn conflict_columns<I, S>(mut self, columns: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.conflict_columns
+            .extend(columns.into_iter().map(|s| s.into()));
         self
     }
 
@@ -41,8 +57,8 @@ impl UpdateRequestBuilder {
         self
     }
 
-    pub fn build(self) -> UpdateRequest {
-        UpdateRequest {
+    pub fn build(self) -> UpsertRequest {
+        UpsertRequest {
             params: Some(Params {
                 id: self.id.unwrap_or_default(),
                 table: self.table.unwrap_or_default(),
@@ -56,7 +72,10 @@ impl UpdateRequestBuilder {
                 pluck: self.pluck.unwrap_or_default(),
                 durability: self.durability.unwrap_or_default(),
             }),
-            body: self.body.unwrap_or_default(),
+            body: Some(UpsertBody {
+                data: self.data.unwrap_or_default(),
+                conflict_columns: self.conflict_columns,
+            }),
         }
     }
 }
