@@ -1,4 +1,4 @@
-use crate::{Params, Query, UpdateRequest};
+use crate::datastore::{Params, Query, UpdateRequest};
 
 #[derive(Debug, Default)]
 pub struct UpdateRequestBuilder {

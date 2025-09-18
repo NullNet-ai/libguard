@@ -1,4 +1,4 @@
-use crate::{AdvanceFilter, BatchDeleteBody, BatchDeleteRequest, Params};
+use crate::datastore::{AdvanceFilter, BatchDeleteBody, BatchDeleteRequest, Params};
 
 #[derive(Debug, Default)]
 pub struct BatchDeleteRequestBuilder {

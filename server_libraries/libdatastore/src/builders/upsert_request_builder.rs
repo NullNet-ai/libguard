@@ -1,4 +1,4 @@
-use crate::{Params, Query, UpsertBody, UpsertRequest};
+use crate::datastore::{Params, Query, UpsertBody, UpsertRequest};
 
 #[derive(Debug, Default)]
 pub struct UpsertRequestBuilder {

@@ -1,4 +1,4 @@
-use crate::MultipleSort;
+use crate::datastore::MultipleSort;
 
 #[derive(Debug, Default)]
 pub struct MultipleSortBuilder {

@@ -1,4 +1,4 @@
-use crate::{GetByIdRequest, Params, Query};
+use crate::datastore::{GetByIdRequest, Params, Query};
 
 #[derive(Debug, Default)]
 pub struct GetByIdRequestBuilder {

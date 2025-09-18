@@ -1,4 +1,4 @@
-use crate::{DeleteQuery, DeleteRequest, Params};
+use crate::datastore::{DeleteQuery, DeleteRequest, Params};
 
 #[derive(Debug, Default)]
 pub struct DeleteRequestBuilder {

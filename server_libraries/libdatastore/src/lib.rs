@@ -5,17 +5,16 @@ mod response_data;
 mod utils;
 
 #[rustfmt::skip]
-#[allow(clippy::pedantic)]
+#[allow(clippy::pedantic, dead_code)]
 mod datastore;
 
 #[rustfmt::skip]
-#[allow(clippy::pedantic)]
-pub mod store;
+#[allow(clippy::pedantic, dead_code)]
+mod store;
 mod builders;
 
 pub use client::DatastoreClient;
 pub use config::DatastoreConfig;
-pub use datastore::*;
 pub use response_data::ResponseData;
 
 pub use builders::*;
