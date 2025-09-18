@@ -15,6 +15,8 @@ mod get_by_filer_request_builder;
 #[allow(unused)]
 mod get_by_id_request_builder;
 #[allow(unused)]
+mod join_builder;
+#[allow(unused)]
 mod login_request_builder;
 #[allow(unused)]
 mod multiple_sort_builder;
