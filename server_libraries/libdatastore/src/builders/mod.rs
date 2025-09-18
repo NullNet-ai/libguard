@@ -18,6 +18,8 @@ mod login_request_builder;
 mod register_device_request_builder;
 #[allow(unused)]
 mod update_request_builder;
+#[allow(unused)]
+mod upsert_request_builder;
 
 #[allow(unused)]
 pub use advanced_filter_builder::AdvanceFilterBuilder;
