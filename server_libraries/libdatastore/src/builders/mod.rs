@@ -17,6 +17,8 @@ mod get_by_id_request_builder;
 #[allow(unused)]
 mod login_request_builder;
 #[allow(unused)]
+mod multiple_sort_builder;
+#[allow(unused)]
 mod register_device_request_builder;
 #[allow(unused)]
 mod update_request_builder;
