@@ -3,11 +3,74 @@ name: Rust
 on:
   push:
     branches:
-      - 'main'
+      - '*'
+  pull_request:
+    branches:
+      - '*'
 
+env:
+  CARGO_TERM_COLOR: always
+
+# Linters inspired from here: https://github.com/actions-rs/meta/blob/master/recipes/quickstart.md
 jobs:
 
   mirror_to_gitlab:
+    if: github.event_name == 'push' && github.ref_name == 'main'
     uses: NullNet-ai/appguard-server/.github/workflows/gitlab_mirror.yml@main
     secrets:
       GITLAB_TOKEN: ${{secrets.GITLAB_TOKEN}}
+
+  rust:
+    timeout-minutes: 10
+    name: ${{ matrix.os }}-latest
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          #          - os: macos
+          - os: ubuntu
+    #          - os: windows
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      #      - name: Install macOS dependencies
+      #        if: matrix.os == 'macos'
+      #        run: |
+      #          curl -OL https://github.com/google/protobuf/releases/download/v3.20.3/protoc-3.20.3-osx-x86_64.zip
+      #          unzip protoc-3.20.3-osx-x86_64.zip -d protoc3
+      #          sudo mv protoc3/bin/* /usr/local/bin/
+      #          sudo mv protoc3/include/* /usr/local/include/
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu'
+        run: |
+          curl -OL https://github.com/google/protobuf/releases/download/v3.20.3/protoc-3.20.3-linux-x86_64.zip
+          unzip protoc-3.20.3-linux-x86_64.zip -d protoc3
+          sudo mv protoc3/bin/* /usr/local/bin/
+          sudo mv protoc3/include/* /usr/local/include/
+
+      #      - name: Install Windows dependencies
+      #        if: matrix.os == 'windows'
+      #        run: |
+      #          Invoke-WebRequest -Uri "https://github.com/google/protobuf/releases/download/v3.20.3/protoc-3.20.3-win64.zip" -OutFile "C:\protoc.zip"
+      #          Expand-Archive -LiteralPath "C:\protoc.zip" -DestinationPath C:\protoc
+      #          echo "C:\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: fmt
+        run: cargo fmt --all -- --check
+
+      - name: build
+        run: cargo build --verbose
+
+      - name: clippy
+        run: cargo clippy -- -D warnings
+
+      - name: test
+        if: matrix.os != 'windows'
+        run: cargo test -- --nocapture
