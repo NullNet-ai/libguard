@@ -24,7 +24,8 @@ pub trait ErrorHandler<T, E> {
 impl<T, E: Display> ErrorHandler<T, E> for Result<T, E> {
     fn handle_err(self, location: Location) -> Result<T, Error> {
         self.map_err(|e| {
-            log::error!(target: location.module_path, "[{}:{}] {e}", location.file, location.line);
+            // log::error!(target: location.module_path, "[{}:{}] {e}", location.file, location.line);
+            println!("[ERROR] [{}:{}] {e}", location.file, location.line);
             Error {
                 message: e.to_string(),
             }
