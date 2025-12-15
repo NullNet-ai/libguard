@@ -10,7 +10,7 @@ members = [
     "server_libraries/libdatastore",
     "server_libraries/libfireparse",
     "server_libraries/libipinfo",
-    "server_libraries/libtoken", "libtunnel"]
+    "server_libraries/libtoken"]
 
 #[workspace.package]
 #authors = ["Author Name <author@name.com>"]
