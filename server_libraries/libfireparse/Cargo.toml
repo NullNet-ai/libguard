@@ -13,6 +13,6 @@ name = "libfireparse"
 
 [dependencies]
 base64 = "0.22.1"
-roxmltree = "0.20.0"
+roxmltree = "0.21.1"
 serde = { version = "1.0", features = ["derive"] }
 nullnet-libconfmon = "=0.2.5"
