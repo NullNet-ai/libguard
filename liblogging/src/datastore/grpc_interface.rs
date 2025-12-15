@@ -16,7 +16,7 @@ impl GrpcInterface {
     ) -> Result<(), String> {
         match self {
             GrpcInterface::AppGuard(client) => {
-                let logs = nullnet_libappguard::Logs {
+                let logs = nullnet_libappguard::appguard::Logs {
                     token,
                     logs: logs.into_iter().map(Into::into).collect(),
                 };

@@ -5,9 +5,9 @@ pub(crate) struct GenericLog {
     pub(crate) message: String,
 }
 
-impl From<GenericLog> for nullnet_libappguard::Log {
-    fn from(val: GenericLog) -> nullnet_libappguard::Log {
-        nullnet_libappguard::Log {
+impl From<GenericLog> for nullnet_libappguard::appguard::Log {
+    fn from(val: GenericLog) -> nullnet_libappguard::appguard::Log {
+        nullnet_libappguard::appguard::Log {
             timestamp: val.timestamp,
             level: val.level,
             message: val.message,
