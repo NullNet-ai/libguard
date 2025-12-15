@@ -55,6 +55,9 @@ jobs:
           sudo mv protoc3/bin/* /usr/local/bin/
           sudo mv protoc3/include/* /usr/local/include/
 
+          sudo apt-get update -y
+          sudo apt-get install -y libpcap-dev protobuf-compiler
+
       #      - name: Install Windows dependencies
       #        if: matrix.os == 'windows'
       #        run: |
