@@ -47,10 +47,11 @@ impl ApiFields {
 }
 
 fn extract_json_field(json: &Value, field: Option<&str>) -> Option<String> {
-    if let Some(name) = field {
-        if let Some(value) = json.pointer(name).map(|v| v.as_str()) {
-            return value.map(std::string::ToString::to_string);
-        }
+    if let Some(name) = field
+        && let Some(value) = json.pointer(name).map(|v| v.as_str())
+    {
+        return value.map(std::string::ToString::to_string);
     }
+
     None
 }

@@ -40,10 +40,8 @@ async fn fetch_mmdb(
         .await
         .handle_err(location!())?;
 
-    let mmdb: Vec<u8> = flate2::read::GzDecoder::new(&zipped_bytes[..])
-        .bytes()
-        .flatten()
-        .collect();
+    let reader = std::io::BufReader::new(flate2::read::GzDecoder::new(&zipped_bytes[..]));
+    let mmdb: Vec<u8> = reader.bytes().flatten().collect();
 
     *mmdb_reader.write().handle_err(location!())? =
         MmdbReader::Reader(Reader::from_source(mmdb).handle_err(location!())?);
