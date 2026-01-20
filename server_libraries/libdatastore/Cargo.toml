@@ -12,7 +12,7 @@ readme = "README.md"
 nullnet-liberror = "0.1.1"
 prost = "0.13.4"
 prost-types = "0.13.4"
-tonic = { version = "0.12.3", features = ["tls", "tls-roots"] }
+tonic = { version = "0.14.2", features = ["tls", "tls-roots"] }
 log = "0.4.26"
 
 [build-dependencies]
