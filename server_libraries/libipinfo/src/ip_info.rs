@@ -18,7 +18,7 @@ impl IpInfo {
         Self {
             country: city
                 .as_ref()
-                .and_then(|city| city.country.as_ref().and_then(|country| country.iso_code))
+                .and_then(|city| city.country.iso_code)
                 .map(std::string::ToString::to_string),
             asn: asn.as_ref().and_then(|asn| {
                 asn.autonomous_system_number
@@ -30,38 +30,24 @@ impl IpInfo {
             }),
             continent_code: city
                 .as_ref()
-                .and_then(|city| city.continent.as_ref().and_then(|continent| continent.code))
+                .and_then(|city| city.continent.code)
                 .map(std::string::ToString::to_string),
             city: city
                 .as_ref()
-                .and_then(|city| {
-                    city.city
-                        .as_ref()
-                        .and_then(|city| city.names.as_ref().and_then(|names| names.get("en")))
-                })
+                .and_then(|city| city.city.names.english)
                 .map(std::string::ToString::to_string),
             region: city
                 .as_ref()
-                .and_then(|city| {
-                    city.subdivisions
-                        .as_ref()
-                        .and_then(|subdivisions| subdivisions.first())
-                })
-                .and_then(|subdivision| {
-                    subdivision.names.as_ref().and_then(|names| names.get("en"))
-                })
+                .and_then(|city| city.subdivisions.first())
+                .and_then(|subdivision| subdivision.names.english)
                 .map(std::string::ToString::to_string),
             postal: city
                 .as_ref()
-                .and_then(|city| city.postal.as_ref().and_then(|postal| postal.code))
+                .and_then(|city| city.postal.code)
                 .map(std::string::ToString::to_string),
             timezone: city
                 .as_ref()
-                .and_then(|city| {
-                    city.location
-                        .as_ref()
-                        .and_then(|location| location.time_zone)
-                })
+                .and_then(|city| city.location.time_zone)
                 .map(std::string::ToString::to_string),
         }
     }
