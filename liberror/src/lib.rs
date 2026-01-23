@@ -31,6 +31,14 @@ impl<T, E: Display> ErrorHandler<T, E> for Result<T, E> {
             }
         })
     }
+
+    fn handle_err_no_print(self, location: Location) -> Result<T, Error> {
+        self.map_err(|e| {
+            Error {
+                message: e.to_string(),
+            }
+        })
+    }
 }
 
 /// Struct to store the location in the code (module path, file, and line)
