@@ -19,24 +19,13 @@ pub trait ErrorHandler<T, E> {
     /// Handle the error and log its location
     #[allow(clippy::missing_errors_doc)]
     fn handle_err(self, loc: Location) -> Result<T, Error>;
-    /// Handle the error without logging
-    #[allow(clippy::missing_errors_doc)]
-    fn handle_err_no_print(self, loc: Location) -> Result<T, Error>;
 }
 
 impl<T, E: Display> ErrorHandler<T, E> for Result<T, E> {
     fn handle_err(self, location: Location) -> Result<T, Error> {
         self.map_err(|e| {
             // log::error!(target: location.module_path, "[{}:{}] {e}", location.file, location.line);
-            println!("[ERROR] [{}:{}] {e}", location.file, location.line);
-            Error {
-                message: e.to_string(),
-            }
-        })
-    }
-
-    fn handle_err_no_print(self, location: Location) -> Result<T, Error> {
-        self.map_err(|e| {
+            eprintln!("[ERROR] [{}:{}] {e}", location.file, location.line);
             Error {
                 message: e.to_string(),
             }
