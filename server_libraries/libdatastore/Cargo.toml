@@ -10,7 +10,7 @@ readme = "README.md"
 
 [dependencies]
 nullnet-liberror = "0.1.1"
-prost = "0.13.4"
+prost = "0.14.1"
 prost-types = "0.13.4"
 tonic = { version = "0.12.3", features = ["tls", "tls-roots"] }
 log = "0.4.26"
