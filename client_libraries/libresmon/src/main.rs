@@ -9,7 +9,8 @@ fn main() {
                 println!("{resources}");
             }
             Err(e) => {
-                eprintln!("Error receiving system resources: {e}");
+                eprintln!("Error receiving system resources: {e}. Exiting...");
+                break;
             }
         }
     }
