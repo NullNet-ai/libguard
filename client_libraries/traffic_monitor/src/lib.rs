@@ -3,6 +3,7 @@ use chrono::Utc;
 use pcap::Device;
 use std::net::ToSocketAddrs;
 use std::thread;
+use std::time::Duration;
 
 /// Configuration for the network traffic monitor
 pub struct MonitorConfig {
@@ -85,20 +86,35 @@ fn monitor_device(device: Device, tx: &Sender<PacketInfo>, snaplen: i32, bpf_pro
     let link_type = cap.get_datalink().0;
 
     loop {
-        if let Ok(p) = cap.next_packet() {
-            let packet = PacketInfo {
-                interface: device_name.clone(),
-                data: p.data[..].to_vec(),
-                link_type,
-                timestamp: Utc::now().to_rfc3339(),
-            };
-            // send packet to caller, or exit if channel is closed
-            let Ok(()) = tx.send_blocking(packet) else {
+        match cap.next_packet() {
+            Ok(p) => {
+                let packet = PacketInfo {
+                    interface: device_name.clone(),
+                    data: p.data[..].to_vec(),
+                    link_type,
+                    timestamp: Utc::now().to_rfc3339(),
+                };
+                // send packet to caller, or exit if channel is closed
+                let Ok(()) = tx.send_blocking(packet) else {
+                    return;
+                };
+                // Save packet to file
+                if let Some(file) = savefile.as_mut() {
+                    file.write(&p);
+                }
+            }
+            // Spurious wakeup with no packet ready (e.g. a signal interrupting the
+            // underlying read): back off briefly instead of spinning the CPU.
+            Err(pcap::Error::TimeoutExpired) => {
+                thread::sleep(Duration::from_millis(10));
+            }
+            // Any other error means the capture is broken (device gone, etc.);
+            // retrying forever would just spin the CPU, so give up.
+            Err(err) => {
+                log::error!(
+                    "Packet capture error on {device_name}: {err}. Aborting monitoring..."
+                );
                 return;
-            };
-            // Save packet to file
-            if let Some(file) = savefile.as_mut() {
-                file.write(&p);
             }
         }
     }
